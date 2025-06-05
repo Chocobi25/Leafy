@@ -2,12 +2,15 @@ package com.chocobi.leafy.place.service;
 
 import com.chocobi.leafy.constants.TourConstants;
 import com.chocobi.leafy.place.dto.PlaceItem;
-import com.chocobi.leafy.place.dto.PlaceResponse;
+import com.chocobi.leafy.place.dto.PlaceApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriBuilder;
+
+import java.net.URI;
 
 
 @Service
@@ -18,16 +21,22 @@ public class PlaceService {
     @Value("${tour.api.key}")
     private String serviceKey;
 
-    @Value("${tour.api.place.url}")
-    private String placeUrl;
-
-
-    public PlaceResponse<PlaceItem> searchPlace(int areaCode) {
+    public PlaceApiResponse<PlaceItem> searchPlace(int areaCode) {
         return tourWebClient.get()
-                .uri(placeUrl,
-                        serviceKey, areaCode, TourConstants.MOBILE_OS, TourConstants.APP_NAME, TourConstants.RESPONSE_TYPE_JSON)
+                .uri(uriBuilder -> buildSearchPlaceUri(uriBuilder, areaCode))
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<PlaceResponse<PlaceItem>>() {})
+                .bodyToMono(new ParameterizedTypeReference<PlaceApiResponse<PlaceItem>>() {})
                 .block();
+    }
+
+    private URI buildSearchPlaceUri(UriBuilder builder, int areaCode) {
+        return builder.path(TourConstants.PLACE_PATH)
+                .queryParam("serviceKey", serviceKey)
+                .queryParam("numOfRows", "100")
+                .queryParam("areaCode", areaCode)
+                .queryParam("MobileOS", TourConstants.MOBILE_OS)
+                .queryParam("MobileApp", TourConstants.APP_NAME)
+                .queryParam("_type", TourConstants.RESPONSE_TYPE_JSON)
+                .build();
     }
 }
