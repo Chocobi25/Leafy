@@ -48,12 +48,12 @@ public class User {
     }
 
     @Builder
-    public User(Long kakaoId, String nickname, String profileImageUrl, Level level, double totalCarbonSaved) {
+    public User(Long kakaoId, String nickname, String profileImageUrl) {
         this.kakaoId = kakaoId;
         this.nickname = nickname;
         this.profileImageUrl = profileImageUrl;
-        this.level = level;
-        this.totalCarbonSaved = totalCarbonSaved;
+        this.level = Level.LV1; // 초기 레벨은 무조건 1
+        this.totalCarbonSaved = 0; // 초기 탄소 절감량 0
     }
 
     /**
