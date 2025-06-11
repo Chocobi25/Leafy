@@ -34,6 +34,9 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     // 필요한 경우에만 setter 추가(보안 문제)
     public void updateNickname(String nickname) {
         this.nickname = nickname;
@@ -62,6 +65,7 @@ public class User {
     @PrePersist
     public void creatTime() {
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public enum Level {
