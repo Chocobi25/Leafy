@@ -34,7 +34,7 @@ public class CarDistanceService {
     public CarDistanceResponse getDistance(String from, String to) {
 
         System.out.println("kakao api key = " + this.kakaoConfig.getApiKey());
-        String url = "https://dapi.kakao.com/v2/local/search/address.json";
+        String url = "https://apis-navi.kakaomobility.com/v1/directions";
         HttpHeaders headers = new HttpHeaders(); // Header 생성
         headers.set("Authorization", "KakaoAK " + kakaoConfig.getApiKey()); // Header에 Authorization: KakaoAK <API_KEY> 설정
 
