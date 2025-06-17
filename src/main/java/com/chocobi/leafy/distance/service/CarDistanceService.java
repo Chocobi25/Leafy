@@ -22,7 +22,6 @@ public class CarDistanceService {
     public CarDistanceService(KakaoConfig kakaoConfig) {
         this.kakaoConfig = kakaoConfig;
         this.restTemplate = new RestTemplate();
-        System.out.println("kakao api key = " + this.kakaoConfig.getApiKey());
     }
 
     /**
@@ -32,8 +31,6 @@ public class CarDistanceService {
      * @return
      */
     public CarDistanceResponse getDistance(String from, String to) {
-
-        System.out.println("kakao api key = " + this.kakaoConfig.getApiKey());
         String url = "https://apis-navi.kakaomobility.com/v1/directions";
         HttpHeaders headers = new HttpHeaders(); // Header 생성
         headers.set("Authorization", "KakaoAK " + kakaoConfig.getApiKey()); // Header에 Authorization: KakaoAK <API_KEY> 설정
