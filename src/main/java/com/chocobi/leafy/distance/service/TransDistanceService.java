@@ -2,7 +2,6 @@ package com.chocobi.leafy.distance.service;
 
 import com.chocobi.leafy.config.ODsayConfig;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
