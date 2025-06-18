@@ -11,14 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api")
 public class CarDistanceController {
 
-    private final CarDistanceService distanceService;
+    private final CarDistanceService carDistanceService;
 
     public CarDistanceController(CarDistanceService distanceService) {
-        this.distanceService = distanceService;
+        this.carDistanceService = distanceService;
     }
 
     @GetMapping("/distance")
     public CarDistanceResponse getDistance(@RequestParam String from, @RequestParam String to) {
-        return distanceService.getDistance(from, to);
+        return carDistanceService.getDistance(from, to);
     }
 }
