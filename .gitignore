@@ -36,6 +36,6 @@ out/
 ### VS Code ###
 .vscode/
 
-.env
-
 /src/main/resources/application-secret.properties
+/src/main/resources/application-oauth.properties
+.env
