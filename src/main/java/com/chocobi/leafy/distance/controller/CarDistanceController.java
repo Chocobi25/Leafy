@@ -1,7 +1,7 @@
 package com.chocobi.leafy.distance.controller;
 
 import com.chocobi.leafy.distance.service.CarDistanceService;
-import com.chocobi.leafy.distance.domain.CarDistanceResponse;
+import com.chocobi.leafy.distance.domain.DistanceResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,8 +17,8 @@ public class CarDistanceController {
         this.carDistanceService = distanceService;
     }
 
-    @GetMapping("/distance")
-    public CarDistanceResponse getDistance(@RequestParam String from, @RequestParam String to) {
+    @GetMapping("/CarDistance")
+    public DistanceResponse getDistance(@RequestParam String from, @RequestParam String to) {
         return carDistanceService.getDistance(from, to);
     }
 }

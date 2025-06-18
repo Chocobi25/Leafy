@@ -1,7 +1,7 @@
 package com.chocobi.leafy.distance.service;
 
 import com.chocobi.leafy.config.KakaoConfig;
-import com.chocobi.leafy.distance.domain.CarDistanceResponse;
+import com.chocobi.leafy.distance.domain.DistanceResponse;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -30,7 +30,7 @@ public class CarDistanceService {
      * @param to
      * @return
      */
-    public CarDistanceResponse getDistance(String from, String to) {
+    public DistanceResponse getDistance(String from, String to) {
         String url = "https://apis-navi.kakaomobility.com/v1/directions";
         HttpHeaders headers = new HttpHeaders(); // Header 생성
         headers.set("Authorization", "KakaoAK " + kakaoConfig.getApiKey()); // Header에 Authorization: KakaoAK <API_KEY> 설정
@@ -60,6 +60,6 @@ public class CarDistanceService {
         int distance = (int) summary.get("distance");
         int duration = (int) summary.get("duration");
 
-        return new CarDistanceResponse(distance, duration);
+        return new DistanceResponse(distance, duration);
     }
 }
