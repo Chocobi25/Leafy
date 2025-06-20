@@ -1,0 +1,15 @@
+package com.chocobi.leafy.place.entity;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
+public enum Category {
+    NATURE("자연"),
+    EXPERIENCE("체험"),
+    CULTURE("문화"),
+    FOOD("음식");
+
+    private final String label;
+}
