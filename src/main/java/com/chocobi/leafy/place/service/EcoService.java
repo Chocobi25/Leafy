@@ -1,8 +1,8 @@
 package com.chocobi.leafy.place.service;
 
-import com.chocobi.leafy.constants.TourConstants;
-import com.chocobi.leafy.place.dto.PlaceItem;
-import com.chocobi.leafy.place.dto.PlaceApiResponse;
+import com.chocobi.leafy.constants.PlaceConstants;
+import com.chocobi.leafy.place.dto.EcoItem;
+import com.chocobi.leafy.place.dto.EcoApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -15,28 +15,28 @@ import java.net.URI;
 
 @Service
 @RequiredArgsConstructor
-public class PlaceService {
+public class EcoService {
     private final WebClient tourWebClient;
 
     @Value("${tour.api.key}")
     private String serviceKey;
 
-    public PlaceApiResponse<PlaceItem> searchPlace(int areaCode) {
+    public EcoApiResponse<EcoItem> searchEcoPlace(int areaCode) {
         return tourWebClient.get()
-                .uri(uriBuilder -> buildSearchPlaceUri(uriBuilder, areaCode))
+                .uri(uriBuilder -> buildSearchEcoUri(uriBuilder, areaCode))
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<PlaceApiResponse<PlaceItem>>() {})
+                .bodyToMono(new ParameterizedTypeReference<EcoApiResponse<EcoItem>>() {})
                 .block();
     }
 
-    private URI buildSearchPlaceUri(UriBuilder builder, int areaCode) {
-        return builder.path(TourConstants.PLACE_PATH)
+    private URI buildSearchEcoUri(UriBuilder builder, int areaCode) {
+        return builder.path(PlaceConstants.ECO_PATH)
                 .queryParam("serviceKey", serviceKey)
                 .queryParam("numOfRows", "100")
                 .queryParam("areaCode", areaCode)
-                .queryParam("MobileOS", TourConstants.MOBILE_OS)
-                .queryParam("MobileApp", TourConstants.APP_NAME)
-                .queryParam("_type", TourConstants.RESPONSE_TYPE_JSON)
+                .queryParam("MobileOS", PlaceConstants.MOBILE_OS)
+                .queryParam("MobileApp", PlaceConstants.APP_NAME)
+                .queryParam("_type", PlaceConstants.RESPONSE_TYPE_JSON)
                 .build();
     }
 }
