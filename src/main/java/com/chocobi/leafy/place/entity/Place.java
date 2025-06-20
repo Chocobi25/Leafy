@@ -17,16 +17,23 @@ public class Place {
     @Column(nullable = false)
     private String title;
 
-    @Column(length = 1000)
-    private String description;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String description;       // 장소 설명
 
-    private String address;
+    @Enumerated(EnumType.STRING)
+    private Category category;        // 자연, 체험, 문화, 음식
 
-    private Double latitude;
-    private Double longitude;
+    @Column(nullable = false)
+    private String address;           // 주소
 
-    private String imageUrl;
+    @Column(nullable = false)
+    private double latitude;          // 위도
 
-    private String telname;
-    private String tel;
+    @Column(nullable = false)
+    private double longitude;         // 경도
+
+    private String imageUrl;          // 이미지
+    private String tel;               // 대표 전화번호
+    private String copyright;         // 저작권
 }
