@@ -1,5 +1,6 @@
-package com.chocobi.leafy.place.dto;
+package com.chocobi.leafy.place.dto.theme;
 
+import com.chocobi.leafy.place.dto.common.Response;
 import lombok.Data;
 
 @Data

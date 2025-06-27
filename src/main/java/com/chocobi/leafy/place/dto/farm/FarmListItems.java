@@ -1,4 +1,4 @@
-package com.chocobi.leafy.place.dto;
+package com.chocobi.leafy.place.dto.farm;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-public class FarmXmlItems {
+public class FarmListItems {
     @XmlElement(name = "item")
     private List<FarmListItem> item;
     private int numOfRows;

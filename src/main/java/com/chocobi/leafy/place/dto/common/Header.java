@@ -1,4 +1,4 @@
-package com.chocobi.leafy.place.dto;
+package com.chocobi.leafy.place.dto.common;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;

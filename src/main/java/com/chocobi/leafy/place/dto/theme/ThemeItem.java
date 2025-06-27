@@ -1,4 +1,4 @@
-package com.chocobi.leafy.place.dto;
+package com.chocobi.leafy.place.dto.theme;
 
 import lombok.Data;
 

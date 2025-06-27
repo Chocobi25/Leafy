@@ -1,4 +1,4 @@
-package com.chocobi.leafy.place.dto;
+package com.chocobi.leafy.place.dto.farm;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
-public class FarmXmlBody {
+public class FarmListBody {
     @XmlElement(name = "items")
-    private FarmXmlItems farmXmlItems;
+    private FarmListItems farmListItems;
 }
