@@ -1,9 +1,11 @@
-package com.chocobi.leafy.user.domain;
+package com.chocobi.leafy.user.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+
+import static com.chocobi.leafy.constants.Kakao.CarbonInit;
 
 @Entity // db 테이블 생성
 @Table(name = "users") // 테이블명 설정. user는 예약어라 사용 불가
@@ -11,10 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자를 만들어줌. 외부에서는 접근하지 못하게 제한
 public class User {
 
-    @Id // PK 설정
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // 번호 증가 전략 설정
-    private Long id;
-
+    @Id
     @Column(name = "kakao_id", nullable = false, unique = true) // DB column 설정
     private Long kakaoId;
 
@@ -37,26 +36,13 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // 필요한 경우에만 setter 추가(보안 문제)
-    public void updateNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
-    public void updateProfileImage(String profileImageUrl) {
-        this.profileImageUrl = profileImageUrl;
-    }
-
-    public void addCarbonSaved(double carbonSaved) {
-        this.totalCarbonSaved += carbonSaved;
-    }
-
     @Builder
     public User(Long kakaoId, String nickname, String profileImageUrl) {
         this.kakaoId = kakaoId;
         this.nickname = nickname;
         this.profileImageUrl = profileImageUrl;
         this.level = Level.LV1; // 초기 레벨은 무조건 1
-        this.totalCarbonSaved = 0; // 초기 탄소 절감량 0
+        this.totalCarbonSaved = CarbonInit; // 초기 탄소 절감량 0
     }
 
     /**
@@ -66,9 +52,5 @@ public class User {
     public void creatTime() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-    }
-
-    public enum Level {
-        LV1, LV2, LV3, LV4, LV5;
     }
 }

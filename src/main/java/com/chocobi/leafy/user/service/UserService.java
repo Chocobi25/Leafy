@@ -1,9 +1,11 @@
 package com.chocobi.leafy.user.service;
 
-import com.chocobi.leafy.user.domain.User;
+import com.chocobi.leafy.user.Entity.User;
 import com.chocobi.leafy.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,5 +30,14 @@ public class UserService {
                             .build();
                     return userRepository.save(newUser);
                 });
+    }
+
+
+    public void editUser(User user) {
+        userRepository.save(user);
+    }
+
+    public void carbonSavedUpdate(Long kakaoId, double carbonSaved) {
+        userRepository.updateCarbonSaved(kakaoId, carbonSaved);
     }
 }
