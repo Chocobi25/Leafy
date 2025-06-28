@@ -60,4 +60,29 @@ public class UserTest {
         System.out.println("기존 유저 ID: " + user.getKakaoId() + ", 닉네임 : " + user.getNickname());
         System.out.println("수정된 유저 ID: " + updatedUser.getKakaoId() + ", 닉네임 : " + updatedUser.getNickname());
     }
+
+    @Test
+    @DisplayName("탄소 절감량 업데이트")
+    public void updateCarbonSavedTest() {
+        // 1. given: 테스트용 유저 생성 및 저장 (최초 로그인 상황 시뮬레이션)
+        User user = User.builder()
+                .kakaoId(11111L)
+                .nickname("초코비")
+                .profileImageUrl("http://example.com/profile.jpg")
+                .build();
+
+        userService.saveOrGetUser(user.getKakaoId(), user.getNickname(), user.getProfileImageUrl());
+
+        // 2. when: 탄소 절감량 수정
+        double carbon = 2000;
+
+        userService.carbonSavedUpdate(user.getKakaoId(), carbon);
+
+        // 3. then: 결과 확인
+        User updatedUser = userService.saveOrGetUser(user.getKakaoId(), user.getNickname(), user.getProfileImageUrl());
+        assertThat(updatedUser.getTotalCarbonSaved()).isEqualTo(carbon);
+
+        System.out.println("기존 유저 탄소 절감량: " + user.getTotalCarbonSaved());
+        System.out.println("업데이트 유저 탄소 절감량: " + updatedUser.getTotalCarbonSaved());
+    }
 }
