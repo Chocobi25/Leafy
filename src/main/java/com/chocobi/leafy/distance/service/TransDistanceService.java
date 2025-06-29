@@ -5,6 +5,7 @@ import com.chocobi.leafy.distance.domain.DistanceResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -13,13 +14,12 @@ import java.util.Map;
 @Service
 public class TransDistanceService {
 
-    private final ODsayConfig odsayConfig;;
-    private final RestTemplate restTemplate;
+    private final ODsayConfig odsayConfig;
+    private final WebClient odsayWebClient;
 
-    public TransDistanceService(ODsayConfig odsayConfig) {
+    public TransDistanceService(ODsayConfig odsayConfig, WebClient odsayWebClient) {
         this.odsayConfig = odsayConfig;
-        this.restTemplate = new RestTemplate();
-        System.out.println("odsay key = " + this.odsayConfig.getApiKey());
+        this.odsayWebClient = odsayWebClient;
     }
 
     /**
@@ -31,23 +31,36 @@ public class TransDistanceService {
      * @return
      */
     public DistanceResponse getDistance(String fromX, String fromY, String toX, String toY) {
-        String url = "https://api.odsay.com/v1/api/searchPubTransPathT";
+//        String url = "https://api.odsay.com/v1/api/searchPubTransPathT";
+//
+//        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
+//                .queryParam("SX", fromX)
+//                .queryParam("SY", fromY)
+//                .queryParam("EX", toX)
+//                .queryParam("EY", toY)
+//                .queryParam("apiKey", odsayConfig.getApiKey());
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
+        String uri = UriComponentsBuilder.fromPath("/v1/api/searchPubTransPathT")
                 .queryParam("SX", fromX)
                 .queryParam("SY", fromY)
                 .queryParam("EX", toX)
                 .queryParam("EY", toY)
-                .queryParam("apiKey", odsayConfig.getApiKey());
+                .queryParam("apiKey", odsayConfig.getApiKey())
+                .toUriString();
 
 
-        ResponseEntity<Map> response = restTemplate.getForEntity(builder.toUriString(), Map.class);
-        Map<String, Object> body = response.getBody();
-        if(body == null) {
-            throw new RuntimeException("ODsay API 응답 오류");
+//        ResponseEntity<Map> response = restTemplate.getForEntity(builder.toUriString(), Map.class);
+//        Map<String, Object> body = response.getBody();
+
+        Map<String, Object> body = odsayWebClient.get()
+                .uri(uri)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block(); // 동기 호출
+
+        if(body == null || !body.containsKey("result")) {
+            throw new RuntimeException("ODsay API 응답 오류: " + body);
         }
-
-        System.out.println("body = " + body);
 
         List<Map<String, Object>> paths = (List<Map<String, Object>>) ((Map<String, Object>) body.get("result")).get("path");
         if (paths == null || paths.isEmpty()) {
