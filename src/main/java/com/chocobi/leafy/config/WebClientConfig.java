@@ -24,6 +24,11 @@ public class WebClientConfig {
         return createWebClient(farmBaseUrl);
     }
 
+    @Bean
+    public WebClient kakaoWebClient(@Value("${kakao.api.base.url}") String kakaoBaseUrl) {
+        return createWebClient(kakaoBaseUrl);
+    }
+
     private WebClient createWebClient(String baseUrl) {
         DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory(baseUrl);
         factory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
