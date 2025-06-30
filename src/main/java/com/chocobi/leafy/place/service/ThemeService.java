@@ -1,8 +1,10 @@
 package com.chocobi.leafy.place.service;
 
 import com.chocobi.leafy.constants.PlaceConstants;
-import com.chocobi.leafy.place.dto.ThemeApiResponse;
-import com.chocobi.leafy.place.dto.ThemeItem;
+import com.chocobi.leafy.place.dto.theme.ThemeApiResponse;
+import com.chocobi.leafy.place.dto.theme.ThemeItem;
+import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -18,6 +20,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ThemeService {
     private final WebClient cultureWebClient;
+    private final GeocodeService geocodeService;
+    private final PlaceRepository placeRepository;
 
     @Value("${theme.api.key}")
     private String serviceKey;
@@ -47,5 +51,27 @@ public class ThemeService {
                 .filter(item -> item.getDescription() != null) // 장소 설명 없으면 제외.
                 .filter(item -> item.getSpatial() != null && item.getSpatial().contains(area)) // 사용자가
                 .collect(Collectors.toList());
+    }
+
+    public void saveThemePlace(){
+        ThemeApiResponse<ThemeItem> response = searchTheme();
+
+        List<Place> places = response.getResponse().getBody().getItems().getItem().stream()
+                .map(item -> {
+                    double[] coords = geocodeService.getCoordinatesFromAddress(item.getSpatial());
+
+                    return Place.builder()
+                            .title(item.getTitle())
+                            .description(item.getDescription())
+                            .tel(item.getReference())
+                            .copyright(item.getCreator())
+                            .address(item.getSpatial())
+                            .longitude(coords[0])
+                            .latitude(coords[1])
+                            .build();
+                })
+                .toList();
+
+        placeRepository.saveAll(places);
     }
 }

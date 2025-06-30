@@ -2,6 +2,7 @@ package com.chocobi.leafy.place.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@Builder
 public class Place {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,5 +37,8 @@ public class Place {
 
     private String imageUrl;          // 이미지
     private String tel;               // 대표 전화번호
+    private String url;               // 홈페이지
     private String copyright;         // 저작권
+
+    private String contentId;         //농가맛집을 위한 콘텐츠 ID
 }
