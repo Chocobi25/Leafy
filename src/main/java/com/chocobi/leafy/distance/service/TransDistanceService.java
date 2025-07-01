@@ -31,14 +31,6 @@ public class TransDistanceService {
      * @return
      */
     public DistanceResponse getDistance(String fromX, String fromY, String toX, String toY) {
-//        String url = "https://api.odsay.com/v1/api/searchPubTransPathT";
-//
-//        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-//                .queryParam("SX", fromX)
-//                .queryParam("SY", fromY)
-//                .queryParam("EX", toX)
-//                .queryParam("EY", toY)
-//                .queryParam("apiKey", odsayConfig.getApiKey());
 
         String uri = UriComponentsBuilder.fromPath("/v1/api/searchPubTransPathT")
                 .queryParam("SX", fromX)
@@ -47,10 +39,6 @@ public class TransDistanceService {
                 .queryParam("EY", toY)
                 .queryParam("apiKey", odsayConfig.getApiKey())
                 .toUriString();
-
-
-//        ResponseEntity<Map> response = restTemplate.getForEntity(builder.toUriString(), Map.class);
-//        Map<String, Object> body = response.getBody();
 
         Map<String, Object> body = odsayWebClient.get()
                 .uri(uri)
