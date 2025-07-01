@@ -14,7 +14,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,10 +41,10 @@ public class RuralService {
     private URI buildSearchRuralUri(UriBuilder builder) {
         return builder.path(PlaceConstants.RURAL_PATH)
                 .queryParam("serviceKey", serviceKey)
-                .queryParam("numOfRows", "1000")
-                .queryParam("pageNo", "1")
-                .queryParam("keyword", "")
-                .queryParam("where", "")
+                .queryParam("numOfRows",PlaceConstants.MAX_NUM_OF_ROWS)
+                .queryParam("pageNo", PlaceConstants.PAGE_NO)
+                .queryParam("keyword", PlaceConstants.BLANK)
+                .queryParam("where", PlaceConstants.BLANK)
                 .queryParam("_type", PlaceConstants.RESPONSE_TYPE_JSON)
                 .build();
     }
@@ -70,13 +73,14 @@ public class RuralService {
     }
 
     private double[] parseSpatial(String spatial) {
-        String[] parts = spatial.split(",");
-        double[] result = new double[parts.length];
+        Pattern pattern = Pattern.compile("([0-9]+\\.?[0-9]*)");
+        Matcher matcher = pattern.matcher(spatial);
 
-        for (int i = 0; i < parts.length; i++) {
-            result[i] = Double.parseDouble(parts[i]);
+        List<Double> numbers = new ArrayList<>();
+        while (matcher.find()) {
+            numbers.add(Double.parseDouble(matcher.group()));
         }
 
-        return result;
+        return new double[] { numbers.get(0), numbers.get(1) };
     }
 }

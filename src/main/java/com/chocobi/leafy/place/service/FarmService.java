@@ -50,8 +50,8 @@ public class FarmService {
     private URI buildFarmListUri(UriBuilder builder) {
         return builder.path(PlaceConstants.FARM_LIST)
                 .queryParam("apiKey", apiKey)
-                .queryParam("numOfRows", "200")
-                .queryParam("pageNo", "1")
+                .queryParam("numOfRows", PlaceConstants.DEFAULT_NUM_OF_ROWS)
+                .queryParam("pageNo", PlaceConstants.PAGE_NO)
                 .build();
     }
 
