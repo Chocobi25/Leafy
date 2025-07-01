@@ -24,6 +24,7 @@ public class Place {
     private String description;       // 장소 설명
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 100)
     private Category category;        // 자연, 체험, 문화, 음식
 
     @Column(nullable = false)
