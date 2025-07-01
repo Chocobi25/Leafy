@@ -1,10 +1,9 @@
 package com.chocobi.leafy.distance.service;
 
-import com.chocobi.leafy.config.KakaoConfig;
+import com.chocobi.leafy.distance.domain.DistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
@@ -20,25 +19,23 @@ public class CarDistanceService {
 
     /**
      * 두 좌표 사이의 거리와 시간 정보를 얻어오는 메서드
-     *
-     * @param from
-     * @param to
-     * @return DistanceResponse
+     * @param request
+     * @return
      */
-    public DistanceResponse getDistance(String from, String to) {
+    public DistanceResponse getDistance(DistanceRequest request) {
 
-        String uri = UriComponentsBuilder.fromPath("/v1/directions")
-                .queryParam("origin", from)
-                .queryParam("destination", to)
-                .toUriString();
+        // uri 경로
+        String uri = "/v1/waypoints/directions";
 
-        Map<String, Object> body = kakaoNaviWebClient.get()
-                .uri(uri)
+        // request body
+
+        Map<String, Object> body = kakaoNaviWebClient.post()
+                .uri(uri).bodyValue(request)
                 .retrieve()
                 .bodyToMono(Map.class)
                 .block(); // 동기 호출
 
-        if(body == null || !body.containsKey("routes")) {
+        if (body == null || !body.containsKey("routes")) {
             throw new RuntimeException("카카오 API 응답 오류");
         }
 
