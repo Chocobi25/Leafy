@@ -67,7 +67,7 @@ public class FarmService {
         List<Place> list = farmListApiResponse.getBody().getFarmListItems().getItem().stream()
                 .map(farmListItem -> {
                     FarmDetailApiResponse farmDetailApiResponse = searchFarmDetail(farmListItem.getCntntsNo());
-                    FarmDetailItem item = farmDetailApiResponse.getBody().getFarmDetailItems().getItem().get(0);
+                    FarmDetailItem item = farmDetailApiResponse.getBody().getFarmDetailItem();
 
                     double[] coords = geocodeService.getCoordinatesFromAddress(item.getLocplc());
 

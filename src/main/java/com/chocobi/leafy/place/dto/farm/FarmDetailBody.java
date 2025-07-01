@@ -8,6 +8,6 @@ import lombok.Data;
 @Data
 @XmlAccessorType(XmlAccessType.FIELD)
 public class FarmDetailBody {
-    @XmlElement(name = "items")
-    private FarmListItems farmListItems;
+    @XmlElement(name = "item")
+    private FarmDetailItem farmDetailItem;
 }
