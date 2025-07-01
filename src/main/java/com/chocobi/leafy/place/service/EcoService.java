@@ -16,7 +16,6 @@ import org.springframework.web.util.UriBuilder;
 
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -40,7 +39,7 @@ public class EcoService {
     private URI buildSearchEcoUri(UriBuilder builder) {
         return builder.path(PlaceConstants.ECO_PATH)
                 .queryParam("serviceKey", serviceKey)
-                .queryParam("numOfRows", "200")
+                .queryParam("numOfRows", PlaceConstants.DEFAULT_NUM_OF_ROWS)
                 .queryParam("MobileOS", PlaceConstants.MOBILE_OS)
                 .queryParam("MobileApp", PlaceConstants.APP_NAME)
                 .queryParam("_type", PlaceConstants.RESPONSE_TYPE_JSON)

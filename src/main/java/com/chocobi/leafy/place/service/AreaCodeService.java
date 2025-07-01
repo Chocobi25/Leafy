@@ -1,9 +1,8 @@
 package com.chocobi.leafy.place.service;
 
-import com.chocobi.leafy.constants.TourConstants;
-import com.chocobi.leafy.place.dto.AreaCodeItem;
-import com.chocobi.leafy.place.dto.AreaCodeResponse;
-import com.chocobi.leafy.place.dto.AreaApiResponse;
+import com.chocobi.leafy.constants.PlaceConstants;
+import com.chocobi.leafy.place.dto.area.AreaCodeItem;
+import com.chocobi.leafy.place.dto.area.AreaCodeApiResponse;
 import com.chocobi.leafy.place.entity.AreaCode;
 import com.chocobi.leafy.place.repository.AreaCodeRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,25 +25,25 @@ public class AreaCodeService {
     @Value("${tour.api.key}")
     private String serviceKey;
 
-    private AreaCodeResponse<AreaCodeItem> fetchAreaCodes() {
+    private AreaCodeApiResponse<AreaCodeItem> fetchAreaCodes() {
         return tourWebClient.get()
                 .uri(this::buildAreaCodeUri)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<AreaCodeResponse<AreaCodeItem>>() {})
+                .bodyToMono(new ParameterizedTypeReference<AreaCodeApiResponse<AreaCodeItem>>() {})
                 .block();
     }
 
     private URI buildAreaCodeUri(UriBuilder builder) {
-        return builder.path(TourConstants.AREA_PATH)
+        return builder.path(PlaceConstants.AREA_PATH)
                 .queryParam("serviceKey", serviceKey)
-                .queryParam("MobileOS", TourConstants.MOBILE_OS)
-                .queryParam("MobileApp", TourConstants.APP_NAME)
-                .queryParam("_type", TourConstants.RESPONSE_TYPE_JSON)
+                .queryParam("MobileOS", PlaceConstants.MOBILE_OS)
+                .queryParam("MobileApp", PlaceConstants.APP_NAME)
+                .queryParam("_type", PlaceConstants.RESPONSE_TYPE_JSON)
                 .build();
     }
 
     public void saveAreaCode() {
-        AreaCodeResponse<AreaCodeItem> response = fetchAreaCodes();
+        AreaCodeApiResponse<AreaCodeItem> response = fetchAreaCodes();
 
         if (response != null && response.getResponse().getBody() != null && response.getResponse().getBody().getItems() != null) {
             List<AreaCodeItem> items = response.getResponse().getBody().getItems().getItem();
@@ -61,10 +60,10 @@ public class AreaCodeService {
         }
     }
 
-    public List<AreaApiResponse> getAreaCode() {
+    public List<AreaCodeItem> getAreaCode() {
         List<AreaCode> areaCodes = areaCodeRepository.findAll();
         return areaCodes.stream()
-                .map(areaCode -> new AreaApiResponse(areaCode.getCode(), areaCode.getName()))
+                .map(areaCode -> new AreaCodeItem(String.valueOf(areaCode.getCode()), areaCode.getName()))
                 .collect(Collectors.toList());
     }
 }
