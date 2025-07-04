@@ -10,9 +10,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
 
     private final KakaoConfig kakaoConfig;
+    private final TmapConfig tmapConfig;
 
-    public WebClientConfig(KakaoConfig kakaoConfig) {
+    public WebClientConfig(KakaoConfig kakaoConfig, TmapConfig tmapConfig) {
         this.kakaoConfig = kakaoConfig;
+        this.tmapConfig = tmapConfig;
     }
 
     @Bean
@@ -24,10 +26,11 @@ public class WebClientConfig {
     }
 
     @Bean
-    public WebClient odsayWebClient() {
+    public WebClient tmapWebClient() {
         return WebClient.builder()
-                .baseUrl("https://api.odsay.com")
+                .baseUrl("https://apis.openapi.sk.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader("appKey", tmapConfig.getApiKey())
                 .build();
     }
 }

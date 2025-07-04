@@ -1,6 +1,6 @@
 package com.chocobi.leafy.distance.service;
 
-import com.chocobi.leafy.distance.domain.DistanceRequest;
+import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -22,15 +22,14 @@ public class CarDistanceService {
      * @param request
      * @return
      */
-    public DistanceResponse getDistance(DistanceRequest request) {
+    public DistanceResponse getDistance(CarDistanceRequest request) {
 
         // uri 경로
         String uri = "/v1/waypoints/directions";
 
-        // request body
-
         Map<String, Object> body = kakaoNaviWebClient.post()
-                .uri(uri).bodyValue(request)
+                .uri(uri)
+                .bodyValue(request)
                 .retrieve()
                 .bodyToMono(Map.class)
                 .block(); // 동기 호출

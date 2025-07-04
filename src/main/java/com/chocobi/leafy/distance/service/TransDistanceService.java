@@ -1,67 +1,110 @@
 package com.chocobi.leafy.distance.service;
 
-import com.chocobi.leafy.config.ODsayConfig;
+import com.chocobi.leafy.constants.TmapPathTypeConst;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
-import org.springframework.http.ResponseEntity;
+import com.chocobi.leafy.distance.domain.TransDistanceRequest;
+import com.chocobi.leafy.distance.dto.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class TransDistanceService {
 
-    private final ODsayConfig odsayConfig;
-    private final WebClient odsayWebClient;
+    private final WebClient tmapWebClient;
 
-    public TransDistanceService(ODsayConfig odsayConfig, WebClient odsayWebClient) {
-        this.odsayConfig = odsayConfig;
-        this.odsayWebClient = odsayWebClient;
+    public TransDistanceService(WebClient tmapWebClient) {
+        this.tmapWebClient = tmapWebClient;
     }
 
     /**
      * 두 좌표 사이의 거리와 시간 정보를 얻어오는 메서드
-     * @param fromX
-     * @param fromY
-     * @param toX
-     * @param toY
+     *
+     * @param request
      * @return
      */
-    public DistanceResponse getDistance(String fromX, String fromY, String toX, String toY) {
+    public List<RouteCalculationResult> getDistance(TransDistanceRequest request) {
 
-        String uri = UriComponentsBuilder.fromPath("/v1/api/searchPubTransPathT")
-                .queryParam("SX", fromX)
-                .queryParam("SY", fromY)
-                .queryParam("EX", toX)
-                .queryParam("EY", toY)
-                .queryParam("apiKey", odsayConfig.getApiKey())
-                .toUriString();
+        String uri = "/transit/routes";
 
-        Map<String, Object> body = odsayWebClient.get()
+        // 티맵 대중교통 api 호출
+        TmapResponse tmapResponse = tmapWebClient.post()
                 .uri(uri)
+                .bodyValue(request)
                 .retrieve()
-                .bodyToMono(Map.class)
+                .bodyToMono(TmapResponse.class)
                 .block(); // 동기 호출
 
-        if(body == null || !body.containsKey("result")) {
-            throw new RuntimeException("ODsay API 응답 오류: " + body);
+        // 응답이 존재하는 지 확인
+        if (tmapResponse == null || tmapResponse.getMetaData() == null) {
+            throw new RuntimeException("TMap 대중교통 api 응답 실패, tmapResponse = " + tmapResponse);
         }
 
-        List<Map<String, Object>> paths = (List<Map<String, Object>>) ((Map<String, Object>) body.get("result")).get("path");
-        if (paths == null || paths.isEmpty()) {
-            throw new RuntimeException("경로를 찾을 수 없습니다.");
+        // MetaData에 있는 Plan 꺼내기
+        MetaData metaData = tmapResponse.getMetaData();
+        Plan plan = metaData.getPlan();
+
+        // plan이 존재하는지 확인
+        if (plan == null) {
+            throw new RuntimeException("Plan 객체가 없습니다.");
         }
 
-        Map<String, Object> firstPath = paths.get(0);
-        Map<String, Object> info = (Map<String, Object>) firstPath.get("info");
+        // 경로안 꺼내기
+        List<Itineraries> itineraries = plan.getItineraries();
 
-        double totalDistance = (double) info.get("totalDistance");
-        int totalTime = (int) info.get("totalTime");
+        // 경로안이 존재하는 지 확인
+        if (itineraries == null || itineraries.isEmpty()) {
+            throw new RuntimeException("경로안(itineraries)가 없습니다.");
+        }
 
-        DistanceResponse result = new DistanceResponse(totalDistance, totalTime);
-        return result;
+        // 경로안을 순회하면서 pathType이 AIRPLANE인 경우는 제외
+        List<RouteCalculationResult> finalResults = new ArrayList<>();
+        boolean[] added = new boolean[5]; // 각 방법이 이미 추가되었는지
+        Arrays.fill(added, false);
+
+        for (Itineraries itinerary : itineraries) {
+            int pathType = itinerary.getPathType();
+
+            if (pathType != TmapPathTypeConst.AIRPLANE && !added[pathType - 1]) {
+                RouteCalculationResult result = new RouteCalculationResult();
+                result.setPathType((pathType));
+                result.setTotalTime(itinerary.getTotalTime());
+
+                int totalDistance = itinerary.getTotalDistance();
+                int totalWalkDistance = itinerary.getTotalWalkDistance();
+
+                for (Legs leg : itinerary.getLegs()) {
+                    String mode = leg.getMode();
+                    Integer distance = leg.getDistance();
+
+                    if (distance != null) {
+                        switch (mode) {
+                            case "BUS", "EXPRESSBUS":
+                                result.setBusDistance(result.getBusDistance() + distance);
+                                break;
+                            case "TRAIN":
+                                result.setTrainDistance(result.getTrainDistance() + distance);
+                                break;
+                        }
+                    }
+                }
+
+                int totalSubwayDistance = totalDistance - totalWalkDistance - result.getBusDistance() - result.getTrainDistance();
+                result.setSubwayDistance(Math.max(0, totalSubwayDistance));
+
+                finalResults.add(result);
+
+                added[pathType - 1] = true;
+            }
+        }
+
+        System.out.println("최종 계산 결과:" + finalResults);
+
+        // 상세 경로 넘겨줄 거면 리턴값 다시 생각해봐야함
+        return finalResults;
     }
 }
