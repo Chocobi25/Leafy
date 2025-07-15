@@ -1,7 +1,6 @@
 package com.chocobi.leafy.distance.service;
 
 import com.chocobi.leafy.constants.TmapPathTypeConst;
-import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.dto.*;
 import org.springframework.stereotype.Service;
@@ -9,7 +8,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @Service
