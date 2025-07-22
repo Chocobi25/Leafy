@@ -1,5 +1,6 @@
 package com.chocobi.leafy.user.dto;
 
+import com.chocobi.leafy.user.Entity.Level;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,4 +13,5 @@ public class UserProfileDto {
     private String role;
     private String level;
     private double totalCarbonSaved;
+    private String selectedLevelIcon;
 }

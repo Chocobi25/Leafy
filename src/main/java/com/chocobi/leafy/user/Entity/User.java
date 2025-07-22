@@ -7,6 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 import static com.chocobi.leafy.constants.Kakao.CarbonInit;
+import static com.chocobi.leafy.user.util.LevelCalculator.calculateLevel;
 
 @Entity // db 테이블 생성
 @Table(name = "users") // 테이블명 설정. user는 예약어라 사용 불가
@@ -35,6 +36,9 @@ public class User {
     @Column(name = "total_carbon_saved")
     private double totalCarbonSaved;
 
+    @Column
+    private Level selectedLevelIcon;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -49,6 +53,7 @@ public class User {
         this.role = Role.USER;
         this.level = Level.LV1; // 초기 레벨은 무조건 1
         this.totalCarbonSaved = CarbonInit; // 초기 탄소 절감량 0
+        this.selectedLevelIcon = Level.LV1;
     }
 
     /**
@@ -57,6 +62,29 @@ public class User {
     @PrePersist
     public void creatTime() {
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateSelectedLevelIcon(Level level) {
+        this.selectedLevelIcon = level;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 테스트용 레벨 설정 메서드
+    public void setLevel(Level level) {
+        this.level = level;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 테스트용 탄소 절감량 설정 메서드
+    public void setTotalCarbonSaved(double totalCarbonSaved) {
+        this.totalCarbonSaved = totalCarbonSaved;
+        this.level = calculateLevel(totalCarbonSaved); // 레벨 자동 계산
         this.updatedAt = LocalDateTime.now();
     }
 }

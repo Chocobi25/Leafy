@@ -1,5 +1,6 @@
 package com.chocobi.leafy.user.service;
 
+import com.chocobi.leafy.user.Entity.Level;
 import com.chocobi.leafy.user.Entity.User;
 import com.chocobi.leafy.user.dto.UserProfileDto;
 import com.chocobi.leafy.user.repository.UserRepository;
@@ -41,6 +42,11 @@ public class UserService {
         userRepository.updateCarbonSaved(kakaoId, carbonSaved);
     }
 
+    public User findByKakaoId(Long kakaoId) {
+        return userRepository.findByKakaoId(kakaoId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
+
     @Transactional(readOnly = true) // 읽기 전용
     public UserProfileDto getUserProfile(Long kakaoId) {
         User user = userRepository.findByKakaoId(kakaoId)
@@ -53,7 +59,34 @@ public class UserService {
                 .profileImageUrl(user.getProfileImageUrl())
                 .role(user.getRole().name())
                 .level(user.getLevel().name())
+                .selectedLevelIcon(user.getSelectedLevelIcon().name())
                 .totalCarbonSaved(user.getTotalCarbonSaved())
                 .build();
+    }
+
+    @Transactional
+    public void updateSelectedLevelIcon(Long kakaoId, String selectedLevelIcon) {
+
+        User user = findByKakaoId(kakaoId);
+
+        Level iconLevel;
+        try {
+            iconLevel = Level.valueOf(selectedLevelIcon);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("유효하지 않은 아이콘입니다.");
+        }
+
+        // 레벨 검증(사용자 레벨보다 높은 아이콘 선택 방지)
+        if (!isValidIconSelection(user.getLevel(), iconLevel)) {
+            throw new IllegalArgumentException("선택할 수 없는 아이콘입니다.");
+        }
+
+        user.updateSelectedLevelIcon(iconLevel);
+    }
+
+    // 레벨 검증 메소드
+    private boolean isValidIconSelection(Level userLevel, Level selectedLevelIcon) {
+        // Level의 enum의 ordinal() 값으로 비교 (LV1=0, LV2=1, .... LV5=4)
+        return selectedLevelIcon.ordinal() <= userLevel.ordinal();
     }
 }
