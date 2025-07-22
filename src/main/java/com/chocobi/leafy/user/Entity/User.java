@@ -1,5 +1,6 @@
 package com.chocobi.leafy.user.Entity;
 
+import com.chocobi.leafy.constants.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,6 +24,10 @@ public class User {
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role;
+
     @Enumerated(EnumType.STRING) // enum을 문자열로 저장
     @Column(nullable = false) // default 값이 Lv1인 것 저장
     private Level level;
@@ -41,6 +46,7 @@ public class User {
         this.kakaoId = kakaoId;
         this.nickname = nickname;
         this.profileImageUrl = profileImageUrl;
+        this.role = Role.USER;
         this.level = Level.LV1; // 초기 레벨은 무조건 1
         this.totalCarbonSaved = CarbonInit; // 초기 탄소 절감량 0
     }
