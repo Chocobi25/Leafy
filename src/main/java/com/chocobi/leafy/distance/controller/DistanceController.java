@@ -3,7 +3,6 @@ package com.chocobi.leafy.distance.controller;
 import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.dto.RouteCalculationResult;
-import com.chocobi.leafy.distance.dto.TmapResponse;
 import com.chocobi.leafy.distance.service.CarDistanceService;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.service.TransDistanceService;
@@ -23,12 +22,12 @@ public class DistanceController {
         this.transDistanceService = transDistanceService;
     }
 
-    @GetMapping("/car")
+    @PostMapping("/car")
     public DistanceResponse getCarDistance(@RequestBody CarDistanceRequest request) {
         return carDistanceService.getDistance(request);
     }
 
-    @GetMapping("/trans")
+    @PostMapping("/trans")
     public List<RouteCalculationResult> getTransDistance(@RequestBody TransDistanceRequest request) {
         return transDistanceService.getDistance(request);
     }

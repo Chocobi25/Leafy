@@ -74,6 +74,7 @@ public class TransDistanceService {
                 result.setTotalTime(itinerary.getTotalTime());
 
                 int totalDistance = itinerary.getTotalDistance();
+                result.setTotalDistance(totalDistance);
                 int totalWalkDistance = itinerary.getTotalWalkDistance();
 
                 for (Legs leg : itinerary.getLegs()) {
