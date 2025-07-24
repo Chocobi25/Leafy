@@ -1,5 +1,6 @@
 package com.chocobi.leafy.distance.service;
 
+import com.chocobi.leafy.constants.CarbonEmissionConst;
 import com.chocobi.leafy.constants.TmapPathTypeConst;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.dto.*;
@@ -93,6 +94,9 @@ public class TransDistanceService {
 
                 int totalSubwayDistance = totalDistance - totalWalkDistance - result.getBusDistance() - result.getTrainDistance();
                 result.setSubwayDistance(Math.max(0, totalSubwayDistance));
+
+                double carbonEmission = (result.getSubwayDistance() / 1000.0) * CarbonEmissionConst.SUBWAY_EMISSION + (result.getTrainDistance() / 1000.0) * CarbonEmissionConst.TRAIN_EMISSION + (result.getBusDistance() / 1000.0) * CarbonEmissionConst.BUS_EMISSION;
+                result.setCarbonEmission(carbonEmission);
 
                 finalResults.add(result);
 

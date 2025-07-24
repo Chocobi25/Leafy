@@ -7,8 +7,11 @@ public class RouteCalculationResult {
 
     private int pathType;
     private int totalTime;
+    private double totalDistance;
 
-    private int busDistance = 0;
-    private int subwayDistance = 0;
-    private int trainDistance = 0;
+    private double carbonEmission;
+
+    private int busDistance;
+    private int subwayDistance;
+    private int trainDistance;
 }

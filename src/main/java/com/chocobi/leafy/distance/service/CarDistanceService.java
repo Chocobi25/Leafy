@@ -1,5 +1,6 @@
 package com.chocobi.leafy.distance.service;
 
+import com.chocobi.leafy.constants.CarbonEmissionConst;
 import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import org.springframework.stereotype.Service;
@@ -45,7 +46,8 @@ public class CarDistanceService {
         // summary의 distance와 duration 꺼내기
         int distance = (int) summary.get("distance");
         int duration = (int) summary.get("duration");
+        double carbonEmission = distance / 1000.0 * CarbonEmissionConst.CAR_EMISSION;
 
-        return new DistanceResponse(distance, duration);
+        return new DistanceResponse(distance, duration, carbonEmission);
     }
 }
