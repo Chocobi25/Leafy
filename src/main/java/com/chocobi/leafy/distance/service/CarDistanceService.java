@@ -1,6 +1,8 @@
 package com.chocobi.leafy.distance.service;
 
 import com.chocobi.leafy.constants.CarbonEmissionConst;
+import com.chocobi.leafy.constants.DistanceConst;
+import com.chocobi.leafy.constants.Kakao;
 import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.domain.Point;
@@ -30,11 +32,8 @@ public class CarDistanceService {
      */
     public DistanceResponse getDistance(CarDistanceRequest request) {
 
-        // uri 경로
-        String uri = "/v1/waypoints/directions";
-
         KakaoNaviResponse kakaoNaviResponse = kakaoNaviWebClient.post()
-                .uri(uri)
+                .uri(DistanceConst.kakaoUri)
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(KakaoNaviResponse.class)

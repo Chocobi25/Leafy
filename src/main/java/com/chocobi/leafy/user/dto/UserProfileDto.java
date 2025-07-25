@@ -1,6 +1,5 @@
 package com.chocobi.leafy.user.dto;
 
-import com.chocobi.leafy.user.Entity.Level;
 import lombok.Builder;
 import lombok.Getter;
 

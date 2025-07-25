@@ -1,5 +1,6 @@
 package com.chocobi.leafy.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -9,28 +10,20 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-    private final KakaoConfig kakaoConfig;
-    private final TmapConfig tmapConfig;
-
-    public WebClientConfig(KakaoConfig kakaoConfig, TmapConfig tmapConfig) {
-        this.kakaoConfig = kakaoConfig;
-        this.tmapConfig = tmapConfig;
-    }
-
     @Bean
-    public WebClient kakaoNaviWebClient() {
+    public WebClient kakaoNaviWebClient(@Value("${kakao.navi.url}") String baseUrl, @Value("${kakao.apiKey}") String apiKey) {
         return WebClient.builder()
-                .baseUrl("https://apis-navi.kakaomobility.com")
-                .defaultHeader("Authorization", "KakaoAK " + kakaoConfig.getApiKey())
+                .baseUrl(baseUrl)
+                .defaultHeader("Authorization", "KakaoAK " + apiKey)
                 .build();
     }
 
     @Bean
-    public WebClient tmapWebClient() {
+    public WebClient tmapWebClient(@Value("${tmap.url}") String baseUrl, @Value("${kakao.apiKey}") String apiKey) {
         return WebClient.builder()
-                .baseUrl("https://apis.openapi.sk.com")
+                .baseUrl(baseUrl)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader("appKey", tmapConfig.getApiKey())
+                .defaultHeader("appKey", apiKey)
                 .build();
     }
 }
