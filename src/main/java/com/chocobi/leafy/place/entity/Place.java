@@ -41,5 +41,7 @@ public class Place {
     private String url;               // 홈페이지
     private String copyright;         // 저작권
 
-    private String contentId;         //농가맛집을 위한 콘텐츠 ID
+    @Enumerated(EnumType.STRING)
+    @Column(length = 100)
+    private Type type;
 }
