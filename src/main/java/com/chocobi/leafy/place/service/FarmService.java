@@ -6,6 +6,7 @@ import com.chocobi.leafy.place.dto.farm.FarmDetailItem;
 import com.chocobi.leafy.place.dto.farm.FarmListApiResponse;
 import com.chocobi.leafy.place.entity.Category;
 import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.entity.Type;
 import com.chocobi.leafy.place.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,7 +82,7 @@ public class FarmService {
                             .tel(item.getTelno())
                             .url(item.getUrl())
                             .imageUrl(farmListItem.getThumbImgUrl())
-                            .contentId(item.getCntntsNo())
+                            .type(Type.API)
                             .build();
                 })
                 .toList();

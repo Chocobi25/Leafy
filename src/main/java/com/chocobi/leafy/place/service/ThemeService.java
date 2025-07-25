@@ -5,6 +5,7 @@ import com.chocobi.leafy.place.dto.theme.ThemeApiResponse;
 import com.chocobi.leafy.place.dto.theme.ThemeItem;
 import com.chocobi.leafy.place.entity.Category;
 import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.entity.Type;
 import com.chocobi.leafy.place.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,6 +62,7 @@ public class ThemeService {
                             .address(item.getSpatial())
                             .longitude(coords[0])
                             .latitude(coords[1])
+                            .type(Type.API)
                             .build();
                 })
                 .toList();
