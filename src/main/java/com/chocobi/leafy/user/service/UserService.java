@@ -1,7 +1,7 @@
 package com.chocobi.leafy.user.service;
 
-import com.chocobi.leafy.user.Entity.Level;
-import com.chocobi.leafy.user.Entity.User;
+import com.chocobi.leafy.user.entity.Level;
+import com.chocobi.leafy.user.entity.User;
 import com.chocobi.leafy.user.dto.UserProfileDto;
 import com.chocobi.leafy.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

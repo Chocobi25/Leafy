@@ -1,7 +1,7 @@
 package com.chocobi.leafy.user.controller;
 
-import com.chocobi.leafy.user.Entity.Level;
-import com.chocobi.leafy.user.Entity.User;
+import com.chocobi.leafy.user.entity.Level;
+import com.chocobi.leafy.user.entity.User;
 import com.chocobi.leafy.user.dto.LevelIconUpdateDto;
 import com.chocobi.leafy.user.dto.NicknameUpdateDto;
 import com.chocobi.leafy.user.dto.UserProfileDto;

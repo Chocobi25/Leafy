@@ -1,6 +1,7 @@
 package com.chocobi.leafy.distance.service;
 
 import com.chocobi.leafy.constants.CarbonEmissionConst;
+import com.chocobi.leafy.constants.DistanceConst;
 import com.chocobi.leafy.constants.TmapPathTypeConst;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.dto.*;
@@ -28,11 +29,9 @@ public class TransDistanceService {
      */
     public List<RouteCalculationResult> getDistance(TransDistanceRequest request) {
 
-        String uri = "/transit/routes";
-
         // 티맵 대중교통 api 호출
         TmapResponse tmapResponse = tmapWebClient.post()
-                .uri(uri)
+                .uri(DistanceConst.tmapUri)
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(TmapResponse.class)
@@ -74,6 +73,7 @@ public class TransDistanceService {
                 result.setTotalTime(itinerary.getTotalTime());
 
                 int totalDistance = itinerary.getTotalDistance();
+                result.setTotalDistance(totalDistance);
                 int totalWalkDistance = itinerary.getTotalWalkDistance();
 
                 for (Legs leg : itinerary.getLegs()) {

@@ -1,6 +1,5 @@
-package com.chocobi.leafy.user.Entity;
+package com.chocobi.leafy.user.entity;
 
-import com.chocobi.leafy.constants.Role;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,4 +1,4 @@
-package com.chocobi.leafy.constants;
+package com.chocobi.leafy.user.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
