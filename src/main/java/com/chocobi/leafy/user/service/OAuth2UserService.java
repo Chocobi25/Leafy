@@ -1,7 +1,7 @@
 package com.chocobi.leafy.user.service;
 
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
+import com.chocobi.leafy.user.entity.User;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 
 @Service
@@ -27,16 +27,12 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        // Role generate
-        List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList("ROLE_ADMIN");
-
         // nameAttributeKey
         String userNameAttributeName = userRequest.getClientRegistration()
                 .getProviderDetails()
                 .getUserInfoEndpoint()
                 .getUserNameAttributeName();
 
-        // DB 저장 로직이 필요하면 추가
         Map<String, Object> attributes = oAuth2User.getAttributes();
         Long kakaoId = ((Number) attributes.get("id")).longValue();
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
@@ -45,8 +41,14 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         String nickname = profile.get("nickname").toString();
         String profileImageUrl = profile.get("profile_image_url").toString();
 
-        userService.saveOrGetUser(kakaoId, nickname, profileImageUrl);
+        // DB 저장 로직이 필요하면 추가
+        // userService.saveOrGetUser의 반환값을 user 변수에 할당
+        User user = userService.saveOrGetUser(kakaoId, nickname, profileImageUrl);
 
-        return new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), userNameAttributeName);
+        return new DefaultOAuth2User(
+                Collections.singleton(new SimpleGrantedAuthority(user.getRole().getKey())),
+                attributes,
+                userNameAttributeName
+        );
     }
 }

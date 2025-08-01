@@ -5,6 +5,7 @@ import com.chocobi.leafy.place.dto.rural.RuralApiResponse;
 import com.chocobi.leafy.place.dto.rural.RuralItem;
 import com.chocobi.leafy.place.entity.Category;
 import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.entity.Type;
 import com.chocobi.leafy.place.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,6 +66,7 @@ public class RuralService {
                             .tel(item.getReference())
                             .url(item.getSource())
                             .copyright(item.getRights())
+                            .type(Type.API)
                             .build();
                 })
                 .toList();

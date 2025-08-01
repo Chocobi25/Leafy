@@ -5,6 +5,7 @@ import com.chocobi.leafy.place.dto.eco.EcoItem;
 import com.chocobi.leafy.place.dto.eco.EcoApiResponse;
 import com.chocobi.leafy.place.entity.Category;
 import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.entity.Type;
 import com.chocobi.leafy.place.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,6 +63,7 @@ public class EcoService {
                             .tel(item.getTel())
                             .imageUrl(item.getMainimage())
                             .copyright("한국관광공사")
+                            .type(Type.API)
                             .build();
                 })
                 .toList();
