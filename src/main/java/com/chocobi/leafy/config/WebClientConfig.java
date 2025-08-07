@@ -14,7 +14,7 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 public class WebClientConfig {
 
     @Bean
-    public WebClient kakaoNaviWebClient(@Value("${kakao.navi.url}") String baseUrl, @Value("${kakao.apiKey}") String apiKey) {
+    public WebClient kakaoNaviWebClient(@Value("${kakao.navi.url}") String baseUrl, @Value("${kakao.api.key}") String apiKey) {
         return WebClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "KakaoAK " + apiKey)
@@ -22,12 +22,13 @@ public class WebClientConfig {
     }
 
     @Bean
-    public WebClient tmapWebClient(@Value("${tmap.url}") String baseUrl, @Value("${kakao.apiKey}") String apiKey) {
+    public WebClient tmapWebClient(@Value("${tmap.url}") String baseUrl, @Value("${kakao.api.key}") String apiKey) {
         return WebClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("appKey", apiKey)
                 .build();
+    }
       
     @Bean
     public WebClient tourWebClient(@Value("${tour.api.base.url}") String tourBaseUrl) {
