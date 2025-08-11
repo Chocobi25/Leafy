@@ -9,4 +9,5 @@ public class UserPlaceDTO {
     private double latitude;
     private double longitude;
     private String placeUrl;
+    private String tel;
 }
