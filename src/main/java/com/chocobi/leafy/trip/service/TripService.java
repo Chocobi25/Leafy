@@ -38,13 +38,14 @@ public class TripService {
     }
 
     public void saveTripPlace(TripPlaceListRequest placeListRequest) {
+        tripPlaceRepository.deleteAllByTripId(placeListRequest.getTripId());
+
         List<TripPlaceRequest> sortedList = placeListRequest.getPlaceList().stream()
                 .sorted(Comparator.comparing(TripPlaceRequest::getVisitDate)
                         .thenComparing(TripPlaceRequest::getVisitOrder))
                 .toList();
 
-        Trip trip = tripRepository.findById(placeListRequest.getTripId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Trip ID"));
+        Trip trip = getTripById(placeListRequest.getTripId());
 
         for(TripPlaceRequest placeRequest : sortedList) {
             Place place = placeService.getPlaceById(placeRequest.getPlaceId());
@@ -68,4 +69,19 @@ public class TripService {
                 .toList();
     }
 
+    public void deleteTrip(Long tripId) {
+        tripRepository.deleteById(tripId);
+    }
+
+    public void updateTrip(Long tripId, TripRequest tripRequest) {
+        Trip trip = getTripById(tripId);
+
+        trip.update(tripRequest.getTitle(), tripRequest.getStart_date(), tripRequest.getEnd_date());
+        tripRepository.save(trip);
+    }
+
+    private Trip getTripById(Long tripId) {
+        return tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
+    }
 }

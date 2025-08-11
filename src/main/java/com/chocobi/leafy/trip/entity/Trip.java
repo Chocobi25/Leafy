@@ -34,4 +34,10 @@ public class Trip {
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<TripPlace> tripPlaces = new ArrayList<>();
+
+    public void update(String title, LocalDate startDate, LocalDate endDate) {
+        this.title = title;
+        this.start_date = startDate;
+        this.end_date = endDate;
+    }
 }
