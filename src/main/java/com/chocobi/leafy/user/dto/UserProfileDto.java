@@ -13,4 +13,5 @@ public class UserProfileDto {
     private String level;
     private double totalCarbonSaved;
     private String selectedLevelIcon;
+    private String createdAt;
 }
