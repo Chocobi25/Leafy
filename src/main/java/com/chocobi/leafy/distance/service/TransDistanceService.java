@@ -5,6 +5,7 @@ import com.chocobi.leafy.constants.DistanceConst;
 import com.chocobi.leafy.constants.TmapPathTypeConst;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.dto.*;
+import com.chocobi.leafy.util.CarbonCalculator;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -95,7 +96,7 @@ public class TransDistanceService {
                 int totalSubwayDistance = totalDistance - totalWalkDistance - result.getBusDistance() - result.getTrainDistance();
                 result.setSubwayDistance(Math.max(0, totalSubwayDistance));
 
-                double carbonEmission = (result.getSubwayDistance() / 1000.0) * CarbonEmissionConst.SUBWAY_EMISSION + (result.getTrainDistance() / 1000.0) * CarbonEmissionConst.TRAIN_EMISSION + (result.getBusDistance() / 1000.0) * CarbonEmissionConst.BUS_EMISSION;
+                double carbonEmission = CarbonCalculator.CalculatePublicTransCarbonEmission(result.getSubwayDistance(), result.getTrainDistance(), result.getBusDistance());
                 result.setCarbonEmission(carbonEmission);
 
                 finalResults.add(result);
