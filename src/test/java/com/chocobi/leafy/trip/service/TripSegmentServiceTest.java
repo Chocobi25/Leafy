@@ -3,6 +3,7 @@ package com.chocobi.leafy.trip.service;
 import com.chocobi.leafy.constants.Transport;
 import com.chocobi.leafy.distance.dto.Section;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
+import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.entity.TripSegment;
 import com.chocobi.leafy.trip.repository.TripSegmentRepository;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.Arrays;
 import java.util.List;
@@ -90,5 +92,36 @@ class TripSegmentServiceCarTest {
         assertEquals(1L, segment2.getTrip().getId());
 
         verify(tripService, times(1)).getTripPlaces(1L);
+    }
+
+    @Test
+    void Redis_임시_저장_테스트() {
+        // given
+        TripSegment segment1 = TripSegment.builder()
+                .trip(Trip.builder().id(1L).build())
+                .distance(1000)
+                .transport(Transport.CAR)
+                .build();
+
+        TripSegment segment2 = TripSegment.builder()
+                .trip(Trip.builder().id(1L).build())
+                .distance(2000)
+                .transport(Transport.CAR)
+                .build();
+
+        List<TripSegment> segments = Arrays.asList(segment1, segment2);
+
+        // RedisTemplate의 opsForValue() Mock 설정
+        ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        // when
+        Long result = tripSegmentService.saveTempTripSegments(segments);
+
+        // then
+        assertEquals(1L, result);
+        verify(redisTemplate).opsForValue();
+        verify(valueOperations).set("temp_trip_segments:1", segments);
+        verify(redisTemplate).expire("temp_trip_segments:1", 30, java.util.concurrent.TimeUnit.MINUTES);
     }
 }
