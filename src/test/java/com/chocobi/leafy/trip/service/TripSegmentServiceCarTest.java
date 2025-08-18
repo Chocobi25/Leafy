@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -122,6 +123,66 @@ class TripSegmentServiceCarTest {
         assertEquals(1L, result);
         verify(redisTemplate).opsForValue();
         verify(valueOperations).set("temp_trip_segments:1", segments);
-        verify(redisTemplate).expire("temp_trip_segments:1", 30, java.util.concurrent.TimeUnit.MINUTES);
+        verify(redisTemplate).expire("temp_trip_segments:1", 30, MINUTES);
+    }
+
+    @Test
+    public void 임시_통합_테스트() throws Exception {
+        // given
+        Long tripId = 1L;
+        String transport = Transport.CAR;
+
+        TripPlaceResponse place1 = TripPlaceResponse.builder()
+                .placeId(10L)
+                .visitOrder(1)
+                .build();
+
+        TripPlaceResponse place2 = TripPlaceResponse.builder()
+                .placeId(20L)
+                .visitOrder(2)
+                .build();
+
+        TripPlaceResponse place3 = TripPlaceResponse.builder()
+                .placeId(30L)
+                .visitOrder(3)
+                .build();
+
+        List<TripPlaceResponse> places = Arrays.asList(place1, place2, place3);
+
+        Section section1 = new Section();
+        section1.setDistance(1000);
+
+        Section section2 = new Section();
+        section2.setDistance(2000);
+
+        List<Section> sections = Arrays.asList(section1, section2);
+
+        when(tripService.getTripPlaces(tripId)).thenReturn(places);
+        ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        // when
+        tripSegmentService.completeTempTripSegments(tripId, sections, transport);
+
+        // then
+        verify(tripService).getTripPlaces(tripId);
+        verify(valueOperations).set(eq("temp_trip_segments:1"), anyList());
+        verify(redisTemplate).expire("temp_trip_segments:1", 30, MINUTES);
+    }
+
+    @Test
+    public void Redis에서_임시데이터_조회() throws Exception {
+        // given
+        List<TripSegment> segments = Arrays.asList();
+        ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("temp_trip_segments:1")).thenReturn(segments);
+
+        // when
+        List<TripSegment> result = tripSegmentService.getTempTripSegments(1L);
+
+        // then
+        assertEquals(segments, result);
+        verify(valueOperations).get("temp_trip_segments:1");
     }
 }
