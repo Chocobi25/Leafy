@@ -3,6 +3,7 @@ package com.chocobi.leafy.distance.service;
 import com.chocobi.leafy.constants.CarbonEmissionConst;
 import com.chocobi.leafy.constants.DistanceConst;
 import com.chocobi.leafy.constants.TmapPathTypeConst;
+import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.dto.*;
 import com.chocobi.leafy.util.CarbonCalculator;
@@ -20,6 +21,28 @@ public class TransDistanceService {
 
     public TransDistanceService(WebClient tmapWebClient) {
         this.tmapWebClient = tmapWebClient;
+    }
+
+    /**
+     * 한 번의 요청으로 모든 경유지 길찾기 실행
+     * @param batchRequest
+     * @return
+     */
+    public List<List<RouteCalculationResult>> getDistanceBatch(TransDistanceBatchRequest batchRequest) {
+        List<List<RouteCalculationResult>> results = new ArrayList<>();
+
+        for (TransDistanceRequest request : batchRequest.getRequests()) {
+            try {
+                List<RouteCalculationResult> result = getDistance(request);
+                results.add(result);
+            } catch (Exception e) {
+                // 실패할 경우 빈 리스트 추가 (또는 에러 정보)
+                System.err.println("경로 계산 실패: " + request + ", 에러: " + e.getMessage());
+                results.add(new ArrayList<>());
+            }
+        }
+
+        return results;
     }
 
     /**
