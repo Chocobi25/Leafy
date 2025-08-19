@@ -44,12 +44,12 @@ public class TripSegmentService {
         List<TripPlaceResponse> tripPlaces = tripService.getTripPlaces(tripId);
         List<TripSegment> tripSegments = new ArrayList<>();
 
-        // visit_order 순서로 정렬
-        tripPlaces.sort(Comparator.comparing(TripPlaceResponse::getVisitOrder));
+        List<TripPlaceResponse> mutableTripPlaces = new ArrayList<>(tripPlaces);
+        mutableTripPlaces.sort(Comparator.comparing(TripPlaceResponse::getVisitOrder));
 
         for (int i = 0; i < sections.size(); i++) {
-            TripPlaceResponse startPlace = tripPlaces.get(i);
-            TripPlaceResponse endPlace = tripPlaces.get(i + 1);
+            TripPlaceResponse startPlace = mutableTripPlaces.get(i);
+            TripPlaceResponse endPlace = mutableTripPlaces.get(i + 1);
             double distance = sections.get(i).getDistance();
 
             TripSegment tripSegment = TripSegment.builder()
