@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class Section {
     private int distance;
+    private double carbonEmission;
 }

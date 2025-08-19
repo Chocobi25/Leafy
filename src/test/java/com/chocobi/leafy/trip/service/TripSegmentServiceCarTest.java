@@ -61,9 +61,11 @@ class TripSegmentServiceCarTest {
 
         Section section1 = new Section();
         section1.setDistance(1000);
+        section1.setCarbonEmission(210.0);
 
         Section section2 = new Section();
         section2.setDistance(2000);
+        section2.setCarbonEmission(420.0);
 
         List<Section> sections = Arrays.asList(section1, section2);
 
@@ -77,6 +79,7 @@ class TripSegmentServiceCarTest {
         TripSegment segment1 = result.getFirst();
         assertEquals(Transport.CAR, segment1.getTransport());
         assertEquals(1000, segment1.getDistance());
+        System.out.println(segment1.getCarbonEmitted());
         assertEquals(210.0, segment1.getCarbonEmitted());
         assertEquals(0, segment1.getCarbonSaved());
         assertEquals(10L, segment1.getStartPlaceId().getId());

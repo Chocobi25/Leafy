@@ -94,6 +94,7 @@ class TripSegmentServiceIntegrationTest {
 
         Section section = new Section();
         section.setDistance(50000); // 50km
+        section.setCarbonEmission(10500.0);
         List<Section> sections = Arrays.asList(section);
 
         // when

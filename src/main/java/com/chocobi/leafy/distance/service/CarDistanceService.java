@@ -84,8 +84,10 @@ public class CarDistanceService {
 
         // section 꺼내기
         List<Section> sections = routes.getSections();
-        // waypoint 별 거리 구하기
-        List<Integer> waypointsDistance = getWaypointsDistance(sections);
+        for (Section section : sections) {
+            double sectionCarbonEmission = CarbonCalculator.CalculateCarCarbonEmission(section.getDistance());
+            section.setCarbonEmission(sectionCarbonEmission);
+        }
 
         tripSegmentService.completeTempTripSegments(request.getTripId(), sections, Transport.CAR);
 
@@ -155,7 +157,7 @@ public class CarDistanceService {
             }
         }
 
-        double carbonEmission = totalDistance / 1000.0 * CarbonEmissionConst.CAR_EMISSION;
+        double carbonEmission = CarbonCalculator.CalculateCarCarbonEmission(totalDistance);
         System.out.println("구간별 계산 완료 - 총 거리: " + totalDistance + "m, 총 시간: " + totalDuration + "s, 탄소배출량: " + carbonEmission + "g");
 
         return new DistanceResponse(totalDistance, (int) totalDuration, carbonEmission);
@@ -178,17 +180,5 @@ public class CarDistanceService {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
         return R * c;
-    }
-
-    /**
-     * 웨이포인트 별 거리 구하기
-     */
-    private List<Integer> getWaypointsDistance(List<Section> sections) {
-        List<Integer> waypointDistance = new ArrayList<>();
-        sections.forEach(section -> {
-            waypointDistance.add(section.getDistance());
-        });
-
-        return waypointDistance;
     }
 }

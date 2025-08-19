@@ -3,9 +3,11 @@ package com.chocobi.leafy.distance.service;
 import com.chocobi.leafy.constants.CarbonEmissionConst;
 import com.chocobi.leafy.constants.DistanceConst;
 import com.chocobi.leafy.constants.TmapPathTypeConst;
+import com.chocobi.leafy.constants.Transport;
 import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.dto.*;
+import com.chocobi.leafy.trip.service.TripSegmentService;
 import com.chocobi.leafy.util.CarbonCalculator;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -18,9 +20,11 @@ import java.util.List;
 public class TransDistanceService {
 
     private final WebClient tmapWebClient;
+    private final TripSegmentService tripSegmentService;
 
-    public TransDistanceService(WebClient tmapWebClient) {
+    public TransDistanceService(WebClient tmapWebClient, TripSegmentService tripSegmentService) {
         this.tmapWebClient = tmapWebClient;
+        this.tripSegmentService = tripSegmentService;
     }
 
     /**
@@ -28,19 +32,28 @@ public class TransDistanceService {
      * @param batchRequest
      * @return
      */
-    public List<List<RouteCalculationResult>> getDistanceBatch(TransDistanceBatchRequest batchRequest) {
-        List<List<RouteCalculationResult>> results = new ArrayList<>();
+    public List<RouteCalculationResult> getDistanceBatch(TransDistanceBatchRequest batchRequest) {
+        List<RouteCalculationResult> results = new ArrayList<>();
+        List<Section> sections = new ArrayList<>();
 
         for (TransDistanceRequest request : batchRequest.getRequests()) {
             try {
                 List<RouteCalculationResult> result = getDistance(request);
-                results.add(result);
+                RouteCalculationResult bestRoute = result.getFirst(); // 최적 경로 뽑기
+                results.add(bestRoute);
+
+                Section section = new Section();
+                section.setDistance((int)bestRoute.getTotalDistance());
+                section.setCarbonEmission(bestRoute.getCarbonEmission());
+                sections.add(section);
+
             } catch (Exception e) {
-                // 실패할 경우 빈 리스트 추가 (또는 에러 정보)
                 System.err.println("경로 계산 실패: " + request + ", 에러: " + e.getMessage());
-                results.add(new ArrayList<>());
+                throw new RuntimeException("일부 구간 계산 실패로 인한 전체 배치 실패", e);
             }
         }
+
+        tripSegmentService.completeTempTripSegments(batchRequest.getTripId(), sections, Transport.PUBLIC_TRANS);
 
         return results;
     }

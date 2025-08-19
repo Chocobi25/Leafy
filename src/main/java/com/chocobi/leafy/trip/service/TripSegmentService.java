@@ -51,6 +51,7 @@ public class TripSegmentService {
             TripPlaceResponse startPlace = mutableTripPlaces.get(i);
             TripPlaceResponse endPlace = mutableTripPlaces.get(i + 1);
             double distance = sections.get(i).getDistance();
+            double carbonEmission = sections.get(i).getCarbonEmission();
 
             TripSegment tripSegment = TripSegment.builder()
                     .trip(Trip.builder().id(tripId).build())
@@ -58,7 +59,7 @@ public class TripSegmentService {
                     .endPlaceId(Place.builder().id(endPlace.getPlaceId()).build())
                     .transport(transport)
                     .distance(distance)
-                    .carbonEmitted(CarbonCalculator.CalculateCarCarbonEmission(distance))
+                    .carbonEmitted(carbonEmission)
                     .carbonSaved(0)
                     .build();
             tripSegments.add(tripSegment);

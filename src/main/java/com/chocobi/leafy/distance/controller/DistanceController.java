@@ -30,7 +30,7 @@ public class DistanceController {
     }
 
     @PostMapping("/trans")
-    public List<List<RouteCalculationResult>> getTransDistance(@RequestBody TransDistanceBatchRequest request) {
+    public List<RouteCalculationResult> getTransDistance(@RequestBody TransDistanceBatchRequest request) {
         return transDistanceService.getDistanceBatch(request);
     }
 }
