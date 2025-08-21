@@ -2,7 +2,6 @@ package com.chocobi.leafy.trip.service;
 
 import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.place.service.PlaceService;
-import com.chocobi.leafy.trip.dto.TripPlaceListRequest;
 import com.chocobi.leafy.trip.dto.TripPlaceRequest;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripRequest;
@@ -13,6 +12,7 @@ import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -25,40 +25,37 @@ public class TripService {
     private final UserService userService;
     private final PlaceService placeService;
 
+    @Transactional
     public Long createTrip(TripRequest tripRequest) {
-        Trip trip = Trip.builder()
+        Trip trip = tripRepository.save(Trip.builder()
                 .user(userService.findByKakaoId(tripRequest.getUser_id()))
                 .title(tripRequest.getTitle())
                 .carbon_saved(0)
                 .start_date(tripRequest.getStart_date())
                 .end_date(tripRequest.getEnd_date())
-                .build();
-        tripRepository.save(trip);
+                .build());
+        saveTripPlace(tripRequest.getPlaceList(), trip);
         return trip.getId();
     }
 
-    public void saveTripPlace(TripPlaceListRequest placeListRequest) {
-        tripPlaceRepository.deleteAllByTripId(placeListRequest.getTripId());
+    public void saveTripPlace(List<TripPlaceRequest> tripPlaceRequests, Trip trip) {
+        tripPlaceRepository.deleteAllByTripId(trip.getId());
 
-        List<TripPlaceRequest> sortedList = placeListRequest.getPlaceList().stream()
+        List<TripPlace> tripPlacesToSave = tripPlaceRequests.stream()
                 .sorted(Comparator.comparing(TripPlaceRequest::getVisitDate)
                         .thenComparing(TripPlaceRequest::getVisitOrder))
+                .map(placeRequest -> {
+                    Place place = placeService.getPlaceById(placeRequest.getPlaceId());
+                    return TripPlace.builder()
+                            .trip(trip)
+                            .place(place)
+                            .visitDate(placeRequest.getVisitDate())
+                            .visit_order(placeRequest.getVisitOrder())
+                            .build();
+                })
                 .toList();
 
-        Trip trip = getTripById(placeListRequest.getTripId());
-
-        for(TripPlaceRequest placeRequest : sortedList) {
-            Place place = placeService.getPlaceById(placeRequest.getPlaceId());
-
-            TripPlace tripPlace = TripPlace.builder()
-                    .trip(trip)
-                    .place(place)
-                    .visitDate(placeRequest.getVisitDate())
-                    .visit_order(placeRequest.getVisitOrder())
-                    .build();
-
-            tripPlaceRepository.save(tripPlace);
-        }
+        tripPlaceRepository.saveAll(tripPlacesToSave);
     }
 
     public List<TripPlaceResponse> getTripPlaces(Long tripId) {
@@ -80,7 +77,7 @@ public class TripService {
         tripRepository.save(trip);
     }
 
-    private Trip getTripById(Long tripId) {
+    public Trip getTripById(Long tripId) {
         return tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
     }
