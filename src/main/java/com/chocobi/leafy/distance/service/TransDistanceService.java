@@ -3,8 +3,12 @@ package com.chocobi.leafy.distance.service;
 import com.chocobi.leafy.constants.CarbonEmissionConst;
 import com.chocobi.leafy.constants.DistanceConst;
 import com.chocobi.leafy.constants.TmapPathTypeConst;
+import com.chocobi.leafy.constants.Transport;
+import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.dto.*;
+import com.chocobi.leafy.trip.service.TripSegmentService;
+import com.chocobi.leafy.util.CarbonCalculator;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -16,9 +20,42 @@ import java.util.List;
 public class TransDistanceService {
 
     private final WebClient tmapWebClient;
+    private final TripSegmentService tripSegmentService;
 
-    public TransDistanceService(WebClient tmapWebClient) {
+    public TransDistanceService(WebClient tmapWebClient, TripSegmentService tripSegmentService) {
         this.tmapWebClient = tmapWebClient;
+        this.tripSegmentService = tripSegmentService;
+    }
+
+    /**
+     * 한 번의 요청으로 모든 경유지 길찾기 실행
+     * @param batchRequest
+     * @return
+     */
+    public List<RouteCalculationResult> getDistanceBatch(TransDistanceBatchRequest batchRequest) {
+        List<RouteCalculationResult> results = new ArrayList<>();
+        List<Section> sections = new ArrayList<>();
+
+        for (TransDistanceRequest request : batchRequest.getRequests()) {
+            try {
+                List<RouteCalculationResult> result = getDistance(request);
+                RouteCalculationResult bestRoute = result.getFirst(); // 최적 경로 뽑기
+                results.add(bestRoute);
+
+                Section section = new Section();
+                section.setDistance((int)bestRoute.getTotalDistance());
+                section.setCarbonEmission(bestRoute.getCarbonEmission());
+                sections.add(section);
+
+            } catch (Exception e) {
+                System.err.println("경로 계산 실패: " + request + ", 에러: " + e.getMessage());
+                throw new RuntimeException("일부 구간 계산 실패로 인한 전체 배치 실패", e);
+            }
+        }
+
+        tripSegmentService.completeTempTripSegments(batchRequest.getTripId(), sections, Transport.PUBLIC_TRANS);
+
+        return results;
     }
 
     /**
@@ -95,7 +132,7 @@ public class TransDistanceService {
                 int totalSubwayDistance = totalDistance - totalWalkDistance - result.getBusDistance() - result.getTrainDistance();
                 result.setSubwayDistance(Math.max(0, totalSubwayDistance));
 
-                double carbonEmission = (result.getSubwayDistance() / 1000.0) * CarbonEmissionConst.SUBWAY_EMISSION + (result.getTrainDistance() / 1000.0) * CarbonEmissionConst.TRAIN_EMISSION + (result.getBusDistance() / 1000.0) * CarbonEmissionConst.BUS_EMISSION;
+                double carbonEmission = CarbonCalculator.CalculatePublicTransCarbonEmission(result.getSubwayDistance(), result.getTrainDistance(), result.getBusDistance());
                 result.setCarbonEmission(carbonEmission);
 
                 finalResults.add(result);
