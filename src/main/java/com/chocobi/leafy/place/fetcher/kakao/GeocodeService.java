@@ -4,7 +4,6 @@ import com.chocobi.leafy.place.common.util.PlaceConstants;
 import com.chocobi.leafy.place.fetcher.kakao.dto.Document;
 import com.chocobi.leafy.place.fetcher.kakao.dto.GeocodeResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
