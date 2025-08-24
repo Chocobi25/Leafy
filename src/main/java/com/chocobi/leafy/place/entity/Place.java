@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -36,12 +38,16 @@ public class Place {
     @Column(nullable = false)
     private double longitude;         // 경도
 
-    private String imageUrl;          // 이미지
     private String tel;               // 대표 전화번호
+
+    @Column(length = 2000)
     private String url;               // 홈페이지
+
     private String copyright;         // 저작권
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 100)
-    private Type type;
+    private PlaceSourceType sourceType;
+
+    @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Image> images;
 }
