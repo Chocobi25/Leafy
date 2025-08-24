@@ -1,87 +1,20 @@
 package com.chocobi.leafy.place.fetcher.rural;
 
-import com.chocobi.leafy.place.common.util.PlaceConstants;
-import com.chocobi.leafy.place.entity.Category;
-import com.chocobi.leafy.place.entity.Place;
-import com.chocobi.leafy.place.entity.PlaceSourceType;
-import com.chocobi.leafy.place.fetcher.rural.dto.RuralApiResponse;
-import com.chocobi.leafy.place.fetcher.rural.dto.RuralItem;
-import com.chocobi.leafy.place.repository.PlaceRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
+import com.chocobi.leafy.place.entity.PlaceStaging;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriBuilder;
 
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class RuralService {
-    private final WebClient cultureWebClient;
-    private final PlaceRepository placeRepository;
+    private final RuralClient ruralClient;
+    private final RuralMapper ruralMapper;
 
-    @Value("${rural.api.key}")
-    private String serviceKey;
-
-    public RuralApiResponse<RuralItem> searchRural() {
-        return cultureWebClient.get()
-                .uri(this::buildSearchRuralUri)
-                .header("Accept", "application/json")
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<RuralApiResponse<RuralItem>>() {})
-                .block();
-    }
-
-    private URI buildSearchRuralUri(UriBuilder builder) {
-        return builder.path(PlaceConstants.RURAL_PATH)
-                .queryParam("serviceKey", serviceKey)
-                .queryParam("numOfRows",PlaceConstants.MAX_NUM_OF_ROWS)
-                .queryParam("pageNo", PlaceConstants.PAGE_NO)
-                .queryParam("keyword", PlaceConstants.BLANK)
-                .queryParam("where", PlaceConstants.BLANK)
-                .queryParam("_type", PlaceConstants.RESPONSE_TYPE_JSON)
-                .build();
-    }
-
-    public void saveRuralPlace() {
-        RuralApiResponse<RuralItem> ruralApiResponse = searchRural();
-
-        List<Place> places = ruralApiResponse.getResponse().getBody().getItems().getItem().stream()
-                .map(item -> {
-                    double[] coords = parseSpatial(item.getSpatial());
-                    return Place.builder()
-                            .title(item.getTitle())
-                            .description(item.getDescription())
-                            .category(Category.EXPERIENCE)
-                            .address(item.getAffiliation())
-                            .longitude(coords[0])
-                            .latitude(coords[1])
-                            .tel(item.getReference())
-                            .url(item.getSource())
-                            .copyright(item.getRights())
-                            .sourceType(PlaceSourceType.API)
-                            .build();
-                })
+    public List<PlaceStaging> getPlaceStaging() {
+        return ruralClient.fetchRuralPlaces().getResponse().getBody().getItems().getItem().stream()
+                .map(ruralMapper::toStaging)
                 .toList();
-
-        placeRepository.saveAll(places);
-    }
-
-    private double[] parseSpatial(String spatial) {
-        Pattern pattern = Pattern.compile("([0-9]+\\.?[0-9]*)");
-        Matcher matcher = pattern.matcher(spatial);
-
-        List<Double> numbers = new ArrayList<>();
-        while (matcher.find()) {
-            numbers.add(Double.parseDouble(matcher.group()));
-        }
-
-        return new double[] { numbers.get(0), numbers.get(1) };
     }
 }
