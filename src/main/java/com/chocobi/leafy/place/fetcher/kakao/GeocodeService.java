@@ -16,9 +16,6 @@ import java.nio.charset.StandardCharsets;
 public class GeocodeService {
     private final WebClient kakaoWebClient;
 
-    @Value("${kakao.api.key}")
-    private String appKey;
-
     public double[] getCoordinatesFromAddress(String address) {
         String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
         GeocodeResponse response = requestGeocode(encodedAddress);
@@ -31,7 +28,6 @@ public class GeocodeService {
                         .path(PlaceConstants.GEOCODE_PATH)
                         .queryParam("query", encodedAddress)
                         .build(false))  // false로 설정해 인코딩 중복 방지
-                .header("Authorization", "KakaoAK " + appKey)
                 .retrieve()
                 .bodyToMono(GeocodeResponse.class)
                 .block();
