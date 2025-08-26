@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class ImageItem {
-    private String galTitle;         // 제목
-    private String galWebImageUrl;   // 웹용 이미지 경로
-    private String galPhotographer;  // 촬영자
+    private String title;       // 문서 제목 (저작권)
+    private String link;        // 이미지 url
+    private String thumbnail;   // 썸네일 url
 }
