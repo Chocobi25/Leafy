@@ -33,29 +33,33 @@ public class PlaceStagingTasklet implements Tasklet {
         List<PlaceStaging> allPlaces = new ArrayList<>();
 
         try {
-            allPlaces.addAll(ecoService.getPlaceStaging());
-            log.info("EcoService fetched {} places", allPlaces.size());
+            List<PlaceStaging> ecoPlaces = ecoService.getPlaceStaging();
+            ecoPlaces.stream().filter(p -> p.getAddress() != null).forEach(allPlaces::add);
+            log.info("EcoService fetched {} places", ecoPlaces.size());
         } catch (Exception e) {
             log.error("EcoService fetch failed", e);
         }
 
         try {
-            allPlaces.addAll(ruralService.getPlaceStaging());
-            log.info("RuralService fetched {} places", allPlaces.size());
+            List<PlaceStaging> ruralPlaces = ruralService.getPlaceStaging();
+            ruralPlaces.stream().filter(p -> p.getAddress() != null).forEach(allPlaces::add);
+            log.info("RuralService fetched {} places", ruralPlaces.size());
         } catch (Exception e) {
             log.error("RuralService fetch failed", e);
         }
 
         try {
-            allPlaces.addAll(themeService.getPlaceStaging());
-            log.info("ThemeService fetched {} places", allPlaces.size());
+            List<PlaceStaging> themePlaces = themeService.getPlaceStaging();
+            themePlaces.stream().filter(p -> p.getAddress() != null).forEach(allPlaces::add);
+            log.info("ThemeService fetched {} places", themePlaces.size());
         } catch (Exception e) {
             log.error("ThemeService fetch failed", e);
         }
 
         try {
-            allPlaces.addAll(farmService.getPlaceStaging());
-            log.info("FarmService fetched {} places", allPlaces.size());
+            List<PlaceStaging> farmPlaces = farmService.getPlaceStaging();
+            farmPlaces.stream().filter(p -> p.getAddress() != null).forEach(allPlaces::add);
+            log.info("FarmService fetched {} places", farmPlaces.size());
         } catch (Exception e) {
             log.error("FarmService fetch failed", e);
         }
