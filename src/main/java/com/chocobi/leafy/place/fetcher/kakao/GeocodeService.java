@@ -4,6 +4,7 @@ import com.chocobi.leafy.place.common.util.PlaceConstants;
 import com.chocobi.leafy.place.fetcher.kakao.dto.Document;
 import com.chocobi.leafy.place.fetcher.kakao.dto.GeocodeResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -14,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class GeocodeService {
     private final WebClient kakaoWebClient;
+
+    @Value("${kakao.api.key}")
+    private String appKey;
 
     public double[] getCoordinatesFromAddress(String address) {
         String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
@@ -27,6 +31,7 @@ public class GeocodeService {
                         .path(PlaceConstants.GEOCODE_PATH)
                         .queryParam("query", encodedAddress)
                         .build(false))  // false로 설정해 인코딩 중복 방지
+                .header("Authorization", "KakaoAK " + appKey)
                 .retrieve()
                 .bodyToMono(GeocodeResponse.class)
                 .block();
