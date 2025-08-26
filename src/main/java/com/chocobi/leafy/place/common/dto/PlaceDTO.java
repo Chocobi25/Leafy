@@ -13,7 +13,6 @@ public class PlaceDTO {
     private String address;
     private double latitude;
     private double longitude;
-    private String imageUrl;
     private String description;
     private String tel;
     private String url;
@@ -26,7 +25,6 @@ public class PlaceDTO {
                 place.getAddress(),
                 place.getLatitude(),
                 place.getLongitude(),
-                place.getImageUrl(),
                 place.getDescription(),
                 place.getTel(),
                 place.getUrl()
