@@ -46,8 +46,20 @@ public class Place {
     private String copyright;         // 저작권
 
     @Enumerated(EnumType.STRING)
-    private PlaceSourceType sourceType;
+    private PlaceSourceType sourceType;   //API, USER 구분
 
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
+
+    public void updateFrom(Place other) {
+        this.title = other.title;
+        this.description = other.description;
+        this.category = other.category;
+        this.address = other.address;
+        this.latitude = other.latitude;
+        this.longitude = other.longitude;
+        this.tel = other.tel;
+        this.url = other.url;
+        this.copyright = other.copyright;
+    }
 }

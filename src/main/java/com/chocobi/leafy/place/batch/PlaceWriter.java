@@ -8,6 +8,8 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -16,10 +18,15 @@ public class PlaceWriter implements ItemWriter<Place> {
 
     @Override
     public void write(Chunk<? extends Place> chunk) throws Exception {
-        log.info("Saving a chunk of {} places.", chunk.size());
-
-        placeRepository.saveAll(chunk.getItems());
-
-        log.info("Successfully saved {} places.", chunk.size());
+        for (Place item : chunk.getItems()) {
+            if (placeRepository.findByTitle(item.getTitle()).isEmpty()) {
+                // 존재하지 않으면 새로운 장소로 판단하고 저장
+                log.info("Inserting new place: {}", item.getTitle());
+                placeRepository.save(item);
+            } else {
+                // 이미 존재하면 아무 작업 없이 스킵
+                log.info("Place already exists. Skipping: {}", item.getTitle());
+            }
+        }
     }
 }
