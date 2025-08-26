@@ -1,6 +1,7 @@
 package com.chocobi.leafy.place.batch;
 
 import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.entity.PlaceSourceType;
 import com.chocobi.leafy.place.entity.PlaceStaging;
 import com.chocobi.leafy.place.fetcher.kakao.GeocodeService;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +17,6 @@ public class PlaceGeocodeProcessor implements ItemProcessor<PlaceStaging, Place>
 
     @Override
     public Place process(PlaceStaging item) throws Exception {
-        log.info("Processing PlaceStaging item with address: {}", item.getAddress());
-
         double[] coordinates = geocodeService.getCoordinatesFromAddress(item.getAddress());
 
         if (coordinates == null) {
@@ -35,6 +34,7 @@ public class PlaceGeocodeProcessor implements ItemProcessor<PlaceStaging, Place>
                 .tel(item.getTel())
                 .url(item.getUrl())
                 .copyright(item.getCopyright())
+                .sourceType(PlaceSourceType.API)
                 .build();
     }
 }
