@@ -11,5 +11,4 @@ public class TripRequest {
     private LocalDate start_date;
     private LocalDate end_date;
     private Long user_id;
-    private List<TripPlaceRequest> placeList;
 }
