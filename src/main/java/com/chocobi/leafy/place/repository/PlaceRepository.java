@@ -5,10 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface PlaceRepository extends JpaRepository<Place, Long> {
     List<Place> findByAddressContaining(String address);
     List<Place> findByTitle(String title);
+    Place findByAddressAndTitle(String address, String title);
+    boolean existsByAddressAndTitle(String address, String title);
 }
