@@ -1,8 +1,6 @@
 package com.chocobi.leafy.distance.service;
 
-import com.chocobi.leafy.constants.CarbonEmissionConst;
 import com.chocobi.leafy.constants.DistanceConst;
-import com.chocobi.leafy.constants.Kakao;
 import com.chocobi.leafy.constants.Transport;
 import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
@@ -18,7 +16,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class CarDistanceService {
@@ -130,7 +127,7 @@ public class CarDistanceService {
             Point end = allPoints.get(i + 1);
 
             System.out.println("구간 " + (i+1) + " 계산: (" + start.getX() + "," + start.getY() + ") → (" + end.getX() + "," + end.getY() + ")");
-            
+
             try {
                 // 구간별 단순 경로 요청(waypoints 없이)
                 CarDistanceRequest segmentRequest = new CarDistanceRequest();
@@ -140,11 +137,11 @@ public class CarDistanceService {
                 DistanceResponse segmentResponse = getDistance(segmentRequest);
                 totalDistance += segmentResponse.getDistance();
                 totalDuration += segmentResponse.getDuration();
-                
+
                 System.out.println("구간 " + (i+1) + " 성공: " + segmentResponse.getDistance() + "m, " + segmentResponse.getDuration() + "s");
             } catch (Exception e) {
                 System.out.println("구간 " + (i+1) + " 실패, 직선거리 추정 사용: " + e.getMessage());
-                
+
                 // 직선 거리 계산(하버사인 공식)
                 double straightDistance = calculateStraightDistance(start, end);
                 double estimatedDistance = straightDistance * 1.3; // 도로 보정계수
@@ -152,7 +149,7 @@ public class CarDistanceService {
 
                 totalDistance += estimatedDistance;
                 totalDuration += estimatedDuration;
-                
+
                 System.out.println("구간 " + (i+1) + " 추정: " + estimatedDistance + "m, " + estimatedDuration + "s");
             }
         }

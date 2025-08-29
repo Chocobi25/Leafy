@@ -1,11 +1,8 @@
 package com.chocobi.leafy.distance.service;
 
-import com.chocobi.leafy.constants.CarbonEmissionConst;
 import com.chocobi.leafy.constants.DistanceConst;
-import com.chocobi.leafy.constants.TmapPathTypeConst;
 import com.chocobi.leafy.constants.Transport;
 import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
-import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.dto.*;
 import com.chocobi.leafy.trip.service.TripSegmentService;
 import com.chocobi.leafy.util.CarbonCalculator;

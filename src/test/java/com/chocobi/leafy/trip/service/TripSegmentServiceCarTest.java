@@ -28,7 +28,7 @@ class TripSegmentServiceCarTest {
     private TripSegmentRepository tripSegmentRepository;
 
     @Mock
-    private TripService tripService;
+    private TripPlaceService tripPlaceService;
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
@@ -70,7 +70,7 @@ class TripSegmentServiceCarTest {
         List<Section> sections = Arrays.asList(section1, section2);
 
         // mock 동작 정의
-        when(tripService.getTripPlaces(tripId)).thenReturn(places);
+        when(tripPlaceService.getTripPlaces(tripId)).thenReturn(places);
 
         // when
         List<TripSegment> result = tripSegmentService.createTripSegments(tripId, sections, transport);
@@ -95,7 +95,7 @@ class TripSegmentServiceCarTest {
         assertEquals(30L, segment2.getEndPlaceId().getId());
         assertEquals(1L, segment2.getTrip().getId());
 
-        verify(tripService, times(1)).getTripPlaces(1L);
+        verify(tripPlaceService, times(1)).getTripPlaces(1L);
     }
 
     @Test
@@ -160,7 +160,7 @@ class TripSegmentServiceCarTest {
 
         List<Section> sections = Arrays.asList(section1, section2);
 
-        when(tripService.getTripPlaces(tripId)).thenReturn(places);
+        when(tripPlaceService.getTripPlaces(tripId)).thenReturn(places);
         ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
@@ -168,7 +168,7 @@ class TripSegmentServiceCarTest {
         tripSegmentService.completeTempTripSegments(tripId, sections, transport);
 
         // then
-        verify(tripService).getTripPlaces(tripId);
+        verify(tripPlaceService).getTripPlaces(tripId);
         verify(valueOperations).set(eq("temp_trip_segments:1"), anyList());
         verify(redisTemplate).expire("temp_trip_segments:1", 30, MINUTES);
     }

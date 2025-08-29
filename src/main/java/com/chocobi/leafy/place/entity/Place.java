@@ -6,18 +6,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.io.Serial;
-import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Builder
-public class Place implements Serializable {
-    
-    @Serial
-    private static final long serialVersionUID = 1L;
+public class Place {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -42,12 +38,28 @@ public class Place implements Serializable {
     @Column(nullable = false)
     private double longitude;         // 경도
 
-    private String imageUrl;          // 이미지
     private String tel;               // 대표 전화번호
+
+    @Column(length = 2000)
     private String url;               // 홈페이지
+
     private String copyright;         // 저작권
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 100)
-    private Type type;
+    private PlaceSourceType sourceType;   //API, USER 구분
+
+    @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Image> images;
+
+    public void updateFrom(Place other) {
+        this.title = other.title;
+        this.description = other.description;
+        this.category = other.category;
+        this.address = other.address;
+        this.latitude = other.latitude;
+        this.longitude = other.longitude;
+        this.tel = other.tel;
+        this.url = other.url;
+        this.copyright = other.copyright;
+    }
 }
