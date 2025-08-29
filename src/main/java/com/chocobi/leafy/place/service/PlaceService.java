@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +29,7 @@ public class PlaceService {
             return placeRepository.findByAddressAndTitle(userPlaceDTO.getAddress(), userPlaceDTO.getTitle()).getId();
         }
 
-       return placeRepository.save(Place.builder()
+        return placeRepository.save(Place.builder()
                 .title(userPlaceDTO.getTitle())
                 .address(userPlaceDTO.getAddress())
                 .longitude(Double.parseDouble(userPlaceDTO.getLongitude()))
@@ -36,6 +37,12 @@ public class PlaceService {
                 .tel(userPlaceDTO.getTel())
                 .url(userPlaceDTO.getUrl())
                 .sourceType(PlaceSourceType.USER)
+                .copyright("카카오지도")
                 .build()).getId();
+    }
+
+    public Place getPlaceById(Long id) {
+        Optional<Place> place = placeRepository.findById(id);
+        return place.orElse(null);
     }
 }

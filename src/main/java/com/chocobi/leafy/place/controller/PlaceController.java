@@ -25,6 +25,6 @@ public class PlaceController {
     @PostMapping("/user-place")
     public ResponseEntity<Map<String, Long>> saveUserPlace(@RequestParam UserPlaceDTO userPlaceDTO) {
         Long id = placeService.saveUserPlace(userPlaceDTO);
-        return ResponseEntity.ok(Map.of("userPlace_id", id));
+        return ResponseEntity.ok(Map.of("kakaoPlace_id", id));
     }
 }
