@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 
 @Entity
 @Builder
@@ -25,6 +24,17 @@ public class TripPlace {
     @ManyToOne(fetch = FetchType.LAZY)
     private Place place;
 
-    private LocalDate visitDate;
-    private int visit_order;
+    @Builder.Default
+    private int dayIndex = 0;
+
+    @Builder.Default
+    private int visitOrder = 0;
+
+    private String memo;
+
+    public void updateDetails(int dayIndex, int visitOrder, String memo){
+        this.dayIndex = dayIndex;
+        this.visitOrder = visitOrder;
+        this.memo = memo;
+    }
 }

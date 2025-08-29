@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class TripPlaceListRequest {
+public class TripPlacesListRequest {
     private Long TripId;
-    private List<TripPlaceRequest> placeList;
+    private List<TripPlaceRequest> places;
 }
