@@ -6,7 +6,6 @@ import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.entity.TripSegment;
 import com.chocobi.leafy.trip.repository.TripSegmentRepository;
-import com.chocobi.leafy.util.CarbonCalculator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TripSegmentService {
     private final TripSegmentRepository tripSegmentRepository;
-    private final TripService tripService;
+    private final TripPlaceService tripPlaceService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
@@ -41,7 +40,7 @@ public class TripSegmentService {
      * @return
      */
     public List<TripSegment> createTripSegments(Long tripId, List<Section> sections, String transport) {
-        List<TripPlaceResponse> tripPlaces = tripService.getTripPlaces(tripId);
+        List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(tripId);
         List<TripSegment> tripSegments = new ArrayList<>();
 
         List<TripPlaceResponse> mutableTripPlaces = new ArrayList<>(tripPlaces);

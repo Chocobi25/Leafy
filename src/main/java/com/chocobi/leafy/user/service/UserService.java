@@ -61,6 +61,7 @@ public class UserService {
                 .level(user.getLevel().name())
                 .selectedLevelIcon(user.getSelectedLevelIcon().name())
                 .totalCarbonSaved(user.getTotalCarbonSaved())
+                .createdAt(user.getCreatedAt().toString())
                 .build();
     }
 
