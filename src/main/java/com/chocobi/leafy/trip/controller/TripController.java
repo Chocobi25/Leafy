@@ -1,23 +1,47 @@
 package com.chocobi.leafy.trip.controller;
 
+import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
 import com.chocobi.leafy.trip.dto.TripRequest;
 import com.chocobi.leafy.trip.entity.Trip;
+import com.chocobi.leafy.trip.service.TripPlaceService;
 import com.chocobi.leafy.trip.service.TripService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @AllArgsConstructor
 public class TripController {
+
     private final TripService tripService;
+    private final TripPlaceService tripPlaceService;
+
+    @PostMapping("/api/trip")
+    public Long saveTrip(@RequestBody TripRequest tripRequest, Authentication authentication) {
+        Long kakaoId = (Long) authentication.getPrincipal(); // 사용자 ID 가져옴
+        return tripService.createTrip(tripRequest, kakaoId);
+    }
+
+    @PostMapping("/api/trip/places")
+    public ResponseEntity<Map<String, String>> saveTripPlaces(@RequestBody TripPlacesListRequest tripPlaceListRequest) {
+        tripPlaceService.saveTripPlaces(tripPlaceListRequest);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "여행지가 성공적으로 저장되었습니다.");
+        return ResponseEntity.ok(response);
+    }
 
     // Test용 메서드(수정할 예정)
     @PostMapping("/api/trip")
-    public ResponseEntity<Trip> createTrip(@RequestBody TripRequest tripRequest) {
+    public ResponseEntity<Trip> createTrip(@RequestBody TripRequest tripRequest, Authentication authentication) {
         // 여행 생성
-        Long createdTripId = tripService.createTrip(tripRequest);
+        Long createdTripId = tripService.createTrip(tripRequest, (Long) authentication.getPrincipal());
 
         // 생성된 여행 정보 조회
         Trip createdTrip = tripService.getTripById(createdTripId);
@@ -29,5 +53,4 @@ public class TripController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }

@@ -14,13 +14,15 @@ public class TripService {
     private final TripRepository tripRepository;
     private final UserService userService;
 
-    public Long createTrip(TripRequest tripRequest) {
-        return tripRepository.save(Trip.builder()
-                .user(userService.findByKakaoId(tripRequest.getUser_id()))
+    public Long createTrip(TripRequest tripRequest, Long kakaoId) {
+        Trip trip = Trip.builder()
+                .user(userService.findByKakaoId(kakaoId))
                 .title(tripRequest.getTitle())
                 .start_date(tripRequest.getStart_date())
                 .end_date(tripRequest.getEnd_date())
-                .build()).getId();
+                .build();
+        tripRepository.save(trip);
+        return trip.getId();
     }
 
     public void deleteTrip(Long tripId) {
@@ -38,6 +40,4 @@ public class TripService {
         return tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
     }
-
-
 }
