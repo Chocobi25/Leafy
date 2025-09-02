@@ -7,7 +7,7 @@ import java.time.LocalDate;
 
 @Data
 public class TripPlaceRequest {
-    private Long PlaceId;
+    private Long placeId;
     private Type placeType;
     private int visitOrder;
     private LocalDate visitDate;

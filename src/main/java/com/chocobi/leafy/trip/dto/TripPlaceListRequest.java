@@ -6,6 +6,6 @@ import java.util.List;
 
 @Data
 public class TripPlaceListRequest {
-    private Long TripId;
+    private Long tripId;
     private List<TripPlaceRequest> placeList;
 }

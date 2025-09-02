@@ -13,6 +13,7 @@ import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -25,9 +26,9 @@ public class TripService {
     private final UserService userService;
     private final PlaceService placeService;
 
-    public Long createTrip(TripRequest tripRequest) {
+    public Long createTrip(TripRequest tripRequest, Long kakaoId) {
         Trip trip = Trip.builder()
-                .user(userService.findByKakaoId(tripRequest.getUser_id()))
+                .user(userService.findByKakaoId(kakaoId))
                 .title(tripRequest.getTitle())
                 .carbon_saved(0)
                 .start_date(tripRequest.getStart_date())
@@ -37,7 +38,11 @@ public class TripService {
         return trip.getId();
     }
 
+    @Transactional
     public void saveTripPlace(TripPlaceListRequest placeListRequest) {
+        System.out.println("TripPlace 저장 시작 - TripId: " + placeListRequest.getTripId());
+        System.out.println("PlaceList 크기: " + placeListRequest.getPlaceList().size());
+        
         tripPlaceRepository.deleteAllByTripId(placeListRequest.getTripId());
 
         List<TripPlaceRequest> sortedList = placeListRequest.getPlaceList().stream()
@@ -48,6 +53,7 @@ public class TripService {
         Trip trip = getTripById(placeListRequest.getTripId());
 
         for(TripPlaceRequest placeRequest : sortedList) {
+            System.out.println("Place 조회 시도 - PlaceId: " + placeRequest.getPlaceId());
             Place place = placeService.getPlaceById(placeRequest.getPlaceId());
 
             TripPlace tripPlace = TripPlace.builder()

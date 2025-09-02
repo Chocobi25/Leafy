@@ -50,6 +50,7 @@ public class SecurityConfig {
 
         // API 경로에 대한 접근 권한 설정 (예시: /api/** 경로는 인증 필요)
         http.authorizeHttpRequests(config -> config
+                .requestMatchers("api/place/**").permitAll()
                 .requestMatchers("/api/**").authenticated() // /api/로 시작하는 모든 경로는 인증 필요
                 .anyRequest().permitAll()); // 그 외 모든 요청은 허용
 
