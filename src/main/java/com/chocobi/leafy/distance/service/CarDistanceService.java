@@ -86,7 +86,32 @@ public class CarDistanceService {
             section.setCarbonEmission(sectionCarbonEmission);
         }
 
-        tripSegmentService.completeTempTripSegments(request.getTripId(), sections, Transport.CAR);
+        // waypoints가 있으면 구간별로 Section 생성
+        List<Section> segmentSections = new ArrayList<>();
+        if (request.getWaypoints() != null && !request.getWaypoints().isEmpty()) {
+            // 전체 경로 점들 (origin + waypoints + destination)
+            List<Point> allPoints = buildAllPoints(request);
+            
+            // 각 구간별로 Section 생성 (임시로 거리 분배)
+            double totalDistance = sections.get(0).getDistance();
+            int segmentCount = allPoints.size() - 1;
+            double avgDistance = totalDistance / segmentCount;
+            
+            for (int i = 0; i < segmentCount; i++) {
+                Section segmentSection = new Section();
+                segmentSection.setDistance((int) avgDistance);
+                segmentSection.setDuration(sections.get(0).getDuration() / segmentCount);
+                segmentSection.setCarbonEmission(CarbonCalculator.CalculateCarCarbonEmission(avgDistance));
+                segmentSections.add(segmentSection);
+                
+                System.out.println("구간[" + i + "] 생성 - distance: " + avgDistance + ", carbon: " + segmentSection.getCarbonEmission());
+            }
+            
+            tripSegmentService.completeTempTripSegments(request.getTripId(), segmentSections, Transport.CAR);
+        } else {
+            // waypoints가 없으면 기존 로직
+            tripSegmentService.completeTempTripSegments(request.getTripId(), sections, Transport.CAR);
+        }
 
         return new DistanceResponse(distance, duration, carbonEmission);
     }
