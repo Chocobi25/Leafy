@@ -47,8 +47,9 @@ public class FCMController {
     @PostMapping("/test-send")
     public ResponseEntity<Void> testSend(@AuthenticationPrincipal Long userId,
                                          @RequestBody FCMTokenDTO fcmTokenDTO) throws FirebaseMessagingException {
-        fcmService.sendNotificationToSingleDevice(fcmTokenDTO.getFcmToken(), "테스트 알림", "테스트 메시지입니다.");
+        fcmService.sendNotification(fcmTokenDTO.getFcmToken(), "테스트 알림", "테스트 메시지입니다.");
 
         return ResponseEntity.ok().build();
     }
+
 }
