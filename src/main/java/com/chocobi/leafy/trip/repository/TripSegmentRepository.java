@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface TripSegmentRepository extends JpaRepository<TripSegment, Long> {
-    List<TripSegment> findByTrip_Id(Long tripId);
+    List<TripSegment> findByTripId_Id(Long tripId);
 }

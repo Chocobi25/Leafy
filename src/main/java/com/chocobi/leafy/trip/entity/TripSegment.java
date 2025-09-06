@@ -22,15 +22,15 @@ public class TripSegment implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trip_id")
-    private Trip trip;
+    private Trip tripId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "start_place_id")
     private Place startPlaceId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "end_place_id")
     private Place endPlaceId;
 
@@ -38,11 +38,10 @@ public class TripSegment implements Serializable {
 
     private double distance;
 
+    private int duration; // 소요 시간 (분)
+
     @Column(name = "carbon_emitted")
     private double carbonEmitted;
-
-    @Column(name = "carbon_saved")
-    private double carbonSaved;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
