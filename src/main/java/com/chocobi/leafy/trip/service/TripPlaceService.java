@@ -43,7 +43,7 @@ public class TripPlaceService {
         List<TripPlace> tripPlaces = tripPlaceRepository.findByTripId(request.getTripId());
 
         Map<Long, TripPlace> tripPlaceMap = tripPlaces.stream()
-                .collect(Collectors.toMap(TripPlace::getId, tp -> tp));
+                .collect(Collectors.toMap(tp -> tp.getPlace().getId(), tp -> tp));
 
         for (TripPlaceRequest req : request.getPlaces()) {
             TripPlace tp = tripPlaceMap.get(req.getTripPlaceId());

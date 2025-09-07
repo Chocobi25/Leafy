@@ -25,17 +25,18 @@ public class TripSegmentRedisDto implements Serializable {
     private Long endPlaceId;
     private String transport;
     private double distance;
+    private int duration; // 소요 시간 (분)
     private double carbonEmitted;
 
     public TripSegment toEntity() {
         return TripSegment.builder()
-                .trip(Trip.builder().id(this.tripId).build())
+                .tripId(Trip.builder().id(this.tripId).build())
                 .startPlaceId(Place.builder().id(this.startPlaceId).build())
                 .endPlaceId(Place.builder().id(this.endPlaceId).build())
                 .transport(this.transport)
                 .distance(this.distance)
+                .duration(this.duration)
                 .carbonEmitted(this.carbonEmitted)
-                .carbonSaved(0)
                 .build();
     }
 }

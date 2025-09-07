@@ -56,8 +56,6 @@ public class UserTest {
         // 전체 유저 수가 1명인지 확인 (새로운 유저가 생성되지 않았는지)
         assertThat(userRepository.findAll().size()).isEqualTo(1);
 
-        System.out.println("기존 유저 ID: " + user.getKakaoId() + ", 닉네임 : " + user.getNickname());
-        System.out.println("수정된 유저 ID: " + updatedUser.getKakaoId() + ", 닉네임 : " + updatedUser.getNickname());
     }
 
     @Test
@@ -81,7 +79,5 @@ public class UserTest {
         User updatedUser = userService.saveOrGetUser(user.getKakaoId(), user.getNickname(), user.getProfileImageUrl());
         assertThat(updatedUser.getTotalCarbonSaved()).isEqualTo(carbon);
 
-        System.out.println("기존 유저 탄소 절감량: " + user.getTotalCarbonSaved());
-        System.out.println("업데이트 유저 탄소 절감량: " + updatedUser.getTotalCarbonSaved());
     }
 }

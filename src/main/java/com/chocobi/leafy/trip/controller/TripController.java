@@ -37,11 +37,20 @@ public class TripController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/api/trip/places")
+    public ResponseEntity<Map<String, String>> updateTripPlaceDetails(@RequestBody TripPlacesListRequest tripPlaceListRequest) {
+        tripPlaceService.updateTripPlaceDetails(tripPlaceListRequest);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "여행지 정보가 성공적으로 업데이트되었습니다.");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/api/trip/{tripId}/complete")
-    public ResponseEntity<Map<String, Object>> completeTrip(@PathVariable Long tripId, Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> completeTrip(@PathVariable Long tripId, @RequestBody Map<String, String> request, Authentication authentication) {
         try {
             Long kakaoId = (Long) authentication.getPrincipal();
-            tripSegmentService.completeTripSegments(tripId);
+            String transport = request.get("transport");
+            tripSegmentService.completeTripSegments(tripId, transport);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -58,6 +67,24 @@ public class TripController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "여행 계획 완료 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @GetMapping("/api/trip/{tripId}/summary")
+    public ResponseEntity<Map<String, Object>> getTripSummary(@PathVariable Long tripId, Authentication authentication) {
+        try {
+            Long kakaoId = (Long) authentication.getPrincipal();
+            Map<String, Object> summary = tripSegmentService.getTotalTimeAndCarbon(tripId);
+            
+            return ResponseEntity.ok(summary);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "여행 요약 정보를 가져오는 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }

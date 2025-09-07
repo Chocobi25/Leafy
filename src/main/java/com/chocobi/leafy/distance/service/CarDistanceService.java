@@ -49,17 +49,14 @@ public class CarDistanceService {
             throw new RuntimeException("카카오 API 응답 오류");
         }
 
-        System.out.println("routes = " + routes);
 
         // 에러 코드 체크
         if (routes.getResult_code() != null && routes.getResult_code() != 0) {
             int errorCode = routes.getResult_code();
             String errorMsg = routes.getResult_message();
-            System.out.println("전체 경로 실패 - 코드: " + errorCode + ", 메시지: " + errorMsg);
 
             // waypoints가 있는 경우 구간별 계산으로 fallback
             if (request.getWaypoints() != null && !request.getWaypoints().isEmpty()) {
-                System.out.println("구간별 계산으로 fallback 시도");
                 return getDistanceBySegments(request);
             }
 
@@ -78,6 +75,7 @@ public class CarDistanceService {
         int distance = summary.getDistance();
         int duration = summary.getDuration();
         double carbonEmission = CarbonCalculator.CalculateCarCarbonEmission(distance);
+        
 
         // section 꺼내기
         List<Section> sections = routes.getSections();
@@ -104,7 +102,6 @@ public class CarDistanceService {
                 segmentSection.setCarbonEmission(CarbonCalculator.CalculateCarCarbonEmission(avgDistance));
                 segmentSections.add(segmentSection);
                 
-                System.out.println("구간[" + i + "] 생성 - distance: " + avgDistance + ", carbon: " + segmentSection.getCarbonEmission());
             }
             
             tripSegmentService.completeTempTripSegments(request.getTripId(), segmentSections, Transport.CAR);
@@ -138,7 +135,6 @@ public class CarDistanceService {
      * @return
      */
     private DistanceResponse getDistanceBySegments(CarDistanceRequest request) {
-        System.out.println("구간별 계산 시작");
 
         double totalDistance = 0;
         double totalDuration = 0;
@@ -151,7 +147,6 @@ public class CarDistanceService {
             Point start = allPoints.get(i);
             Point end = allPoints.get(i + 1);
 
-            System.out.println("구간 " + (i+1) + " 계산: (" + start.getX() + "," + start.getY() + ") → (" + end.getX() + "," + end.getY() + ")");
 
             try {
                 // 구간별 단순 경로 요청(waypoints 없이)
@@ -163,9 +158,7 @@ public class CarDistanceService {
                 totalDistance += segmentResponse.getDistance();
                 totalDuration += segmentResponse.getDuration();
 
-                System.out.println("구간 " + (i+1) + " 성공: " + segmentResponse.getDistance() + "m, " + segmentResponse.getDuration() + "s");
             } catch (Exception e) {
-                System.out.println("구간 " + (i+1) + " 실패, 직선거리 추정 사용: " + e.getMessage());
 
                 // 직선 거리 계산(하버사인 공식)
                 double straightDistance = calculateStraightDistance(start, end);
@@ -175,12 +168,10 @@ public class CarDistanceService {
                 totalDistance += estimatedDistance;
                 totalDuration += estimatedDuration;
 
-                System.out.println("구간 " + (i+1) + " 추정: " + estimatedDistance + "m, " + estimatedDuration + "s");
             }
         }
 
         double carbonEmission = CarbonCalculator.CalculateCarCarbonEmission(totalDistance);
-        System.out.println("구간별 계산 완료 - 총 거리: " + totalDistance + "m, 총 시간: " + totalDuration + "s, 탄소배출량: " + carbonEmission + "g");
 
         return new DistanceResponse(totalDistance, (int) totalDuration, carbonEmission);
     }

@@ -17,16 +17,19 @@ public class WebClientConfig {
         return WebClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "KakaoAK " + apiKey)
+                .exchangeStrategies(commonExchangeStrategies())
                 .build();
     }
 
     @Bean
-    public WebClient tmapWebClient(@Value("${tmap.url}") String baseUrl, @Value("${kakao.api.key}") String apiKey) {
-        return WebClient.builder()
+    public WebClient tmapWebClient(@Value("${tmap.url}") String baseUrl, @Value("${tmap.api.key}") String tmapApiKey) {
+        WebClient client = WebClient.builder()
                 .baseUrl(baseUrl)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader("appKey", apiKey)
+                .defaultHeader("accept", "application/json")
+                .defaultHeader("appKey", tmapApiKey)
+                .defaultHeader("content-type", "application/json")
                 .build();
+        return client;
     }
       
     @Bean
