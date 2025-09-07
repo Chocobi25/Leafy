@@ -37,6 +37,14 @@ public class TripController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/api/trip/places")
+    public ResponseEntity<Map<String, String>> updateTripPlaceDetails(@RequestBody TripPlacesListRequest tripPlaceListRequest) {
+        tripPlaceService.updateTripPlaceDetails(tripPlaceListRequest);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "여행지 정보가 성공적으로 업데이트되었습니다.");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/api/trip/{tripId}/complete")
     public ResponseEntity<Map<String, Object>> completeTrip(@PathVariable Long tripId, @RequestBody Map<String, String> request, Authentication authentication) {
         try {

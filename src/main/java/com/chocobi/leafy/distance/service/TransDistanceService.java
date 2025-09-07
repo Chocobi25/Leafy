@@ -78,15 +78,14 @@ public class TransDistanceService {
             throw new RuntimeException("경로안(itineraries)가 없습니다.");
         }
 
-        // 경로안을 순회하면서 pathType이 AIRPLANE인 경우는 제외
+        // 최적 경로(첫 번째) 하나만 선택
         List<RouteCalculationResult> finalResults = new ArrayList<>();
-        boolean[] added = new boolean[5]; // 각 방법이 이미 추가되었는지
-        Arrays.fill(added, false);
 
+        // 첫 번째 유효한 경로만 사용
         for (Itineraries itinerary : itineraries) {
             int pathType = itinerary.getPathType();
 
-            if (pathType != TmapPathTypeConst.AIRPLANE && !added[pathType - 1]) {
+            if (pathType != TmapPathTypeConst.AIRPLANE) {
                 RouteCalculationResult result = new RouteCalculationResult();
                 result.setPathType((pathType));
                 result.setTotalTime(itinerary.getTotalTime());
@@ -120,8 +119,9 @@ public class TransDistanceService {
                 result.setCarbonEmission(carbonEmission);
 
                 finalResults.add(result);
-
-                added[pathType - 1] = true;
+                
+                // 첫 번째 유효한 경로만 사용하고 루프 종료
+                break;
             }
         }
 
@@ -197,17 +197,24 @@ public class TransDistanceService {
             List<TripPlaceResponse> tripPlaces = new ArrayList<>(tripPlaceService.getTripPlaces(batchRequest.getTripId()));
             tripPlaces.sort((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()));
             
-            // 각 구간마다 개별적으로 getDistance 호출하고 TripSegmentRedisDto 생성
+            // 각 구간마다 개별적으로 getDistance 호출 (모든 요청 처리)
             List<TransDistanceRequest> requests = batchRequest.getRequests();
-            for (int i = 0; i < requests.size() && i < tripPlaces.size() - 1; i++) {
+            for (int i = 0; i < requests.size(); i++) {
                 TransDistanceRequest request = requests.get(i);
-                Long startPlaceId = tripPlaces.get(i).getPlaceId();
-                Long endPlaceId = tripPlaces.get(i + 1).getPlaceId();
                 
-                
-                // TripSegmentRedisDto 생성을 포함한 getDistance 호출
-                List<RouteCalculationResult> segmentResults = getDistance(request, batchRequest.getTripId(), startPlaceId, endPlaceId);
-                allResults.addAll(segmentResults);
+                // 여행지 간 구간만 TripSegmentRedisDto 생성 (출발지→출발지 구간 제외)
+                if (i < tripPlaces.size() - 1) {
+                    Long startPlaceId = tripPlaces.get(i).getPlaceId();
+                    Long endPlaceId = tripPlaces.get(i + 1).getPlaceId();
+                    
+                    // TripSegmentRedisDto 생성을 포함한 getDistance 호출
+                    List<RouteCalculationResult> segmentResults = getDistance(request, batchRequest.getTripId(), startPlaceId, endPlaceId);
+                    allResults.addAll(segmentResults);
+                } else {
+                    // 출발지↔목적지 구간은 결과만 반환 (TripSegment 저장 안함)
+                    List<RouteCalculationResult> segmentResults = getDistance(request);
+                    allResults.addAll(segmentResults);
+                }
             }
             
             return allResults;

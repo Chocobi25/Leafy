@@ -57,7 +57,7 @@ public class CarDistanceService {
 
             // waypoints가 있는 경우 구간별 계산으로 fallback
             if (request.getWaypoints() != null && !request.getWaypoints().isEmpty()) {
-                    return getDistanceBySegments(request);
+                return getDistanceBySegments(request);
             }
 
             // waypoints가 없는 단순 경로도 실패한 경우
@@ -75,6 +75,7 @@ public class CarDistanceService {
         int distance = summary.getDistance();
         int duration = summary.getDuration();
         double carbonEmission = CarbonCalculator.CalculateCarCarbonEmission(distance);
+        
 
         // section 꺼내기
         List<Section> sections = routes.getSections();
