@@ -40,9 +40,12 @@ public class Trip implements Serializable {
     @Builder.Default
     private double carbonSaved = 0.0;
 
+    @Builder.Default
+    private double carbonEmission = 0.0;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private TripStatus status = TripStatus.DRAFT;
+    private TripStatus status = TripStatus.CREATING;
 
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
