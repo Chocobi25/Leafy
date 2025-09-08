@@ -1,5 +1,9 @@
 package com.chocobi.leafy.trip.controller;
 
+import com.chocobi.leafy.distance.domain.CarDistanceRequest;
+import com.chocobi.leafy.distance.domain.DistanceResponse;
+import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
+import com.chocobi.leafy.distance.dto.RouteCalculationResult;
 import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
 import com.chocobi.leafy.trip.dto.TripRequest;
 import com.chocobi.leafy.trip.entity.Trip;
@@ -13,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -72,10 +77,10 @@ public class TripController {
     }
 
     @GetMapping("/api/trip/{tripId}/summary")
-    public ResponseEntity<Map<String, Object>> getTripSummary(@PathVariable Long tripId, Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> getTripSummary(@PathVariable Long tripId, @RequestParam String transport, Authentication authentication) {
         try {
             Long kakaoId = (Long) authentication.getPrincipal();
-            Map<String, Object> summary = tripSegmentService.getTotalTimeAndCarbon(tripId);
+            Map<String, Object> summary = tripSegmentService.getTotalTimeAndCarbon(tripId, transport);
             
             return ResponseEntity.ok(summary);
         } catch (IllegalArgumentException e) {
@@ -103,6 +108,32 @@ public class TripController {
             return new ResponseEntity<>(createdTrip, HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/api/trip/{tripId}/routes/car")
+    public ResponseEntity<DistanceResponse> calculateCarRoute(@PathVariable Long tripId, @RequestBody CarDistanceRequest request, Authentication authentication) {
+        try {
+            Long kakaoId = (Long) authentication.getPrincipal();
+            System.out.println("자동차 경로 계산 요청 - tripId: " + tripId + ", request: " + request);
+            DistanceResponse response = tripSegmentService.calculateAndSaveCarRoute(request, tripId);
+            System.out.println("자동차 경로 계산 완료 - response: " + response);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("자동차 경로 계산 에러: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @PostMapping("/api/trip/routes/public")
+    public ResponseEntity<List<RouteCalculationResult>> calculatePublicRoute(@RequestBody TransDistanceBatchRequest request, Authentication authentication) {
+        try {
+            Long kakaoId = (Long) authentication.getPrincipal();
+            List<RouteCalculationResult> results = tripSegmentService.calculateAndSavePublicRoute(request);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }
