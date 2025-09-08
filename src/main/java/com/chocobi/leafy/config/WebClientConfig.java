@@ -28,6 +28,7 @@ public class WebClientConfig {
                 .defaultHeader("accept", "application/json")
                 .defaultHeader("appKey", tmapApiKey)
                 .defaultHeader("content-type", "application/json")
+                .exchangeStrategies(commonExchangeStrategies()) // 버퍼 사이즈 증가
                 .build();
         return client;
     }

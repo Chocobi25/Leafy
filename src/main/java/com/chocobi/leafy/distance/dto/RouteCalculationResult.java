@@ -14,4 +14,5 @@ public class RouteCalculationResult {
     private int busDistance;
     private int subwayDistance;
     private int trainDistance;
+    private int airplaneDistance;
 }
