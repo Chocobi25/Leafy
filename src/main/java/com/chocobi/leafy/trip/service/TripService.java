@@ -2,6 +2,7 @@ package com.chocobi.leafy.trip.service;
 
 import com.chocobi.leafy.trip.dto.*;
 import com.chocobi.leafy.trip.entity.Trip;
+import com.chocobi.leafy.trip.entity.TripStatus;
 import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.service.UserService;
 import lombok.AllArgsConstructor;
