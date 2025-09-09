@@ -1,16 +1,12 @@
 package com.chocobi.leafy.distance.service;
 
 import com.chocobi.leafy.constants.DistanceConst;
-import com.chocobi.leafy.constants.Transport;
 import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.domain.Point;
-import com.chocobi.leafy.distance.dto.KakaoNaviResponse;
-import com.chocobi.leafy.distance.dto.Routes;
-import com.chocobi.leafy.distance.dto.Section;
-import com.chocobi.leafy.distance.dto.Summary;
-import com.chocobi.leafy.trip.service.TripSegmentService;
+import com.chocobi.leafy.distance.dto.*;
 import com.chocobi.leafy.util.CarbonCalculator;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -18,22 +14,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CarDistanceService {
 
     private final WebClient kakaoNaviWebClient;
-    private final TripSegmentService tripSegmentService;
-
-    public CarDistanceService(WebClient kakaoNaviWebClient, TripSegmentService tripSegmentService) {
-        this.kakaoNaviWebClient = kakaoNaviWebClient;
-        this.tripSegmentService = tripSegmentService;
-    }
 
     /**
      * 두 좌표 사이의 거리와 시간 정보를 얻어오는 메서드
      * @param request
      * @return
      */
-    public DistanceResponse getDistance(CarDistanceRequest request) {
+    public CarDistanceResponse getDistance(CarDistanceRequest request) {
 
         KakaoNaviResponse kakaoNaviResponse = kakaoNaviWebClient.post()
                 .uri(DistanceConst.kakaoUri)
@@ -48,7 +39,6 @@ public class CarDistanceService {
         if (routes == null) {
             throw new RuntimeException("카카오 API 응답 오류");
         }
-
 
         // 에러 코드 체크
         if (routes.getResult_code() != null && routes.getResult_code() != 0) {
@@ -77,41 +67,21 @@ public class CarDistanceService {
         double carbonEmission = CarbonCalculator.CalculateCarCarbonEmission(distance);
         
 
-        // section 꺼내기
+        // section 꺼내기 - 카카오에서 이미 구간별로 나눠줌
         List<Section> sections = routes.getSections();
         for (Section section : sections) {
             double sectionCarbonEmission = CarbonCalculator.CalculateCarCarbonEmission(section.getDistance());
             section.setCarbonEmission(sectionCarbonEmission);
+            section.setMaxCarbonEmission(sectionCarbonEmission); // 자동차는 단일 교통수단이므로 동일
         }
 
-        // waypoints가 있으면 구간별로 Section 생성
-        List<Section> segmentSections = new ArrayList<>();
-        if (request.getWaypoints() != null && !request.getWaypoints().isEmpty()) {
-            // 전체 경로 점들 (origin + waypoints + destination)
-            List<Point> allPoints = buildAllPoints(request);
-            
-            // 각 구간별로 Section 생성 (임시로 거리 분배)
-            double totalDistance = sections.get(0).getDistance();
-            int segmentCount = allPoints.size() - 1;
-            double avgDistance = totalDistance / segmentCount;
-            
-            for (int i = 0; i < segmentCount; i++) {
-                Section segmentSection = new Section();
-                segmentSection.setDistance((int) avgDistance);
-                segmentSection.setDuration(sections.get(0).getDuration() / segmentCount);
-                segmentSection.setCarbonEmission(CarbonCalculator.CalculateCarCarbonEmission(avgDistance));
-                segmentSections.add(segmentSection);
-                
-            }
-            
-            tripSegmentService.completeTempTripSegments(request.getTripId(), segmentSections, Transport.CAR);
-        } else {
-            // waypoints가 없으면 기존 로직
-            tripSegmentService.completeTempTripSegments(request.getTripId(), sections, Transport.CAR);
-        }
+        CarDistanceResponse carDistanceResponse = new CarDistanceResponse();
+        carDistanceResponse.setDistanceResponse(new DistanceResponse(distance, duration, carbonEmission));
+        carDistanceResponse.setSections(sections);
 
-        return new DistanceResponse(distance, duration, carbonEmission);
+        return carDistanceResponse;
     }
+
 
     /**
      * 출발지, 목적지와 웨이포인트를 리스트에 담기
@@ -134,7 +104,10 @@ public class CarDistanceService {
      * @param request
      * @return
      */
-    private DistanceResponse getDistanceBySegments(CarDistanceRequest request) {
+    private CarDistanceResponse getDistanceBySegments(CarDistanceRequest request) {
+
+        CarDistanceResponse carDistanceResponse = new CarDistanceResponse();
+        List<Section> sections = new ArrayList<>();
 
         double totalDistance = 0;
         double totalDuration = 0;
@@ -147,17 +120,23 @@ public class CarDistanceService {
             Point start = allPoints.get(i);
             Point end = allPoints.get(i + 1);
 
-
             try {
-                // 구간별 단순 경로 요청(waypoints 없이)
                 CarDistanceRequest segmentRequest = new CarDistanceRequest();
                 segmentRequest.setOrigin(start);
                 segmentRequest.setDestination(end);
+                segmentRequest.setWaypoints(null); // waypoints 제거하여 단순 경로로
 
-                DistanceResponse segmentResponse = getDistance(segmentRequest);
-                totalDistance += segmentResponse.getDistance();
-                totalDuration += segmentResponse.getDuration();
-
+                CarDistanceResponse segmentResponse = getDistance(segmentRequest);
+                totalDistance += segmentResponse.getDistanceResponse().getDistance();
+                totalDuration += segmentResponse.getDistanceResponse().getDuration();
+                
+                // 구간별 Section 생성
+                Section segmentSection = new Section();
+                segmentSection.setDistance((int) segmentResponse.getDistanceResponse().getDistance());
+                segmentSection.setDuration(segmentResponse.getDistanceResponse().getDuration());
+                segmentSection.setCarbonEmission(segmentResponse.getDistanceResponse().getCarbonEmission());
+                segmentSection.setMaxCarbonEmission(segmentResponse.getDistanceResponse().getCarbonEmission());
+                sections.add(segmentSection);
             } catch (Exception e) {
 
                 // 직선 거리 계산(하버사인 공식)
@@ -167,13 +146,25 @@ public class CarDistanceService {
 
                 totalDistance += estimatedDistance;
                 totalDuration += estimatedDuration;
+                
+                // 추정값으로 Section 생성
+                Section estimatedSection = new Section();
+                estimatedSection.setDistance((int) estimatedDistance);
+                estimatedSection.setDuration((int) estimatedDuration);
+                double estimatedCarbonEmission = CarbonCalculator.CalculateCarCarbonEmission(estimatedDistance);
+                estimatedSection.setCarbonEmission(estimatedCarbonEmission);
+                estimatedSection.setMaxCarbonEmission(estimatedCarbonEmission);
+                sections.add(estimatedSection);
 
             }
         }
 
         double carbonEmission = CarbonCalculator.CalculateCarCarbonEmission(totalDistance);
 
-        return new DistanceResponse(totalDistance, (int) totalDuration, carbonEmission);
+
+        carDistanceResponse.setDistanceResponse(new DistanceResponse(totalDistance, (int) totalDuration, carbonEmission));
+        carDistanceResponse.setSections(sections);
+        return carDistanceResponse;
     }
 
     /**

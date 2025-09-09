@@ -6,28 +6,54 @@ import com.chocobi.leafy.constants.TmapPathTypeConst;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.dto.*;
-import com.chocobi.leafy.trip.service.TripSegmentService;
+import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.service.PlaceService;
 import com.chocobi.leafy.trip.service.TripPlaceService;
-import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class TransDistanceService {
 
     private final WebClient tmapWebClient;
-    private final TripSegmentService tripSegmentService;
     private final TripPlaceService tripPlaceService;
+    private final PlaceService placeService;
 
-    public TransDistanceService(WebClient tmapWebClient, TripSegmentService tripSegmentService, TripPlaceService tripPlaceService) {
-        this.tmapWebClient = tmapWebClient;
-        this.tripSegmentService = tripSegmentService;
-        this.tripPlaceService = tripPlaceService;
+    /**
+     * 여러 구간의 대중교통 경로를 배치로 처리하는 메서드
+     */
+    public List<RouteCalculationResult> getBatchDistance(TransDistanceBatchRequest batchRequest) {
+
+        List<RouteCalculationResult> allResults = new ArrayList<>();
+
+        try {
+            // TripPlace 정보를 가져와서 순서대로 정렬
+            List<TripPlaceResponse> tripPlaces = new ArrayList<>(tripPlaceService.getTripPlaces(batchRequest.getTripId()));
+            tripPlaces.sort((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()));
+
+            // 제주 여행인지 확인
+            boolean isJejuTrip = isJejuTrip(tripPlaces);
+
+            // 각 구간마다 개별적으로 getDistance 호출 (순수 계산만)
+            List<TransDistanceRequest> requests = batchRequest.getRequests();
+            for (TransDistanceRequest request : requests) {
+                RouteCalculationResult segmentResult = getDistance(request, isJejuTrip);
+                if (segmentResult != null) {
+                    allResults.add(segmentResult);
+                }
+            }
+
+            return allResults;
+
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
     /**
@@ -35,7 +61,7 @@ public class TransDistanceService {
      * /@param request
      * /@return
      */
-    public List<RouteCalculationResult> getDistance(TransDistanceRequest request) {
+    public RouteCalculationResult getDistance(TransDistanceRequest request, boolean isJejuTrip) {
 
         // 티맵 대중교통 api 호출
         
@@ -78,149 +104,112 @@ public class TransDistanceService {
             throw new RuntimeException("경로안(itineraries)가 없습니다.");
         }
 
-        // 최적 경로(첫 번째) 하나만 선택
-        List<RouteCalculationResult> finalResults = new ArrayList<>();
-
-        // 첫 번째 유효한 경로만 사용
-        for (Itineraries itinerary : itineraries) {
-            int pathType = itinerary.getPathType();
-
-            if (pathType != TmapPathTypeConst.AIRPLANE) {
-                RouteCalculationResult result = new RouteCalculationResult();
-                result.setPathType((pathType));
-                result.setTotalTime(itinerary.getTotalTime());
-
-                int totalDistance = itinerary.getTotalDistance();
-                result.setTotalDistance(totalDistance);
-                int totalWalkDistance = itinerary.getTotalWalkDistance();
-
-                for (Legs leg : itinerary.getLegs()) {
-                    String mode = leg.getMode();
-                    Integer distance = leg.getDistance();
-
-                    if (distance != null) {
-                        switch (mode) {
-                            case "BUS", "EXPRESSBUS":
-                                result.setBusDistance(result.getBusDistance() + distance);
-                                break;
-                            case "TRAIN":
-                                result.setTrainDistance(result.getTrainDistance() + distance);
-                                break;
-                        }
-                    }
-                }
-
-                int totalSubwayDistance = totalDistance - totalWalkDistance - result.getBusDistance() - result.getTrainDistance();
-                result.setSubwayDistance(Math.max(0, totalSubwayDistance));
-
-                
-                double carbonEmission = (result.getSubwayDistance() / 1000.0) * CarbonEmissionConst.SUBWAY_EMISSION + (result.getTrainDistance() / 1000.0) * CarbonEmissionConst.TRAIN_EMISSION + (result.getBusDistance() / 1000.0) * CarbonEmissionConst.BUS_EMISSION;
-                
-                result.setCarbonEmission(carbonEmission);
-
-                finalResults.add(result);
-                
-                // 첫 번째 유효한 경로만 사용하고 루프 종료
-                break;
-            }
-        }
-
-
-        // 상세 경로 넘겨줄 거면 리턴값 다시 생각해봐야함
-        return finalResults;
-    }
-
-    /**
-     * TripSegmentRedisDto 생성을 포함한 대중교통 경로 계산 메서드
-     */
-    public List<RouteCalculationResult> getDistance(TransDistanceRequest request, Long tripId, Long startPlaceId, Long endPlaceId) {
-        List<RouteCalculationResult> results;
+        // 경로 선택 및 maxCarbonEmission 계산용 항공 경로 확인
+        Itineraries selectedItinerary = null;
+        double maxCarbonEmission = 0;
         
-        try {
-            results = getDistance(request);
-        } catch (Exception e) {
-            // API 실패 시 추정값으로 폴백
-            RouteCalculationResult estimatedResult = new RouteCalculationResult();
-            estimatedResult.setPathType(1); // 기본 대중교통 타입
-            estimatedResult.setTotalDistance(50000); // 50km 추정
-            estimatedResult.setTotalTime(3000); // 50분 추정
-            estimatedResult.setCarbonEmission(2.5); // 추정 탄소 배출량
-            results = List.of(estimatedResult);
-        }
-        
-        // 최적 경로의 탄소 배출량으로 TripSegmentRedisDto 생성
-        if (!results.isEmpty()) {
-            RouteCalculationResult bestRoute = results.get(0); // 첫 번째가 최적 경로
+        // 제주가 아닌 경우: 항공 경로와 대중교통 경로 모두 확인
+        if (!isJejuTrip) {
+            Itineraries airplaneItinerary = null;
+            Itineraries publicItinerary = null;
             
-            TripSegmentRedisDto tripSegmentDto = TripSegmentRedisDto.builder()
-                    .tripId(tripId)
-                    .startPlaceId(startPlaceId)
-                    .endPlaceId(endPlaceId)
-                    .transport("대중교통")
-                    .distance(bestRoute.getTotalDistance())
-                    .carbonEmitted(bestRoute.getCarbonEmission())
-                    .build();
-                    
-            // Redis에 개별 저장 (기존 리스트에 추가)
-            saveSingleTripSegment(tripSegmentDto);
-        }
-        
-        return results;
-    }
-    
-    /**
-     * 개별 TripSegmentRedisDto를 Redis에 저장
-     */
-    private void saveSingleTripSegment(TripSegmentRedisDto tripSegmentDto) {
-        List<TripSegmentRedisDto> existingList;
-        
-        try {
-            existingList = tripSegmentService.getTempTripSegments(tripSegmentDto.getTripId());
-        } catch (IllegalArgumentException e) {
-            // 기존 데이터가 없는 경우 새로운 리스트 생성
-            existingList = new ArrayList<>();
-        }
-        
-        existingList.add(tripSegmentDto);
-        tripSegmentService.saveTempTripSegments(existingList);
-    }
-
-    /**
-     * 여러 구간의 대중교통 경로를 배치로 처리하는 메서드
-     */
-    public List<RouteCalculationResult> getBatchDistance(TransDistanceBatchRequest batchRequest) {
-        
-        List<RouteCalculationResult> allResults = new ArrayList<>();
-        
-        try {
-            // TripPlace 정보를 가져와서 순서대로 정렬
-            List<TripPlaceResponse> tripPlaces = new ArrayList<>(tripPlaceService.getTripPlaces(batchRequest.getTripId()));
-            tripPlaces.sort((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()));
-            
-            // 각 구간마다 개별적으로 getDistance 호출 (모든 요청 처리)
-            List<TransDistanceRequest> requests = batchRequest.getRequests();
-            for (int i = 0; i < requests.size(); i++) {
-                TransDistanceRequest request = requests.get(i);
-                
-                // 여행지 간 구간만 TripSegmentRedisDto 생성 (출발지→출발지 구간 제외)
-                if (i < tripPlaces.size() - 1) {
-                    Long startPlaceId = tripPlaces.get(i).getPlaceId();
-                    Long endPlaceId = tripPlaces.get(i + 1).getPlaceId();
-                    
-                    // TripSegmentRedisDto 생성을 포함한 getDistance 호출
-                    List<RouteCalculationResult> segmentResults = getDistance(request, batchRequest.getTripId(), startPlaceId, endPlaceId);
-                    allResults.addAll(segmentResults);
-                } else {
-                    // 출발지↔목적지 구간은 결과만 반환 (TripSegment 저장 안함)
-                    List<RouteCalculationResult> segmentResults = getDistance(request);
-                    allResults.addAll(segmentResults);
+            for (Itineraries itinerary : itineraries) {
+                int pathType = itinerary.getPathType();
+                if (pathType == TmapPathTypeConst.AIRPLANE && airplaneItinerary == null) {
+                    airplaneItinerary = itinerary;
+                } else if (pathType != TmapPathTypeConst.AIRPLANE && publicItinerary == null) {
+                    publicItinerary = itinerary;
                 }
             }
             
-            return allResults;
+            // 항공 경로가 있으면 탄소 배출량 계산 (maxCarbonEmission용)
+            if (airplaneItinerary != null) {
+                RouteCalculationResult airplaneResult = createRouteResult(airplaneItinerary);
+                maxCarbonEmission = airplaneResult.getCarbonEmission();
+            }
             
-        } catch (Exception e) {
-            throw e;
+            // 대중교통 경로를 실제 반환용으로 선택
+            selectedItinerary = publicItinerary != null ? publicItinerary : itineraries.getFirst();
+        } else {
+            // 제주 여행인 경우: 첫 번째 경로 사용
+            selectedItinerary = itineraries.getFirst();
         }
+
+        if (selectedItinerary == null) {
+            throw new RuntimeException("유효한 경로를 찾을 수 없습니다.");
+        }
+
+        // 선택된 경로로 결과 생성
+        RouteCalculationResult result = createRouteResult(selectedItinerary);
+        
+        // maxCarbonEmission 설정 (제주가 아닌 경우)
+        if (!isJejuTrip && maxCarbonEmission > 0) {
+            result.setMaxCarbonEmission(Math.max(result.getCarbonEmission(), maxCarbonEmission));
+        } else {
+            result.setMaxCarbonEmission(result.getCarbonEmission());
+        }
+
+        return result;
+    }
+
+    private boolean isJejuTrip(List<TripPlaceResponse> tripPlaces) {
+        return tripPlaces.stream()
+                .anyMatch(tripPlace -> {
+                    Place place = placeService.getPlaceById(tripPlace.getPlaceId());
+
+                    return place.getAddress() != null && place.getAddress().contains("제주");
+                });
+    }
+
+    private RouteCalculationResult createRouteResult(Itineraries itinerary) {
+        int pathType = itinerary.getPathType();
+        RouteCalculationResult result = new RouteCalculationResult();
+        result.setPathType(pathType);
+        result.setTotalTime(itinerary.getTotalTime());
+
+        int totalDistance = itinerary.getTotalDistance();
+        result.setTotalDistance(totalDistance);
+        int totalWalkDistance = itinerary.getTotalWalkDistance();
+
+        for (Legs leg : itinerary.getLegs()) {
+            String mode = leg.getMode();
+            Integer distance = leg.getDistance();
+
+            if (distance != null) {
+                switch (mode) {
+                    case "BUS", "EXPRESSBUS":
+                        result.setBusDistance(result.getBusDistance() + distance);
+                        break;
+                    case "TRAIN":
+                        result.setTrainDistance(result.getTrainDistance() + distance);
+                        break;
+                    case "AIRPLANE":
+                        result.setAirplaneDistance(result.getAirplaneDistance() + distance);
+                        break;
+                }
+            }
+        }
+        
+        // 지하철 거리 계산
+        int totalSubwayDistance;
+        if (pathType == TmapPathTypeConst.AIRPLANE) {
+            totalSubwayDistance = totalDistance - totalWalkDistance - result.getBusDistance() - result.getTrainDistance() - result.getAirplaneDistance();
+        } else {
+            totalSubwayDistance = totalDistance - totalWalkDistance - result.getBusDistance() - result.getTrainDistance();
+        }
+        result.setSubwayDistance(Math.max(0, totalSubwayDistance));
+
+        // 탄소 배출량 계산
+        double carbonEmission = (result.getSubwayDistance() / 1000.0) * CarbonEmissionConst.SUBWAY_EMISSION + 
+                               (result.getTrainDistance() / 1000.0) * CarbonEmissionConst.TRAIN_EMISSION + 
+                               (result.getBusDistance() / 1000.0) * CarbonEmissionConst.BUS_EMISSION;
+        
+        if (pathType == TmapPathTypeConst.AIRPLANE) {
+            carbonEmission += (result.getAirplaneDistance() / 1000.0) * CarbonEmissionConst.AIRPLANE_EMISSION;
+        }
+        
+        result.setCarbonEmission(carbonEmission);
+        
+        return result;
     }
 }

@@ -7,4 +7,5 @@ public class Section {
     private int distance;
     private int duration; // 단위: 초
     private double carbonEmission;
+    private double maxCarbonEmission;
 }
