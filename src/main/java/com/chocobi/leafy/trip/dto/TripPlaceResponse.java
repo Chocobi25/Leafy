@@ -1,0 +1,26 @@
+package com.chocobi.leafy.trip.dto;
+
+import com.chocobi.leafy.trip.entity.TripPlace;
+import lombok.Builder;
+import lombok.Data;
+
+
+@Data
+@Builder
+public class TripPlaceResponse {
+    private Long tripId;
+    private Long placeId;
+    private int visitOrder;
+    private int day_index;
+    private String memo;
+
+    public static TripPlaceResponse toDTO(TripPlace tripPlace) {
+        return TripPlaceResponse.builder()
+                .tripId(tripPlace.getTrip().getId())
+                .placeId(tripPlace.getPlace().getId())
+                .visitOrder(tripPlace.getVisitOrder())
+                .day_index(tripPlace.getDayIndex())
+                .memo(tripPlace.getMemo())
+                .build();
+    }
+}

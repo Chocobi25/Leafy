@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface PlaceRepository extends JpaRepository<Place, Long> {
     List<Place> findByAddressContaining(String address);
+    List<Place> findByTitle(String title);
+    Place findByAddressAndTitle(String address, String title);
+    boolean existsByAddressAndTitle(String address, String title);
 }

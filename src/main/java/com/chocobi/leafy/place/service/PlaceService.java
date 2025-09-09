@@ -1,12 +1,10 @@
 package com.chocobi.leafy.place.service;
 
-import com.chocobi.leafy.place.dto.PlaceDTO;
-import com.chocobi.leafy.place.dto.UserPlaceDTO;
+import com.chocobi.leafy.place.common.dto.PlaceDTO;
+import com.chocobi.leafy.place.common.dto.UserPlaceDTO;
 import com.chocobi.leafy.place.entity.Place;
-import com.chocobi.leafy.place.entity.Type;
-import com.chocobi.leafy.place.entity.UserPlace;
+import com.chocobi.leafy.place.entity.PlaceSourceType;
 import com.chocobi.leafy.place.repository.PlaceRepository;
-import com.chocobi.leafy.place.repository.UserPlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +16,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlaceService {
     private final PlaceRepository placeRepository;
-    private final UserPlaceRepository userPlaceRepository;
 
     public List<PlaceDTO> getPlaceByAddress(String address) {
         List<Place> places = placeRepository.findByAddressContaining(address);
@@ -28,22 +25,24 @@ public class PlaceService {
     }
 
     public Long saveUserPlace(UserPlaceDTO userPlaceDTO) {
-        Optional<UserPlace> existingPlace = userPlaceRepository.findByTitle(userPlaceDTO.getTitle());
-
-        if (existingPlace.isPresent()) {
-            return existingPlace.get().getId();
+        if(placeRepository.existsByAddressAndTitle(userPlaceDTO.getAddress(), userPlaceDTO.getTitle())) {
+            return placeRepository.findByAddressAndTitle(userPlaceDTO.getAddress(), userPlaceDTO.getTitle()).getId();
         }
 
-        UserPlace userPlace = UserPlace.builder()
-                .address(userPlaceDTO.getAddress())
+        return placeRepository.save(Place.builder()
                 .title(userPlaceDTO.getTitle())
-                .latitude(userPlaceDTO.getLatitude())
-                .longitude(userPlaceDTO.getLongitude())
-                .place_url(userPlaceDTO.getPlaceUrl())
-                .type(Type.USER)
-                .build();
+                .address(userPlaceDTO.getAddress())
+                .longitude(Double.parseDouble(userPlaceDTO.getLongitude()))
+                .latitude(Double.parseDouble(userPlaceDTO.getLatitude()))
+                .tel(userPlaceDTO.getTel())
+                .url(userPlaceDTO.getUrl())
+                .sourceType(PlaceSourceType.USER)
+                .copyright("카카오지도")
+                .build()).getId();
+    }
 
-        userPlaceRepository.save(userPlace);
-        return userPlace.getId();
+    public Place getPlaceById(Long id) {
+        Optional<Place> place = placeRepository.findById(id);
+        return place.orElse(null);
     }
 }
