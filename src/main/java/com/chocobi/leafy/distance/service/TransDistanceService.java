@@ -42,6 +42,15 @@ public class TransDistanceService {
 
             // 각 구간마다 개별적으로 getDistance 호출 (순수 계산만)
             List<TransDistanceRequest> requests = batchRequest.getRequests();
+            
+            // 마지막 구간의 도착지를 첫 구간의 출발지(origin)로 변경 (출발지로 복귀)
+            if (!requests.isEmpty()) {
+                TransDistanceRequest firstRequest = requests.getFirst();
+                TransDistanceRequest lastRequest = requests.getLast();
+                lastRequest.setEndX(firstRequest.getStartX());
+                lastRequest.setEndY(firstRequest.getStartY());
+            }
+            
             for (TransDistanceRequest request : requests) {
                 RouteCalculationResult segmentResult = getDistance(request, isJejuTrip);
                 if (segmentResult != null) {
