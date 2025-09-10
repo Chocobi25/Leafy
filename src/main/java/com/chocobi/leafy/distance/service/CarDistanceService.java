@@ -21,21 +21,16 @@ public class CarDistanceService {
 
     /**
      * 두 좌표 사이의 거리와 시간 정보를 얻어오는 메서드
-     * @param request
-     * @return
      */
     public CarDistanceResponse getDistance(CarDistanceRequest request) {
-
-        KakaoNaviResponse kakaoNaviResponse = kakaoNaviWebClient.post()
-                .uri(DistanceConst.kakaoUri)
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(KakaoNaviResponse.class)
-                .block(); // 동기 호출
+        KakaoNaviResponse kakaoNaviResponse = callKakaoApi(request);
 
         List<Routes> routesList = kakaoNaviResponse.getRoutes();
-        Routes routes = routesList.getFirst();
+        if (routesList == null || routesList.isEmpty()) {
+            throw new RuntimeException("카카오 API 응답에 경로(routes)가 없음");
+        }
 
+        Routes routes = routesList.getFirst();
         if (routes == null) {
             throw new RuntimeException("카카오 API 응답 오류");
         }
@@ -56,7 +51,6 @@ public class CarDistanceService {
 
         // summary 꺼내기
         Summary summary = routes.getSummary();
-
         if (summary == null) {
             throw new RuntimeException("카카오 API summary 정보 없음");
         }
@@ -65,14 +59,14 @@ public class CarDistanceService {
         int distance = summary.getDistance();
         int duration = summary.getDuration();
         double carbonEmission = CarbonCalculator.CalculateCarCarbonEmission(distance);
-        
 
-        // section 꺼내기 - 카카오에서 이미 구간별로 나눠줌
+
+        // 카카오에서 제공하는 section 구간별 처리
         List<Section> sections = routes.getSections();
         for (Section section : sections) {
             double sectionCarbonEmission = CarbonCalculator.CalculateCarCarbonEmission(section.getDistance());
             section.setCarbonEmission(sectionCarbonEmission);
-            section.setMaxCarbonEmission(sectionCarbonEmission); // 자동차는 단일 교통수단이므로 동일
+            section.setMaxCarbonEmission(sectionCarbonEmission); // 자동차는 단일 교통수단
         }
 
         CarDistanceResponse carDistanceResponse = new CarDistanceResponse();
@@ -82,38 +76,36 @@ public class CarDistanceService {
         return carDistanceResponse;
     }
 
-
     /**
-     * 출발지, 목적지와 웨이포인트를 리스트에 담기
-     * @param request
+     * 카카오 내비 API 호출
      */
-    private static List<Point> buildAllPoints(CarDistanceRequest request) {
-        // 전체 경로 점들 (origin + waypoints + destination)
-        List<Point> allPoints = new ArrayList<>();
-        allPoints.add(request.getOrigin());
-        if (request.getWaypoints() != null) {
-            allPoints.addAll(request.getWaypoints());
-        }
-        allPoints.add(request.getDestination());
+    private KakaoNaviResponse callKakaoApi(CarDistanceRequest request) {
+        KakaoNaviResponse response = kakaoNaviWebClient.post()
+                .uri(DistanceConst.kakaoUri)
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(KakaoNaviResponse.class)
+                .block();
 
-        return allPoints;
+        if (response == null) {
+            throw new RuntimeException("카카오 네비 API 응답 실패 (null)");
+        }
+        return response;
     }
+
 
     /**
      * api 호출 에러 시, 구간별 거리, 시간 계산
-     * @param request
-     * @return
      */
     private CarDistanceResponse getDistanceBySegments(CarDistanceRequest request) {
+        // 전체 경로 점들 (origin + waypoints + destination)
+        List<Point> allPoints = DistanceUtils.buildAllPoints(request.getOrigin(), request.getDestination(), request.getWaypoints());
 
         CarDistanceResponse carDistanceResponse = new CarDistanceResponse();
         List<Section> sections = new ArrayList<>();
 
         double totalDistance = 0;
         double totalDuration = 0;
-
-        // 전체 경로 점들 (origin + waypoints + destination)
-        List<Point> allPoints = buildAllPoints(request);
 
         // 각 구간별로 계산
         for (int i = 0; i < allPoints.size() - 1; i++) {
@@ -137,12 +129,12 @@ public class CarDistanceService {
                 segmentSection.setCarbonEmission(segmentResponse.getDistanceResponse().getCarbonEmission());
                 segmentSection.setMaxCarbonEmission(segmentResponse.getDistanceResponse().getCarbonEmission());
                 sections.add(segmentSection);
-            } catch (Exception e) {
 
+            } catch (Exception e) {
                 // 직선 거리 계산(하버사인 공식)
-                double straightDistance = calculateStraightDistance(start, end);
-                double estimatedDistance = straightDistance * 1.3; // 도로 보정계수
-                double estimatedDuration = estimatedDistance / (50 * 1000 / 3600); // 평균 50km/h 가정, 초 단위
+                double straightDistance = DistanceUtils.calculateStraightDistance(start, end);
+                double estimatedDistance = straightDistance * DistanceConst.ROAD_CORRECTION_FACTOR; // 도로 보정계수
+                double estimatedDuration = estimatedDistance / DistanceConst.AVERAGE_CAR_SPEED_MPS; // 평균 50km/h 가정, 초 단위
 
                 totalDistance += estimatedDistance;
                 totalDuration += estimatedDuration;
@@ -155,34 +147,13 @@ public class CarDistanceService {
                 estimatedSection.setCarbonEmission(estimatedCarbonEmission);
                 estimatedSection.setMaxCarbonEmission(estimatedCarbonEmission);
                 sections.add(estimatedSection);
-
             }
         }
 
         double carbonEmission = CarbonCalculator.CalculateCarCarbonEmission(totalDistance);
-
-
         carDistanceResponse.setDistanceResponse(new DistanceResponse(totalDistance, (int) totalDuration, carbonEmission));
         carDistanceResponse.setSections(sections);
+
         return carDistanceResponse;
-    }
-
-    /**
-     * 직선 거리 구하기
-     * @param start
-     * @param end
-     * @return
-     */
-    private double calculateStraightDistance(Point start, Point end) {
-        final double R = 6371000; // 지구 반지름 (미터)
-        double lat1Rad = Math.toRadians(start.getY());
-        double lat2Rad = Math.toRadians(end.getY());
-        double deltaLatRad = Math.toRadians(end.getY() - start.getY());
-        double deltaLonRad = Math.toRadians(end.getX() - start.getX());
-
-        double a = Math.sin(deltaLatRad/2) * Math.sin(deltaLatRad/2) + Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(deltaLonRad/2) * Math.sin(deltaLonRad/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-        return R * c;
     }
 }
