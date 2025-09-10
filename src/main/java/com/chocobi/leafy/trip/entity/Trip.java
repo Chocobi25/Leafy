@@ -40,7 +40,6 @@ public class Trip implements Serializable {
     @Builder.Default
     private double carbonEmission = 0.0;
 
-    @Setter
     @Enumerated(EnumType.STRING)
     @Column(length = 50)
     @Builder.Default

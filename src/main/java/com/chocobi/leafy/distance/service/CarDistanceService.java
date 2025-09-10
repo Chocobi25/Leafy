@@ -94,7 +94,7 @@ public class CarDistanceService {
         if (request.getWaypoints() != null) {
             allPoints.addAll(request.getWaypoints());
         }
-        allPoints.add(request.getDestination());
+        allPoints.add(request.getOrigin());
 
         return allPoints;
     }
