@@ -20,7 +20,7 @@ public class PlaceGeocodeProcessor implements ItemProcessor<PlaceStaging, Place>
     public Place process(PlaceStaging item) throws Exception {
         GeocodeResult geocodeResult = geocodeService.getCoordinatesFromAddress(item.getAddress());
 
-        if (geocodeResult == null) {
+        if (geocodeResult.getAddress() == null) {
             log.warn("Failed to get coordinates for address: {}. Skipping item.", item.getAddress());
             return null;
         }
