@@ -29,78 +29,35 @@ public class TransDistanceService {
      * 여러 구간의 대중교통 경로를 배치로 처리하는 메서드
      */
     public List<RouteCalculationResult> getBatchDistance(TransDistanceBatchRequest batchRequest) {
-
         List<RouteCalculationResult> allResults = new ArrayList<>();
 
-        try {
-            // TripPlace 정보를 가져와서 순서대로 정렬
-            List<TripPlaceResponse> tripPlaces = new ArrayList<>(tripPlaceService.getTripPlaces(batchRequest.getTripId()));
-            tripPlaces.sort((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()));
+        List<TripPlaceResponse> tripPlaces = new ArrayList<>(tripPlaceService.getTripPlaces(batchRequest.getTripId()));
+        tripPlaces.sort((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()));
 
-            // 제주 여행인지 확인
-            boolean isJejuTrip = isJejuTrip(tripPlaces);
+        // 제주 여행 여부 판별
+        boolean isJejuTrip = DistanceUtils.isJejuTrip(tripPlaces, placeService);
 
-            // 각 구간마다 개별적으로 getDistance 호출 (순수 계산만)
-            List<TransDistanceRequest> requests = batchRequest.getRequests();
-            
-            // 마지막 구간의 도착지를 첫 구간의 출발지(origin)로 변경 (출발지로 복귀)
-            if (!requests.isEmpty()) {
-                TransDistanceRequest firstRequest = requests.getFirst();
-                TransDistanceRequest lastRequest = requests.getLast();
-                lastRequest.setEndX(firstRequest.getStartX());
-                lastRequest.setEndY(firstRequest.getStartY());
+        // 각 구간마다 개별적으로 getDistance 호출 (순수 계산만)
+        List<TransDistanceRequest> requests = batchRequest.getRequests();
+        for (TransDistanceRequest request : requests) {
+            RouteCalculationResult segmentResult = getDistance(request, isJejuTrip);
+            if (segmentResult != null) {
+                allResults.add(segmentResult);
             }
-            
-            for (TransDistanceRequest request : requests) {
-                RouteCalculationResult segmentResult = getDistance(request, isJejuTrip);
-                if (segmentResult != null) {
-                    allResults.add(segmentResult);
-                }
-            }
-
-            return allResults;
-
-        } catch (Exception e) {
-            throw e;
         }
+
+        return allResults;
     }
 
     /**
      * 두 좌표 사이의 거리와 시간 정보를 얻어오는 메서드
-     * /@param request
-     * /@return
      */
     public RouteCalculationResult getDistance(TransDistanceRequest request, boolean isJejuTrip) {
-
         // 티맵 대중교통 api 호출
-        
-        TmapResponse tmapResponse = tmapWebClient.post()
-                .uri(DistanceConst.tmapUri)
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(TmapResponse.class)
-                .block(); // 동기 호출
-                
+        TmapResponse tmapResponse = callTmapApi(request);
 
-        // 응답이 존재하는 지 확인
-        if (tmapResponse == null) {
-            throw new RuntimeException("TMap 대중교통 api 응답 실패, tmapResponse = null");
-        }
-        
-        // 검색 결과가 없는 경우 확인
-        if (tmapResponse.getResult() != null && tmapResponse.getResult().getStatus() == 14) {
-            throw new RuntimeException("대중교통 경로 검색 결과가 없습니다: " + tmapResponse.getResult().getMessage());
-        }
-        
-        if (tmapResponse.getMetaData() == null) {
-            throw new RuntimeException("TMap 대중교통 api 응답 실패, metaData = null");
-        }
+        Plan plan = tmapResponse.getMetaData().getPlan();
 
-        // MetaData에 있는 Plan 꺼내기
-        MetaData metaData = tmapResponse.getMetaData();
-        Plan plan = metaData.getPlan();
-
-        // plan이 존재하는지 확인
         if (plan == null) {
             throw new RuntimeException("Plan 객체가 없습니다.");
         }
@@ -161,14 +118,37 @@ public class TransDistanceService {
         return result;
     }
 
-    private boolean isJejuTrip(List<TripPlaceResponse> tripPlaces) {
-        return tripPlaces.stream()
-                .anyMatch(tripPlace -> {
-                    Place place = placeService.getPlaceById(tripPlace.getPlaceId());
 
-                    return place.getAddress() != null && place.getAddress().contains("제주");
-                });
+    /**
+     * TMap API 호출 메서드
+     */
+    private TmapResponse callTmapApi(TransDistanceRequest request) {
+        TmapResponse response = tmapWebClient.post()
+                .uri(DistanceConst.tmapUri)
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(TmapResponse.class)
+                .block();
+
+        // 응답이 null인 경우
+        if (response == null) {
+            throw new RuntimeException("TMap 대중교통 API 응답 실패 (response = null)");
+        }
+
+        // 검색 결과 없음
+        if (response.getResult() != null && response.getResult().getStatus() == 14) {
+            throw new RuntimeException("대중교통 경로 검색 결과 없음: "
+                    + response.getResult().getMessage());
+        }
+
+        // MetaData 없음
+        if (response.getMetaData() == null) {
+            throw new RuntimeException("TMap 대중교통 API 응답 실패 (metaData = null)");
+        }
+
+        return response;
     }
+
 
     private RouteCalculationResult createRouteResult(Itineraries itinerary) {
         int pathType = itinerary.getPathType();

@@ -10,4 +10,5 @@ public class CarbonEmissionConst {
     public static final double BUS_EMISSION = 27.7;
     public static final double TRAIN_EMISSION = 22.7;
     public static final double AIRPLANE_EMISSION = 450.0;
+    public static final double FERRY_EMISSION = 19.0;
 }
