@@ -1,22 +1,33 @@
 package com.chocobi.leafy.distance.service;
 
 import com.chocobi.leafy.constants.DistanceConst;
+import com.chocobi.leafy.constants.PortConst;
 import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.domain.Point;
+import com.chocobi.leafy.distance.domain.Port;
 import com.chocobi.leafy.distance.dto.*;
+import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.service.PlaceService;
+import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.util.CarbonCalculator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.chocobi.leafy.constants.PortConst.isFerrySection;
+import static com.chocobi.leafy.distance.service.DistanceUtils.findNearestPort;
+import static com.chocobi.leafy.distance.service.DistanceUtils.placeToPoint;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CarDistanceService {
-
+    private final PlaceService placeService;
     private final WebClient kakaoNaviWebClient;
 
     /**
@@ -56,25 +67,62 @@ public class CarDistanceService {
         }
 
         // summary의 distance와 duration 꺼내기
-        int distance = summary.getDistance();
+        int totalDistance = 0;
         int duration = summary.getDuration();
-        double carbonEmission = CarbonCalculator.CalculateCarCarbonEmission(distance);
-
+        double totalCarbonEmission = 0.0;
 
         // 카카오에서 제공하는 section 구간별 처리
         List<Section> sections = routes.getSections();
-        for (Section section : sections) {
-            double sectionCarbonEmission = CarbonCalculator.CalculateCarCarbonEmission(section.getDistance());
+
+        // 전체 경로의 모든 점들을 순서대로 담은 리스트를 만듭니다.
+        // 이 리스트를 기준으로 sections를 처리해야 인덱스 에러가 발생하지 않습니다.
+        List<Point> allPoints = new ArrayList<>();
+        allPoints.add(request.getOrigin());
+        if (request.getWaypoints() != null && !request.getWaypoints().isEmpty()) {
+            allPoints.addAll(request.getWaypoints());
+        }
+        allPoints.add(request.getDestination());
+
+        // allPoints 리스트를 순회하며 각 구간의 탄소량을 계산합니다.
+        // sections 리스트와 allPoints 리스트의 크기는 항상 일치해야 합니다.
+        if (sections.size() != allPoints.size() - 1) {
+            log.error("API에서 반환된 섹션의 개수가 예상과 다릅니다. 예상: {}, 실제: {}", allPoints.size() - 1, sections.size());
+            // 이 경우, 구간별 계산 fallback 로직을 호출하거나 예외를 던질 수 있습니다.
+            // 여기서는 예외를 던지는 것으로 가정합니다.
+            throw new RuntimeException("경로 섹션과 경유지 목록의 불일치 오류. 경로를 다시 확인해주세요.");
+        }
+
+        // 이제 인덱스 에러 없이 안전하게 루프를 실행할 수 있습니다.
+        for (int i = 0; i < sections.size(); i++) {
+            Section section = sections.get(i);
+
+            // allPoints 리스트에서 해당 섹션의 시작점과 끝점을 가져옵니다.
+            Point startPoint = allPoints.get(i);
+            Point endPoint = allPoints.get(i + 1);
+
+            double sectionCarbonEmission;
+
+            // 페리 구간인지 판별
+            if (isFerrySection(startPoint, endPoint)) {
+                sectionCarbonEmission = CarbonCalculator.CalculateFerryCarbonEmission(section.getDistance());
+            } else {
+                sectionCarbonEmission = CarbonCalculator.CalculateCarCarbonEmission(section.getDistance());
+            }
+
             section.setCarbonEmission(sectionCarbonEmission);
-            section.setMaxCarbonEmission(sectionCarbonEmission); // 자동차는 단일 교통수단
+            section.setMaxCarbonEmission(sectionCarbonEmission);
+
+            totalCarbonEmission += sectionCarbonEmission;
+            totalDistance += section.getDistance();
         }
 
         CarDistanceResponse carDistanceResponse = new CarDistanceResponse();
-        carDistanceResponse.setDistanceResponse(new DistanceResponse(distance, duration, carbonEmission));
+        carDistanceResponse.setDistanceResponse(new DistanceResponse(totalDistance, duration, totalCarbonEmission));
         carDistanceResponse.setSections(sections);
 
         return carDistanceResponse;
     }
+
 
     /**
      * 카카오 내비 API 호출
@@ -155,5 +203,87 @@ public class CarDistanceService {
         carDistanceResponse.setSections(sections);
 
         return carDistanceResponse;
+    }
+
+    public CarDistanceRequest addPortsToRequest(CarDistanceRequest request, List<TripPlaceResponse> tripPlaces) {
+        log.info("addPortsToRequest 호출: 제주도 경유지 확인 시작");
+
+        // 1. 제주도 장소의 첫 번째와 마지막 인덱스 찾기
+        int firstJejuIndex = -1;
+        int lastJejuIndex = -1;
+
+        // TripPlaces의 전체 목록을 로그로 출력 (디버깅 용)
+        log.debug("전체 tripPlaces 목록: {}", tripPlaces);
+
+        for (int i = 0; i < tripPlaces.size(); i++) {
+            Place place = placeService.getPlaceById(tripPlaces.get(i).getPlaceId());
+            if (place.getAddress() != null && place.getAddress().contains("제주")) {
+                if (firstJejuIndex == -1) {
+                    firstJejuIndex = i;
+                }
+                lastJejuIndex = i;
+            }
+        }
+
+        // 제주도 장소가 없다면 아무것도 하지 않고 기존 요청 반환
+        if (firstJejuIndex == -1) {
+            log.info("제주도 경유지가 없어 항구를 추가하지 않습니다.");
+            return request;
+        }
+
+        log.info("제주도 경유지 발견: 첫 번째 인덱스 = {}, 마지막 인덱스 = {}", firstJejuIndex, lastJejuIndex);
+
+        // 2. 항구를 추가할 새로운 Waypoints 리스트 생성
+        List<Point> newWaypoints = new ArrayList<>();
+
+        // 3. 육지에서 제주로 가는 항구 추가
+        Point preJejuPoint = (firstJejuIndex > 0)
+                ? placeToPoint(placeService.getPlaceById(tripPlaces.get(firstJejuIndex - 1).getPlaceId()))
+                : request.getOrigin();
+
+        log.info("제주도 진입 전 마지막 장소의 좌표: {}", preJejuPoint);
+        Port nearestDepartPort = findNearestPort(preJejuPoint, PortConst.JEJU_DEPART_PORTS);
+        newWaypoints.add(nearestDepartPort.getPoint());
+        log.info("선택된 육지 출발 항구: {} ({})", nearestDepartPort.getName(), nearestDepartPort.getPoint());
+
+        Point firstJejuPoint = placeToPoint(placeService.getPlaceById(tripPlaces.get(firstJejuIndex).getPlaceId()));
+        Port nearestJejuArrivePort = findNearestPort(firstJejuPoint, PortConst.JEJU_ARRIVE_PORTS);
+        newWaypoints.add(nearestJejuArrivePort.getPoint());
+        log.info("선택된 제주 도착 항구: {} ({})", nearestJejuArrivePort.getName(), nearestJejuArrivePort.getPoint());
+
+        // 4. 제주도 내 기존 경유지 추가
+        for (int i = firstJejuIndex; i <= lastJejuIndex; i++) {
+            newWaypoints.add(placeToPoint(placeService.getPlaceById(tripPlaces.get(i).getPlaceId())));
+        }
+        log.debug("제주도 내 경유지 추가 완료. 현재 waypoints: {}", newWaypoints);
+
+        // 5. 제주도에서 육지로 돌아오는 항구 추가 (무조건 추가)
+        Point lastJejuPoint = placeToPoint(placeService.getPlaceById(tripPlaces.get(lastJejuIndex).getPlaceId()));
+        Port nearestJejuDepartPort = findNearestPort(lastJejuPoint, PortConst.JEJU_ARRIVE_PORTS);
+        newWaypoints.add(nearestJejuDepartPort.getPoint());
+        log.info("선택된 제주 출발 항구: {} ({})", nearestJejuDepartPort.getName(), nearestJejuDepartPort.getPoint());
+
+        // 다음 경유지 또는 최종 목적지
+        Point postJejuPoint = (lastJejuIndex < tripPlaces.size() - 1)
+                ? placeToPoint(placeService.getPlaceById(tripPlaces.get(lastJejuIndex + 1).getPlaceId()))
+                : request.getDestination();
+        Port nearestArrivePort = findNearestPort(postJejuPoint, PortConst.JEJU_DEPART_PORTS);
+        newWaypoints.add(nearestArrivePort.getPoint());
+        log.info("선택된 육지 도착 항구: {} ({})", nearestArrivePort.getName(), nearestArrivePort.getPoint());
+
+        log.debug("제주도 내 경유지 추가 완료. 현재 waypoints: {}", newWaypoints);
+
+        // 6. 제주도 외의 나머지 경유지 추가
+        for (int i = lastJejuIndex + 1; i < tripPlaces.size(); i++) {
+            newWaypoints.add(placeToPoint(placeService.getPlaceById(tripPlaces.get(i).getPlaceId())));
+        }
+
+        // 7. 기존 waypoints를 새로 구성된 리스트로 교체
+        request.setWaypoints(newWaypoints);
+
+        log.info("최종적으로 구성된 waypoints 리스트: {}", newWaypoints);
+
+        // 8. 수정된 요청 객체 반환
+        return request;
     }
 }

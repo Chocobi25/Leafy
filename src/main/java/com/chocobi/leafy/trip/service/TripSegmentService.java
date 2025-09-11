@@ -8,8 +8,10 @@ import com.chocobi.leafy.distance.dto.CarDistanceResponse;
 import com.chocobi.leafy.distance.dto.RouteCalculationResult;
 import com.chocobi.leafy.distance.dto.Section;
 import com.chocobi.leafy.distance.service.CarDistanceService;
+import com.chocobi.leafy.distance.service.DistanceUtils;
 import com.chocobi.leafy.distance.service.TransDistanceService;
 import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.service.PlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
 import com.chocobi.leafy.trip.entity.Trip;
@@ -34,6 +36,7 @@ public class TripSegmentService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final CarDistanceService carDistanceService;
     private final TransDistanceService transDistanceService;
+    private final PlaceService placeService;
 
     /**
      * TripSegmentRedisDto를 만들고 Redis에 임시 저장하는 편의 통합 메서드
@@ -255,12 +258,25 @@ public class TripSegmentService {
      * @return
      */
     public DistanceResponse calculateAndSaveCarRoute(CarDistanceRequest request, Long tripId) {
-        // CarDistanceService에서 CarDistanceResponse 가져오기 (sections 포함)
-        CarDistanceResponse carResponse = carDistanceService.getDistance(request);
-        
+        List<TripPlaceResponse> tripPlaces = new ArrayList<>(tripPlaceService.getTripPlaces(tripId));
+        tripPlaces.sort((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()));
+
+        CarDistanceResponse carResponse;
+
+        // 2. 제주도 여행 여부 판별
+        if (DistanceUtils.isJejuTrip(tripPlaces, placeService)) {
+            // 3. 제주도 여행이면, 항구 포함하도록 request 객체 수정
+            CarDistanceRequest modifiedRequest = carDistanceService.addPortsToRequest(request, tripPlaces);
+
+            // 4. 수정된 request로 CarDistanceService 호출
+            carResponse = carDistanceService.getDistance(modifiedRequest);
+        }
+
+        carResponse = carDistanceService.getDistance(request);;
+
         // sections 가져오기
         List<Section> sections = carResponse.getSections();
-        
+
         // Redis에 저장
         completeTempTripSegments(tripId, sections, "car");
 

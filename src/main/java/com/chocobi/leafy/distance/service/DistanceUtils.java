@@ -1,11 +1,13 @@
 package com.chocobi.leafy.distance.service;
 
 import com.chocobi.leafy.distance.domain.Point;
+import com.chocobi.leafy.distance.domain.Port;
 import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.place.service.PlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class DistanceUtils {
@@ -49,5 +51,23 @@ public class DistanceUtils {
         }
         allPoints.add(destination);
         return allPoints;
+    }
+
+    /**
+     * Place → Point 변환
+     */
+    public static Point placeToPoint(Place place) {
+        return new Point(place.getLongitude(), place.getLatitude());
+    }
+
+    /**
+     * 대상 점에서 가장 가까운 항구 찾기
+     */
+    public static Port findNearestPort(Point target, List<Port> ports) {
+        return ports.stream()
+                .min(Comparator.comparingDouble(p ->
+                        calculateStraightDistance(target, p.getPoint())
+                ))
+                .orElseThrow();
     }
 }
