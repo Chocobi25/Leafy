@@ -27,6 +27,8 @@ public class PostService {
                 .content(request.getContent())
                 .user(userService.findByKakaoId(request.getUserId()))
                 .place(placeService.getPlaceById(request.getPlaceId()))
+
+                .rating(request.getRating())
                 .build();
 
         return PostResponse.fromEntity(postRepository.save(post));
@@ -68,5 +70,18 @@ public class PostService {
         return postRepository.findByPlace(placeService.getPlaceById(placeId)).stream()
                 .map(PostResponse::fromEntity)
                 .toList();
+    }
+
+    @Transactional
+    public PostResponse toggleLike(Long postId, boolean isCurrentlyLiked) {
+        Post post = getPostById(postId);
+        if (isCurrentlyLiked) {
+            // 현재 좋아요 상태면 취소 (-1)
+            post.decrementLikes();
+        } else {
+            // 현재 좋아요 안한 상태면 추가 (+1)
+            post.incrementLikes();
+        }
+        return PostResponse.fromEntity(postRepository.save(post));
     }
 }

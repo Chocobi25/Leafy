@@ -4,6 +4,7 @@ import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.post.dto.PostRequest;
 import com.chocobi.leafy.user.entity.User;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @Entity
 @Builder
 @RequiredArgsConstructor
+@AllArgsConstructor
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +36,12 @@ public class Post {
     @JoinColumn(name = "place_id", nullable = true)
     private Place place;
 
+    @Column(nullable = true)
+    private Integer rating;
+
+    @Column(nullable = false)
+    private Integer likes = 0;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -45,11 +53,22 @@ public class Post {
     public Post updatePost(PostRequest request, Place place) {
         this.title = request.getTitle();
         this.content = request.getContent();
+        this.rating = request.getRating();
 
         if(place != null) {
             this.place = place;
         }
 
         return this;
+    }
+
+    public void incrementLikes() {
+        this.likes++;
+    }
+
+    public void decrementLikes() {
+        if (this.likes > 0) {
+            this.likes--;
+        }
     }
 }

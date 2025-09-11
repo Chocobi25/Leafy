@@ -9,4 +9,5 @@ public class PostRequest {
     private String content;
     private Long userId;
     private Long placeId;
+    private Integer rating;
 }
