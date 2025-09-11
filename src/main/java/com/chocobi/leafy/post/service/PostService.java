@@ -27,6 +27,7 @@ public class PostService {
                 .content(request.getContent())
                 .user(userService.findByKakaoId(request.getUserId()))
                 .place(placeService.getPlaceById(request.getPlaceId()))
+
                 .rating(request.getRating())
                 .build();
 

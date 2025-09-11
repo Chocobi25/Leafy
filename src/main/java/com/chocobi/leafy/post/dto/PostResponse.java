@@ -57,7 +57,7 @@ public class PostResponse {
                     post.getPlace().getAddress()
             );
         }
-        
+  
         return new PostResponse(
                 post.getId(),
                 post.getTitle(),

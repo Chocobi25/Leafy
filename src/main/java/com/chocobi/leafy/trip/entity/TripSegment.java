@@ -43,6 +43,9 @@ public class TripSegment implements Serializable {
     @Column(name = "carbon_emitted")
     private double carbonEmitted;
 
+    @Column(name = "max_carbon_emission")
+    private double maxCarbonEmission;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

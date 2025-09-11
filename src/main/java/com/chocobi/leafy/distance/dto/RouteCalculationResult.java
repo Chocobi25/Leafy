@@ -10,8 +10,10 @@ public class RouteCalculationResult {
     private double totalDistance;
 
     private double carbonEmission;
+    private double maxCarbonEmission;
 
     private int busDistance;
     private int subwayDistance;
     private int trainDistance;
+    private int airplaneDistance;
 }
