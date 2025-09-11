@@ -2,10 +2,7 @@ package com.chocobi.leafy.trip.entity;
 
 import com.chocobi.leafy.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -22,9 +19,9 @@ import java.util.List;
 @Builder
 @Getter
 public class Trip implements Serializable {
-    
     @Serial
     private static final long serialVersionUID = 1L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -40,9 +37,15 @@ public class Trip implements Serializable {
     @Builder.Default
     private double carbonSaved = 0.0;
 
-    @Enumerated(EnumType.STRING)
     @Builder.Default
-    private TripStatus status = TripStatus.DRAFT;
+    private double carbonEmission = 0.0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    @Builder.Default
+    private TripStatus status = TripStatus.CREATING;
+
+    private LocalDateTime certificationAt;
 
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -60,5 +63,12 @@ public class Trip implements Serializable {
         this.title = title;
         this.start_date = startDate;
         this.end_date = endDate;
+    }
+
+    public void certify() {
+        if (this.certificationAt != null) {
+            throw new IllegalStateException("이미 위치 인증을 완료했습니다.");
+        }
+        this.certificationAt = LocalDateTime.now();
     }
 }
