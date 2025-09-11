@@ -37,8 +37,15 @@ public class TransDistanceService {
         // 제주 여행 여부 판별
         boolean isJejuTrip = DistanceUtils.isJejuTrip(tripPlaces, placeService);
 
-        // 각 구간마다 개별적으로 getDistance 호출 (순수 계산만)
         List<TransDistanceRequest> requests = batchRequest.getRequests();
+
+        if (!requests.isEmpty()) {
+            TransDistanceRequest firstRequest = requests.getFirst();
+            TransDistanceRequest lastRequest = requests.getLast();
+            lastRequest.setEndX(firstRequest.getStartX());
+            lastRequest.setEndY(firstRequest.getStartY());
+        }
+
         for (TransDistanceRequest request : requests) {
             RouteCalculationResult segmentResult = getDistance(request, isJejuTrip);
             if (segmentResult != null) {
