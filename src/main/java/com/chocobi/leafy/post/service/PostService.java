@@ -5,7 +5,10 @@ import com.chocobi.leafy.place.service.PlaceService;
 import com.chocobi.leafy.post.dto.PostRequest;
 import com.chocobi.leafy.post.dto.PostResponse;
 import com.chocobi.leafy.post.entity.Post;
+import com.chocobi.leafy.post.entity.UserPostLike;
 import com.chocobi.leafy.post.repository.PostRepository;
+import com.chocobi.leafy.post.repository.UserPostLikeRepository;
+import com.chocobi.leafy.user.entity.User;
 import com.chocobi.leafy.user.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
+    private final UserPostLikeRepository userPostLikeRepository;
     private final PlaceService placeService;
     private final UserService userService;
 
@@ -27,8 +31,8 @@ public class PostService {
                 .content(request.getContent())
                 .user(userService.findByKakaoId(request.getUserId()))
                 .place(placeService.getPlaceById(request.getPlaceId()))
-
                 .rating(request.getRating())
+                .likes(0)
                 .build();
 
         return PostResponse.fromEntity(postRepository.save(post));
@@ -73,15 +77,32 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponse toggleLike(Long postId, boolean isCurrentlyLiked) {
+    public PostResponse toggleLike(Long postId, Long userId) {
         Post post = getPostById(postId);
+        User user = userService.findByKakaoId(userId);
+
+        boolean isCurrentlyLiked = userPostLikeRepository.existsByUserAndPost(user, post);
+
         if (isCurrentlyLiked) {
-            // 현재 좋아요 상태면 취소 (-1)
+            // 좋아요 취소
+            userPostLikeRepository.findByUserAndPost(user, post)
+                .ifPresent(userPostLikeRepository::delete);
             post.decrementLikes();
         } else {
-            // 현재 좋아요 안한 상태면 추가 (+1)
+            // 좋아요 추가
+            UserPostLike userPostLike = UserPostLike.builder()
+                .user(user)
+                .post(post)
+                .build();
+            userPostLikeRepository.save(userPostLike);
             post.incrementLikes();
         }
+
         return PostResponse.fromEntity(postRepository.save(post));
+    }
+
+    public List<Long> getUserLikedPostIds(Long userId) {
+        User user = userService.findByKakaoId(userId);
+        return userPostLikeRepository.findPostIdsByUser(user);
     }
 }
