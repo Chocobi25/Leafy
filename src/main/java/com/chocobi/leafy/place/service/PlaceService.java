@@ -44,6 +44,9 @@ public class PlaceService {
     }
 
     public Place getPlaceById(Long id) {
+        if (id == null) {
+            return null;
+        }
         Optional<Place> place = placeRepository.findById(id);
         return place.orElse(null);
     }
