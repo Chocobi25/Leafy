@@ -50,6 +50,10 @@ public class PostController {
 
     @GetMapping("/likes/me")
     public ResponseEntity<List<Long>> getUserLikedPosts(Authentication authentication) {
+        if (authentication == null) {
+            // 비로그인 사용자는 빈 배열 반환
+            return ResponseEntity.ok(List.of());
+        }
         Long userId = Long.parseLong(authentication.getName());
         return ResponseEntity.ok(postService.getUserLikedPostIds(userId));
     }
