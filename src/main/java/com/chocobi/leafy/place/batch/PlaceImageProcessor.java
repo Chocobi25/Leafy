@@ -28,11 +28,9 @@ public class PlaceImageProcessor implements ItemProcessor<Place, List<Image>> {
             return null;
         }
 
-        // 검색 쿼리 조합 (카테고리 + 지역 + 저작권 + 제목)
-        String query = String.format("%s %s %s %s",
-                place.getCategory().name(),
-                place.getAddress().split(" ")[0],
-                place.getCopyright(),
+        // 검색 쿼리 조합 (지역 + 장소명)
+        String query = String.format("%s %s",
+                place.getRegionGroup(),
                 place.getTitle()
         );
 

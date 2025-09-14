@@ -4,6 +4,8 @@ import com.chocobi.leafy.place.entity.Place;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 public class PlaceDTO {
@@ -16,6 +18,7 @@ public class PlaceDTO {
     private String description;
     private String tel;
     private String url;
+    private List<ImageDTO> images;
 
     public static PlaceDTO fromEntity(Place place){
         return new PlaceDTO(
@@ -27,7 +30,12 @@ public class PlaceDTO {
                 place.getLongitude(),
                 place.getDescription(),
                 place.getTel(),
-                place.getUrl()
+                place.getUrl(),
+                place.getImages() != null ?
+                        place.getImages().stream()
+                                .map(ImageDTO::fromEntity)
+                                .toList()
+                        : List.of()
         );
     }
 }
