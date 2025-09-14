@@ -11,4 +11,8 @@ public class CarbonCalculator {
     public static double CalculatePublicTransCarbonEmission(double subwayDistance, double trainDistance, double busDistance ){
         return (subwayDistance / 1000.0) * CarbonEmissionConst.SUBWAY_EMISSION + (trainDistance / 1000.0) * CarbonEmissionConst.TRAIN_EMISSION + (busDistance / 1000.0) * CarbonEmissionConst.BUS_EMISSION;
     }
+
+    public static double CalculateFerryCarbonEmission(double ferryDistance) {
+        return (ferryDistance / 1000.0) * CarbonEmissionConst.FERRY_EMISSION;
+    }
 }
