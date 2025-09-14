@@ -18,7 +18,7 @@ public class PlaceController {
 
     @GetMapping("/list")
     public ResponseEntity<List<PlaceDTO>> getPlacesByArrival(@RequestParam String arrival) {
-        List<PlaceDTO> places = placeService.getPlaceByAddress(arrival);
+        List<PlaceDTO> places = placeService.getPlacesByArrival(arrival);
         return ResponseEntity.ok(places);
     }
 

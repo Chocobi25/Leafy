@@ -16,15 +16,15 @@ import java.util.List;
 @Getter
 @Builder
 public class Place implements Serializable {
-
     @Serial
     private static final long serialVersionUID = 1L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String title;
+    private String title;             // 제목
 
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -37,13 +37,18 @@ public class Place implements Serializable {
     @Column(nullable = false)
     private String address;           // 주소
 
+    @Enumerated(EnumType.STRING)
+    private RegionGroup regionGroup;
+
+    private String regionDetail;
+
     @Column(nullable = false)
     private double latitude;          // 위도
 
     @Column(nullable = false)
     private double longitude;         // 경도
 
-    private String tel;               // 대표 전화번호
+    private String tel;               // 전화번호
 
     @Column(length = 2000)
     private String url;               // 홈페이지
@@ -54,7 +59,7 @@ public class Place implements Serializable {
     private PlaceSourceType sourceType;   //API, USER 구분
 
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Image> images;
+    private List<Image> images;         // 이미지
 
     public void updateFrom(Place other) {
         this.title = other.title;

@@ -1,6 +1,7 @@
 package com.chocobi.leafy.place.fetcher.kakao;
 
 import com.chocobi.leafy.place.common.util.PlaceConstants;
+import com.chocobi.leafy.place.fetcher.kakao.dto.Address;
 import com.chocobi.leafy.place.fetcher.kakao.dto.Document;
 import com.chocobi.leafy.place.fetcher.kakao.dto.GeocodeResponse;
 import com.chocobi.leafy.place.fetcher.kakao.dto.GeocodeResult;
@@ -40,17 +41,27 @@ public class GeocodeService {
 
     private GeocodeResult extractCoordinatesAndAddress(GeocodeResponse response) {
         if (response == null || response.getDocuments().isEmpty()) {
-            return new GeocodeResult(PlaceConstants.DEFAULT_COORDINATES[0], PlaceConstants.DEFAULT_COORDINATES[1], null);
+            return defaultResult();
         }
 
         Document doc = response.getDocuments().getFirst();
         try {
             double x = Double.parseDouble(doc.getX());
             double y = Double.parseDouble(doc.getY());
-            String fullAddress = doc.getAddress_name();
-            return new GeocodeResult(y, x, fullAddress);
+
+            Address address = doc.getAddress();
+
+            return new GeocodeResult(y, x, address);
         } catch (NumberFormatException e) {
-            return new GeocodeResult(PlaceConstants.DEFAULT_COORDINATES[0], PlaceConstants.DEFAULT_COORDINATES[1], null);
+            return defaultResult();
         }
+    }
+
+    private GeocodeResult defaultResult() {
+        return new GeocodeResult(
+                PlaceConstants.DEFAULT_COORDINATES[0],
+                PlaceConstants.DEFAULT_COORDINATES[1],
+                null
+        );
     }
 }
