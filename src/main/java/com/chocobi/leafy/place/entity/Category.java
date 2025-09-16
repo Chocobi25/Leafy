@@ -9,7 +9,8 @@ public enum Category {
     NATURE("자연"),
     EXPERIENCE("체험"),
     CULTURE("문화"),
-    FOOD("음식");
+    FOOD("음식"),
+    ETC("기타");
 
     private final String label;
 }

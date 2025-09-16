@@ -11,4 +11,5 @@ import java.util.List;
 @Repository
 public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findByStatusAndCreatedAtBefore(TripStatus status, LocalDateTime createdAt);
+    List<Trip> findByUserKakaoIdOrderByCreatedAtDesc(Long kakaoId);
 }

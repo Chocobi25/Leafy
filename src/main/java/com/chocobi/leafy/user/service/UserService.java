@@ -1,5 +1,8 @@
 package com.chocobi.leafy.user.service;
 
+import com.chocobi.leafy.trip.entity.Trip;
+import com.chocobi.leafy.trip.repository.TripRepository;
+import com.chocobi.leafy.user.dto.UserTripDto;
 import com.chocobi.leafy.user.entity.Level;
 import com.chocobi.leafy.user.entity.User;
 import com.chocobi.leafy.user.dto.UserProfileDto;
@@ -8,11 +11,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final TripRepository tripRepository;
 
     /**
      * 만약 유저가 있다면 그 User를 리턴하고, User가 없다면 새 User 객체를 만들어 리턴한다.
@@ -89,5 +96,24 @@ public class UserService {
     private boolean isValidIconSelection(Level userLevel, Level selectedLevelIcon) {
         // Level의 enum의 ordinal() 값으로 비교 (LV1=0, LV2=1, .... LV5=4)
         return selectedLevelIcon.ordinal() <= userLevel.ordinal();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserTripDto> getUserTrips(Long kakaoId) {
+        List<Trip> trips = tripRepository.findByUserKakaoIdOrderByCreatedAtDesc(kakaoId);
+        
+        return trips.stream()
+                .map(trip -> UserTripDto.builder()
+                        .tripId(trip.getId())
+                        .title(trip.getTitle())
+                        .startDate(trip.getStart_date())
+                        .endDate(trip.getEnd_date())
+                        .carbonSaved(trip.getCarbonSaved())
+                        .carbonEmission(trip.getCarbonEmission())
+                        .status(trip.getStatus())
+                        .createdAt(trip.getCreatedAt())
+                        .totalPlaces(trip.getTripPlaces() != null ? trip.getTripPlaces().size() : 0)
+                        .build())
+                .collect(Collectors.toList());
     }
 }

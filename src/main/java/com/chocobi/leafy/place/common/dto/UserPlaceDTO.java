@@ -7,7 +7,7 @@ public class UserPlaceDTO {
     private String title;
     private String tel;
     private String address;
-    private String longitude;
-    private String latitude;
+    private double longitude;
+    private double latitude;
     private String url;
 }

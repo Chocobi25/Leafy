@@ -5,6 +5,7 @@ import com.chocobi.leafy.user.entity.User;
 import com.chocobi.leafy.user.dto.LevelIconUpdateDto;
 import com.chocobi.leafy.user.dto.NicknameUpdateDto;
 import com.chocobi.leafy.user.dto.UserProfileDto;
+import com.chocobi.leafy.user.dto.UserTripDto;
 import com.chocobi.leafy.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,6 +32,15 @@ public class UserController {
         UserProfileDto userProfileDto = userService.getUserProfile(kakaoId);
 
         return ResponseEntity.ok(userProfileDto);
+    }
+
+    @GetMapping("/trips")
+    public ResponseEntity<List<UserTripDto>> getUserTrips() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long kakaoId = (Long) authentication.getPrincipal();
+        
+        List<UserTripDto> userTrips = userService.getUserTrips(kakaoId);
+        return ResponseEntity.ok(userTrips);
     }
 
     @PutMapping("/nickname")

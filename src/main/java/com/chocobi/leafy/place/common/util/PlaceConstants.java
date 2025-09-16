@@ -18,7 +18,8 @@ public class PlaceConstants {
     public static final String FARM_LIST = "/frmhsTasteHosList";
     public static final String FARM_DETAIL = "/frmhsTasteHosDtl";
     public static final String GEOCODE_PATH = "/v2/local/search/address.json";
-    public static final String SEARCH_IMAGE_PATH = "/v1/search/image";
+    public static final String NAVER_IMAGE_PATH = "/v1/search/image";
+    public static final String TOUR_IMAGE_PATH = "/PhotoGalleryService1/gallerySearchList1";
 
     public static final double[] DEFAULT_COORDINATES = {0.0, 0.0};
 }
