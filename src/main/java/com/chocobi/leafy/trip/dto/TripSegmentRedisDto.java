@@ -27,6 +27,7 @@ public class TripSegmentRedisDto implements Serializable {
     private double distance;
     private int duration; // 소요 시간 (분)
     private double carbonEmitted;
+    private double maxCarbonEmission;
 
     public TripSegment toEntity() {
         return TripSegment.builder()
@@ -37,6 +38,7 @@ public class TripSegmentRedisDto implements Serializable {
                 .distance(this.distance)
                 .duration(this.duration)
                 .carbonEmitted(this.carbonEmitted)
+                .maxCarbonEmission(this.maxCarbonEmission)
                 .build();
     }
 }

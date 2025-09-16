@@ -3,7 +3,9 @@ package com.chocobi.leafy.place.batch;
 import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.place.entity.PlaceSourceType;
 import com.chocobi.leafy.place.entity.PlaceStaging;
+import com.chocobi.leafy.place.entity.RegionGroup;
 import com.chocobi.leafy.place.fetcher.kakao.GeocodeService;
+import com.chocobi.leafy.place.fetcher.kakao.dto.GeocodeResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
@@ -17,9 +19,9 @@ public class PlaceGeocodeProcessor implements ItemProcessor<PlaceStaging, Place>
 
     @Override
     public Place process(PlaceStaging item) throws Exception {
-        double[] coordinates = geocodeService.getCoordinatesFromAddress(item.getAddress());
+        GeocodeResult geocodeResult = geocodeService.getCoordinatesFromAddress(item.getAddress());
 
-        if (coordinates == null) {
+        if (geocodeResult.getAddress() == null) {
             log.warn("Failed to get coordinates for address: {}. Skipping item.", item.getAddress());
             return null;
         }
@@ -28,9 +30,11 @@ public class PlaceGeocodeProcessor implements ItemProcessor<PlaceStaging, Place>
                 .title(item.getTitle())
                 .description(item.getDescription())
                 .category(item.getCategory())
-                .address(item.getAddress())
-                .latitude(coordinates[0])
-                .longitude(coordinates[1])
+                .address(geocodeResult.getAddress().getAddress_name())
+                .regionGroup(RegionGroup.fromRegionName(geocodeResult.getAddress().getRegion_1depth_name()))
+                .regionDetail(geocodeResult.getAddress().getRegion_2depth_name())
+                .latitude(geocodeResult.getLatitude())
+                .longitude(geocodeResult.getLongitude())
                 .tel(item.getTel())
                 .url(item.getUrl())
                 .copyright(item.getCopyright())
