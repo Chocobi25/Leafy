@@ -27,6 +27,9 @@ public class PlaceService {
     }
 
     public Place getPlaceById(Long id) {
+        if (id == null) {
+            return null;
+        }
         Optional<Place> place = placeRepository.findById(id);
         return place.orElse(null);
     }
@@ -60,12 +63,5 @@ public class PlaceService {
                 .copyright("카카오지도")
                 .category(Category.ETC)
                 .build()).getId();
-    }
-    public Place getPlaceById(Long id) {
-        if (id == null) {
-            return null;
-        }
-        Optional<Place> place = placeRepository.findById(id);
-        return place.orElse(null);
     }
 }

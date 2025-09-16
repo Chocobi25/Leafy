@@ -49,6 +49,13 @@ public class TripService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
     }
 
+    public void changeTripStatus(Long tripId, TripStatus tripStatus) {
+        Trip trip = getTripById(tripId);
+        trip.editStatus(tripStatus);
+        tripRepository.save(trip);
+    }
+
+
     @Transactional
     public void requestLocationCheck(Long userId, Trip trip) throws FirebaseMessagingException {
         User user = userService.findByKakaoId(userId);
