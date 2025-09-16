@@ -7,6 +7,7 @@ import com.chocobi.leafy.distance.dto.RouteCalculationResult;
 import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
 import com.chocobi.leafy.trip.dto.TripRequest;
 import com.chocobi.leafy.trip.entity.Trip;
+import com.chocobi.leafy.trip.entity.TripStatus;
 import com.chocobi.leafy.trip.service.TripPlaceService;
 import com.chocobi.leafy.trip.service.TripSegmentService;
 import com.chocobi.leafy.trip.service.TripService;
@@ -61,6 +62,8 @@ public class TripController {
             response.put("success", true);
             response.put("message", "여행 계획이 성공적으로 완료되었습니다.");
             response.put("tripId", tripId);
+
+            tripService.changeTripStatus(tripId,TripStatus.READY);
 
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
