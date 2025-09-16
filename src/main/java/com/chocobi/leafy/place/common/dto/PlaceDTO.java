@@ -1,6 +1,7 @@
 package com.chocobi.leafy.place.common.dto;
 
 import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.entity.RegionGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -13,6 +14,8 @@ public class PlaceDTO {
     private String title;
     private String category;
     private String address;
+    private RegionGroup regionGroup;
+    private String regionDetails;
     private double latitude;
     private double longitude;
     private String description;
@@ -26,6 +29,8 @@ public class PlaceDTO {
                 place.getTitle(),
                 place.getCategory().name(),
                 place.getAddress(),
+                place.getRegionGroup(),
+                place.getRegionDetail(),
                 place.getLatitude(),
                 place.getLongitude(),
                 place.getDescription(),
