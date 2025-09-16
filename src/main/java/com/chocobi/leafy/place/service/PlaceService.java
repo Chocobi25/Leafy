@@ -61,4 +61,11 @@ public class PlaceService {
                 .category(Category.ETC)
                 .build()).getId();
     }
+    public Place getPlaceById(Long id) {
+        if (id == null) {
+            return null;
+        }
+        Optional<Place> place = placeRepository.findById(id);
+        return place.orElse(null);
+    }
 }
