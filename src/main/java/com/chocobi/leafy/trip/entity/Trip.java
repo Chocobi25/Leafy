@@ -71,4 +71,8 @@ public class Trip implements Serializable {
         }
         this.certificationAt = LocalDateTime.now();
     }
+
+    public void editStatus(TripStatus status) {
+        this.status = status;
+    }
 }

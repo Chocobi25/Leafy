@@ -48,6 +48,12 @@ public class TripService {
         return tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
     }
+  
+    public void changeTripStatus(Long tripId, TripStatus tripStatus) {
+        Trip trip = getTripById(tripId);
+        trip.editStatus(tripStatus);
+        tripRepository.save(trip);
+    }
 
     public void saveTrip(Trip trip){
         tripRepository.save(trip);

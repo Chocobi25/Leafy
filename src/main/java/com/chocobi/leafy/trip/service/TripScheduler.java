@@ -24,15 +24,25 @@ public class TripScheduler {
     private final TripRepository tripRepository;
     private final FCMService fcmService;
     private final TripMessageService tripMessageService;
+    private final TripService tripService;
 
-    @Scheduled(cron = "0 0 0 * * *")
-    public void deleteOldCreatingTrips() {
+    @Scheduled(cron = "0 0 0 * * *") // 매일 자정
+    public void processTripsDaily() throws FirebaseMessagingException {
         LocalDateTime threshold = LocalDateTime.now().minusDays(7);
-        List<Trip> oldTrips = tripRepository.findByStatusAndCreatedAtBefore(TripStatus.CREATING, threshold);
 
+        // 1. 오래된 Creating Trip 삭제
+        List<Trip> oldTrips = tripRepository.findByStatusAndCreatedAtBefore(TripStatus.CREATING, threshold);
         if (!oldTrips.isEmpty()) {
             tripRepository.deleteAll(oldTrips);
             log.info("Deleted {} old creating trips.", oldTrips.size());
+        }
+
+        // 2. 오늘 출발 Ready Trip -> InProgress로 상태 변경
+        LocalDate today = LocalDate.now();
+        List<Trip> readyTrips = tripRepository.findAllByStartDateAndStatus(today, TripStatus.READY);
+
+        for (Trip trip : readyTrips) {
+            tripService.changeTripStatus(trip.getId(), TripStatus.IN_PROGRESS);
         }
     }
 
