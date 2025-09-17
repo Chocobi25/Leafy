@@ -15,7 +15,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Configuration
@@ -24,6 +23,7 @@ import java.util.Map;
 public class TripScheduler {
     private final TripRepository tripRepository;
     private final FCMService fcmService;
+    private final TripMessageService tripMessageService;
     private final TripService tripService;
 
     @Scheduled(cron = "0 0 0 * * *") // 매일 자정
@@ -53,12 +53,21 @@ public class TripScheduler {
 
         for (Trip trip : tripsStartingToday) {
             User participant = trip.getUser();
-            fcmService.sendNotification(
-                    participant,
-                    "여행 출발!",
-                    trip.getTitle() + " 여행이 오늘 출발합니다!",
-                    Map.of("tripId", trip.getId().toString())
-            );
+            tripMessageService.notifyTripStart(participant, trip);
+        }
+    }
+
+    /**
+     * startDate 17:00 PM: 위치 인증 알림 전송
+     */
+    @Scheduled(cron = "0 0 17 * * *", zone = "Asia/Seoul")
+    public void sendCertifyNotification() throws FirebaseMessagingException {
+        LocalDate today = LocalDate.now();
+        List<Trip> tripsStartingToday = tripRepository.findAllByStartDateAndStatus(today, TripStatus.IN_PROGRESS);
+
+        for (Trip trip : tripsStartingToday) {
+            User participant = trip.getUser();
+            tripMessageService.requestLocationCheck(participant, trip);
         }
     }
 }
