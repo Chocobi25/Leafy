@@ -18,7 +18,7 @@ public class TripDTO {
     private LocalDate endDate;
     private double carbonSaved;
     private double carbonEmission;
-    private User user;
+    private Long userId;
     private List<TripPlaceResponse> tripPlaces;
 
     public static TripDTO fromEntity(Trip trip) {
@@ -29,7 +29,7 @@ public class TripDTO {
                 trip.getEndDate(),
                 trip.getCarbonSaved(),
                 trip.getCarbonEmission(),
-                trip.getUser(),
+                trip.getUser().getKakaoId(),
                 trip.getTripPlaces().stream()
                         .map(TripPlaceResponse::toDTO)
                         .sorted(Comparator.comparingInt(TripPlaceResponse::getVisitOrder))

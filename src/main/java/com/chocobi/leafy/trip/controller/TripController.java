@@ -4,6 +4,8 @@ import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.dto.RouteCalculationResult;
+import com.chocobi.leafy.trip.dto.TripDetailsDTO;
+import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
 import com.chocobi.leafy.trip.dto.TripRequest;
 import com.chocobi.leafy.trip.entity.Trip;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/api/trip")
 @AllArgsConstructor
 public class TripController {
 
@@ -31,29 +34,31 @@ public class TripController {
     private final TripSegmentService tripSegmentService;
     private final TripMessageService tripMessageService;
 
-    @PostMapping("/api/trip")
+    @PostMapping
     public Long saveTrip(@RequestBody TripRequest tripRequest, Authentication authentication) {
-        Long kakaoId = (Long) authentication.getPrincipal(); // 사용자 ID 가져옴
+        Long kakaoId = (Long) authentication.getPrincipal();
         return tripService.createTrip(tripRequest, kakaoId);
     }
 
-    @PostMapping("/api/trip/places")
+    @PostMapping("/places")
     public ResponseEntity<Map<String, String>> saveTripPlaces(@RequestBody TripPlacesListRequest tripPlaceListRequest) {
-        tripPlaceService.saveTripPlaces(tripPlaceListRequest);
+        Trip trip = tripService.getTripById(tripPlaceListRequest.getTripId());
+        tripPlaceService.saveTripPlaces(trip, tripPlaceListRequest);
         Map<String, String> response = new HashMap<>();
         response.put("message", "여행지가 성공적으로 저장되었습니다.");
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/api/trip/places")
+    @PatchMapping("/places")
     public ResponseEntity<Map<String, String>> updateTripPlaceDetails(@RequestBody TripPlacesListRequest tripPlaceListRequest) {
-        tripPlaceService.updateTripPlaceDetails(tripPlaceListRequest);
+        Trip trip = tripService.getTripById(tripPlaceListRequest.getTripId());
+        tripPlaceService.updateTripPlaceDetails(trip, tripPlaceListRequest);
         Map<String, String> response = new HashMap<>();
         response.put("message", "여행지 정보가 성공적으로 업데이트되었습니다.");
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/api/trip/{tripId}/complete")
+    @PostMapping("/{tripId}/complete")
     public ResponseEntity<Map<String, Object>> completeTrip(@PathVariable Long tripId, @RequestBody Map<String, String> request, Authentication authentication) {
         try {
             Long kakaoId = (Long) authentication.getPrincipal();
@@ -65,7 +70,7 @@ public class TripController {
             response.put("message", "여행 계획이 성공적으로 완료되었습니다.");
             response.put("tripId", tripId);
 
-            tripService.changeTripStatus(tripId,TripStatus.READY);
+            tripService.changeTripStatus(tripId, TripStatus.READY);
             tripMessageService.notifyTripCreated(kakaoId, tripId);
 
             return ResponseEntity.ok(response);
@@ -82,12 +87,12 @@ public class TripController {
         }
     }
 
-    @GetMapping("/api/trip/{tripId}/summary")
+    @GetMapping("/{tripId}/summary")
     public ResponseEntity<Map<String, Object>> getTripSummary(@PathVariable Long tripId, @RequestParam String transport, Authentication authentication) {
         try {
             Long kakaoId = (Long) authentication.getPrincipal();
             Map<String, Object> summary = tripSegmentService.getTotalTimeAndCarbon(tripId, transport);
-            
+
             return ResponseEntity.ok(summary);
         } catch (IllegalArgumentException e) {
             Map<String, Object> errorResponse = new HashMap<>();
@@ -100,29 +105,15 @@ public class TripController {
         }
     }
 
-    // Test용 메서드(수정할 예정)
-    @PostMapping("/api/test/trip")
-    public ResponseEntity<Trip> createTrip(@RequestBody TripRequest tripRequest, Authentication authentication) {
-        // 여행 생성
-        Long createdTripId = tripService.createTrip(tripRequest, (Long) authentication.getPrincipal());
 
-        // 생성된 여행 정보 조회
-        Trip createdTrip = tripService.getTripById(createdTripId);
-
-        // HTTP 상태 코드와 함께 응답
-        if (createdTrip != null) {
-            return new ResponseEntity<>(createdTrip, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PostMapping("/api/trip/{tripId}/routes/car")
+    @PostMapping("/{tripId}/routes/car")
     public ResponseEntity<DistanceResponse> calculateCarRoute(@PathVariable Long tripId, @RequestBody CarDistanceRequest request, Authentication authentication) {
         try {
             Long kakaoId = (Long) authentication.getPrincipal();
             System.out.println("자동차 경로 계산 요청 - tripId: " + tripId + ", request: " + request);
+
             DistanceResponse response = tripSegmentService.calculateAndSaveCarRoute(request, tripId);
+
             System.out.println("자동차 경로 계산 완료 - response: " + response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -132,14 +123,49 @@ public class TripController {
         }
     }
 
-    @PostMapping("/api/trip/routes/public")
+
+    @PostMapping("/routes/public")
     public ResponseEntity<List<RouteCalculationResult>> calculatePublicRoute(@RequestBody TransDistanceBatchRequest request, Authentication authentication) {
         try {
             Long kakaoId = (Long) authentication.getPrincipal();
-            List<RouteCalculationResult> results = tripSegmentService.calculateAndSavePublicRoute(request);
+
+            List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(request.getTripId());
+            List<RouteCalculationResult> results = tripSegmentService.calculateAndSavePublicRoute(request, tripPlaces);
+
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @GetMapping("/details/{tripId}")
+    public ResponseEntity<TripDetailsDTO> getTripDetails(@PathVariable Long tripId) {
+        TripDetailsDTO tripDetails = tripService.getTripDetails(tripId);
+        return ResponseEntity.ok(tripDetails);
+    }
+
+    @PatchMapping("/{tripId}")
+    public ResponseEntity<String> updateTrip(@PathVariable Long tripId, @RequestBody TripRequest tripRequest) {
+        try {
+            tripService.updateTrip(tripId, tripRequest);
+            return ResponseEntity.ok("여행 기록이 성공적으로 수정되었습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("여행 기록 수정 중 오류가 발생했습니다.");
+        }
+    }
+
+    // ⭐️ 여행 기록 삭제 API 엔드포인트 추가
+    @DeleteMapping("/{tripId}")
+    public ResponseEntity<String> deleteTrip(@PathVariable Long tripId) {
+        try {
+            tripService.deleteTrip(tripId);
+            return ResponseEntity.ok("여행 기록이 성공적으로 삭제되었습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("여행 기록 삭제 중 오류가 발생했습니다.");
         }
     }
 }

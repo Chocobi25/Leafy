@@ -13,10 +13,12 @@ import com.chocobi.leafy.distance.service.TransDistanceService;
 import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.place.service.PlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.entity.TripSegment;
 import com.chocobi.leafy.trip.repository.TripSegmentRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -27,16 +29,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TripSegmentService {
     private final TripSegmentRepository tripSegmentRepository;
-    private final TripPlaceService tripPlaceService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final CarDistanceService carDistanceService;
     private final TransDistanceService transDistanceService;
-    private final PlaceService placeService;
+    private final TripPlaceService tripPlaceService;
 
     /**
      * TripSegmentRedisDto를 만들고 Redis에 임시 저장하는 편의 통합 메서드
@@ -44,10 +46,11 @@ public class TripSegmentService {
      * @param tripId
      * @param sections
      * @param transport
+     * @param tripPlaces ⭐️ tripPlaces를 인자로 받습니다.
      */
-    public void completeTempTripSegments(Long tripId, List<Section> sections, String transport) {
-        
-        List<TripSegmentRedisDto> tripSegmentDtos = createTripSegmentRedisDto(tripId, sections, transport);
+    public void completeTempTripSegments(Long tripId, List<Section> sections, String transport, List<TripPlaceResponse> tripPlaces) {
+
+        List<TripSegmentRedisDto> tripSegmentDtos = createTripSegmentRedisDto(tripId, sections, transport, tripPlaces);
         saveTempTripSegments(tripSegmentDtos);
     }
 
@@ -57,10 +60,10 @@ public class TripSegmentService {
      * @param tripId
      * @param sections
      * @param transport
+     * @param tripPlaces ⭐️ tripPlaces를 인자로 받습니다.
      * @return
      */
-    private List<TripSegmentRedisDto> createTripSegmentRedisDto(Long tripId, List<Section> sections, String transport) {
-        List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(tripId);
+    private List<TripSegmentRedisDto> createTripSegmentRedisDto(Long tripId, List<Section> sections, String transport, List<TripPlaceResponse> tripPlaces) {
         List<TripSegmentRedisDto> tripSegmentDtos = new ArrayList<>();
 
         List<TripPlaceResponse> mutableTripPlaces = new ArrayList<>(tripPlaces);
@@ -76,8 +79,8 @@ public class TripSegmentService {
 
             TripSegmentRedisDto dto = TripSegmentRedisDto.builder()
                     .tripId(tripId)
-                    .startPlaceId(startPlace.getPlaceId())
-                    .endPlaceId(endPlace.getPlaceId())
+                    .startPlaceId(startPlace.getPlace().getId())
+                    .endPlaceId(endPlace.getPlace().getId())
                     .transport(transport)
                     .distance(distance)
                     .duration(durationInMinutes)
@@ -118,10 +121,10 @@ public class TripSegmentService {
      * @param tripId    트립 아이디
      * @param sections  구간별 거리 정보 담김
      * @param transport 교통 수단
+     * @param tripPlaces ⭐️ tripPlaces를 인자로 받습니다.
      * @return
      */
-    public List<TripSegment> createTripSegments(Long tripId, List<Section> sections, String transport) {
-        List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(tripId);
+    public List<TripSegment> createTripSegments(Long tripId, List<Section> sections, String transport, List<TripPlaceResponse> tripPlaces) {
         List<TripSegment> tripSegments = new ArrayList<>();
 
         List<TripPlaceResponse> mutableTripPlaces = new ArrayList<>(tripPlaces);
@@ -137,8 +140,8 @@ public class TripSegmentService {
 
             TripSegment tripSegment = TripSegment.builder()
                     .tripId(Trip.builder().id(tripId).build())
-                    .startPlaceId(Place.builder().id(startPlace.getPlaceId()).build())
-                    .endPlaceId(Place.builder().id(endPlace.getPlaceId()).build())
+                    .startPlaceId(Place.builder().id(startPlace.getPlace().getId()).build())
+                    .endPlaceId(Place.builder().id(endPlace.getPlace().getId()).build())
                     .transport(transport)
                     .distance(distance)
                     .duration(durationInMinutes)
@@ -173,7 +176,7 @@ public class TripSegmentService {
         for (int i = 0; i < tripSegmentDtos.size(); i++) {
             TripSegmentRedisDto dto = tripSegmentDtos.get(i);
             dto.setTransport(transport);
-            
+
             // maxCarbonEmission 설정: 현재 교통수단과 다른 교통수단의 maxCarbonEmission 중 더 큰 값
             double maxCarbon = dto.getMaxCarbonEmission();
             if (otherTripSegmentDtos != null && i < otherTripSegmentDtos.size()) {
@@ -181,10 +184,10 @@ public class TripSegmentService {
                 maxCarbon = Math.max(maxCarbon, otherMaxCarbon);
             }
             dto.setMaxCarbonEmission(maxCarbon);
-            
+
             tripSegments.add(dto.toEntity());
         }
-        
+
         saveTripSegments(tripSegments); // DB에 저장
         deleteTempTripSegments(tripId, transport); // 임시 저장한 TripSegments를 삭제
         deleteTempTripSegments(tripId, otherTransport);
@@ -226,19 +229,19 @@ public class TripSegmentService {
      */
     public Map<String, Object> getTotalTimeAndCarbon(Long tripId, String transport) {
         List<TripSegmentRedisDto> segments = getTempTripSegments(tripId, transport);
-        
+
         int totalDuration = segments.stream()
                 .mapToInt(TripSegmentRedisDto::getDuration)
                 .sum();
-        
+
         double totalCarbonEmission = segments.stream()
                 .mapToDouble(TripSegmentRedisDto::getCarbonEmitted)
                 .sum();
-        
+
         Map<String, Object> result = new HashMap<>();
         result.put("totalDuration", totalDuration); // 분 단위
         result.put("totalCarbonEmission", totalCarbonEmission); // g 단위
-        
+
         return result;
     }
 
@@ -255,30 +258,32 @@ public class TripSegmentService {
      * 자동차 경로 계산 및 Redis 저장 통합 메서드
      *
      * @param request
+     * @param tripId
+     * @param tripPlaces ⭐️ tripPlaces를 인자로 받습니다.
      * @return
      */
+    @Transactional
     public DistanceResponse calculateAndSaveCarRoute(CarDistanceRequest request, Long tripId) {
-        List<TripPlaceResponse> tripPlaces = new ArrayList<>(tripPlaceService.getTripPlaces(tripId));
-        tripPlaces.sort((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()));
+        // ⭐️ 서비스 내부에서 tripPlaces를 가져옵니다.
+        List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(tripId);
 
         CarDistanceResponse carResponse;
+        CarDistanceRequest finalRequest = request;
 
         // 2. 제주도 여행 여부 판별
-        if (DistanceUtils.isJejuTrip(tripPlaces, placeService)) {
-            // 3. 제주도 여행이면, 항구 포함하도록 request 객체 수정
-            CarDistanceRequest modifiedRequest = carDistanceService.addPortsToRequest(request, tripPlaces);
-
-            // 4. 수정된 request로 CarDistanceService 호출
-            carResponse = carDistanceService.getDistance(modifiedRequest);
+        if (DistanceUtils.isJejuTrip(tripPlaces)) {
+            // 3. 제주도 여행이면, 항구 포함하도록 request 객체를 새로 생성
+            finalRequest = carDistanceService.addPortsToRequest(request, tripPlaces);
         }
 
-        carResponse = carDistanceService.getDistance(request);;
+        // 4. 최종 요청 객체로 CarDistanceService 호출
+        carResponse = carDistanceService.getDistance(finalRequest);
 
         // sections 가져오기
         List<Section> sections = carResponse.getSections();
 
         // Redis에 저장
-        completeTempTripSegments(tripId, sections, "car");
+        completeTempTripSegments(tripId, sections, "car", tripPlaces);
 
         return carResponse.getDistanceResponse();
     }
@@ -287,11 +292,12 @@ public class TripSegmentService {
      * 대중교통 경로 계산 및 Redis 저장 통합 메서드
      *
      * @param batchRequest
+     * @param tripPlaces ⭐️ tripPlaces를 인자로 받습니다.
      * @return
      */
-    public List<RouteCalculationResult> calculateAndSavePublicRoute(TransDistanceBatchRequest batchRequest) {
+    public List<RouteCalculationResult> calculateAndSavePublicRoute(TransDistanceBatchRequest batchRequest, List<TripPlaceResponse> tripPlaces) {
         List<RouteCalculationResult> results = transDistanceService.getBatchDistance(batchRequest);
-        
+
         // RouteCalculationResult를 Section으로 변환
         List<Section> sections = new ArrayList<>();
         for (RouteCalculationResult result : results) {
@@ -302,9 +308,21 @@ public class TripSegmentService {
             section.setMaxCarbonEmission(result.getMaxCarbonEmission());
             sections.add(section);
         }
-        
-        completeTempTripSegments(batchRequest.getTripId(), sections, "public");
-        
+
+        completeTempTripSegments(batchRequest.getTripId(), sections, "public", tripPlaces);
+
         return results;
+    }
+
+    @Transactional
+    public List<TripSegmentDTO> getTripSegments(Long tripId) {
+        return tripSegmentRepository.findByTripId_Id(tripId).stream()
+                .map(TripSegmentDTO::fromEntity)
+                .toList();
+    }
+
+    @Transactional
+    public void deleteTripSegments(Trip trip) {
+        tripSegmentRepository.deleteAllByTripId(trip);
     }
 }
