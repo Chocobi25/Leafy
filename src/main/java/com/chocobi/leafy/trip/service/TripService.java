@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -26,8 +27,8 @@ public class TripService {
         Trip trip = Trip.builder()
                 .user(userService.findByKakaoId(kakaoId))
                 .title(tripRequest.getTitle())
-                .start_date(tripRequest.getStart_date())
-                .end_date(tripRequest.getEnd_date())
+                .startDate(tripRequest.getStart_date())
+                .endDate(tripRequest.getEnd_date())
                 .build();
         tripRepository.save(trip);
         return trip.getId();
@@ -48,7 +49,16 @@ public class TripService {
         return tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
     }
-  
+
+    public List<TripDTO> getTripsByUser(Long userId){
+        User user = userService.findByKakaoId(userId);
+        List<Trip> trips = tripRepository.findAllByUser(user);
+
+        return trips.stream()
+                .map(TripDTO::fromEntity)
+                .toList();
+    }
+
     public void changeTripStatus(Long tripId, TripStatus tripStatus) {
         Trip trip = getTripById(tripId);
         trip.editStatus(tripStatus);

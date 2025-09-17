@@ -8,6 +8,7 @@ import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
 import com.chocobi.leafy.trip.dto.TripRequest;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.entity.TripStatus;
+import com.chocobi.leafy.trip.service.TripMessageService;
 import com.chocobi.leafy.trip.service.TripPlaceService;
 import com.chocobi.leafy.trip.service.TripSegmentService;
 import com.chocobi.leafy.trip.service.TripService;
@@ -28,6 +29,7 @@ public class TripController {
     private final TripService tripService;
     private final TripPlaceService tripPlaceService;
     private final TripSegmentService tripSegmentService;
+    private final TripMessageService tripMessageService;
 
     @PostMapping("/api/trip")
     public Long saveTrip(@RequestBody TripRequest tripRequest, Authentication authentication) {
@@ -64,6 +66,7 @@ public class TripController {
             response.put("tripId", tripId);
 
             tripService.changeTripStatus(tripId,TripStatus.READY);
+            tripMessageService.notifyTripCreated(kakaoId, tripId);
 
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
