@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,60 +20,61 @@ public class FCMService {
     private final UserDeviceRepository userDeviceRepository;
 
     /**
-     * 특정 사용자에게 알림 전송 (멀티 디바이스 지원)
+     * 특정 사용자에게 단일 알림 전송
      */
     @Transactional
     public void sendNotification(User user, String title, String body, Map<String, String> data) throws FirebaseMessagingException {
-        // 1. 해당 유저의 모든 디바이스 토큰 가져오기
-        Optional<UserDevice> devices = userDeviceRepository.findByUser(user);
-        if (devices.isEmpty()) {
-            log.warn("사용자 {}에게 등록된 FCM 토큰이 없습니다.", user.getKakaoId());
+        // 1. 사용자 디바이스 토큰 가져오기 (단일)
+        Optional<UserDevice> deviceOpt = userDeviceRepository.findByUser(user);
+        if (deviceOpt.isEmpty()) {
+            log.warn("❌ 사용자 {} 에 등록된 FCM 토큰이 없습니다.", user.getKakaoId());
             return;
         }
 
-        List<String> tokens = devices.stream()
-                .map(UserDevice::getFcmToken)
-                .toList();
+        String fcmToken = deviceOpt.get().getFcmToken();
 
-        // 2. 멀티캐스트 메시지 생성
-        MulticastMessage.Builder messageBuilder = MulticastMessage.builder()
-                .addAllTokens(tokens)
-                .setNotification(Notification.builder().setTitle(title).setBody(body).build());
+        // 2. 메시지 생성
+        Message.Builder builder = Message.builder()
+                .setToken(fcmToken)
+                .setNotification(Notification.builder()
+                        .setTitle(title)
+                        .setBody(body)
+                        .build());
 
         if (data != null && !data.isEmpty()) {
-            messageBuilder.putAllData(data);
+            builder.putAllData(data);
         }
 
-        MulticastMessage message = messageBuilder.build();
+        Message message = builder.build();
 
         // 3. 발송
-        BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
-        log.info("알림 발송 완료. 성공: {}, 실패: {}", response.getSuccessCount(), response.getFailureCount());
-
-        // 4. 실패 토큰 삭제
-        List<SendResponse> responses = response.getResponses();
-        for (int i = 0; i < responses.size(); i++) {
-            if (!responses.get(i).isSuccessful()) {
-                String failedToken = tokens.get(i);
-                log.warn("FCM 토큰 {} 발송 실패. DB에서 삭제합니다.", failedToken);
-                userDeviceRepository.findByFcmToken(failedToken)
-                        .ifPresent(userDeviceRepository::delete);
-            }
+        try {
+            String response = FirebaseMessaging.getInstance().send(message);
+            log.info("✅ FCM 알림 전송 완료 - user={}, token={}, response={}", user.getKakaoId(), fcmToken, response);
+        } catch (FirebaseMessagingException e) {
+            log.error("❌ FCM 전송 실패 - user={}, token={}, reason={}", user.getKakaoId(), fcmToken, e.getMessagingErrorCode(), e);
+            // 실패 토큰 삭제
+            userDeviceRepository.findByFcmToken(fcmToken)
+                    .ifPresent(userDeviceRepository::delete);
         }
     }
 
     /**
-     * 단일 토큰 알림 (기존 sendSimpleNotification / sendDataNotification 대체 가능)
+     * 단일 토큰 알림 (테스트용)
      */
     public void sendNotification(String fcmToken, String title, String body, Map<String, String> data) throws FirebaseMessagingException {
-        Message.Builder messageBuilder = Message.builder()
+        Message.Builder builder = Message.builder()
                 .setToken(fcmToken)
-                .setNotification(Notification.builder().setTitle(title).setBody(body).build());
+                .setNotification(Notification.builder()
+                        .setTitle(title)
+                        .setBody(body)
+                        .build());
 
         if (data != null && !data.isEmpty()) {
-            messageBuilder.putAllData(data);
+            builder.putAllData(data);
         }
 
-        FirebaseMessaging.getInstance().send(messageBuilder.build());
+        String response = FirebaseMessaging.getInstance().send(builder.build());
+        log.info("✅ 단일 토큰 알림 전송 성공 - token={}, response={}", fcmToken, response);
     }
 }
