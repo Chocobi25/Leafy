@@ -7,6 +7,7 @@ import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.domain.Point;
 import com.chocobi.leafy.distance.domain.Port;
 import com.chocobi.leafy.distance.dto.*;
+import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.place.service.PlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
@@ -27,7 +28,6 @@ import static com.chocobi.leafy.distance.service.DistanceUtils.placeToPoint;
 @Service
 @RequiredArgsConstructor
 public class CarDistanceService {
-    private final PlaceService placeService;
     private final WebClient kakaoNaviWebClient;
 
     /**
@@ -128,6 +128,9 @@ public class CarDistanceService {
      * 카카오 내비 API 호출
      */
     private KakaoNaviResponse callKakaoApi(CarDistanceRequest request) {
+        // ⭐️ 이 줄을 추가하여 어떤 데이터가 보내지는지 확인합니다.
+        System.out.println("카카오 네비 API에 보낼 요청: " + request.toString());
+
         KakaoNaviResponse response = kakaoNaviWebClient.post()
                 .uri(DistanceConst.kakaoUri)
                 .bodyValue(request)
@@ -216,7 +219,7 @@ public class CarDistanceService {
         log.debug("전체 tripPlaces 목록: {}", tripPlaces);
 
         for (int i = 0; i < tripPlaces.size(); i++) {
-            Place place = placeService.getPlaceById(tripPlaces.get(i).getPlaceId());
+            PlaceDTO place = tripPlaces.get(i).getPlace();
             if (place.getAddress() != null && place.getAddress().contains("제주")) {
                 if (firstJejuIndex == -1) {
                     firstJejuIndex = i;
@@ -238,7 +241,7 @@ public class CarDistanceService {
 
         // 3. 육지에서 제주로 가는 항구 추가
         Point preJejuPoint = (firstJejuIndex > 0)
-                ? placeToPoint(placeService.getPlaceById(tripPlaces.get(firstJejuIndex - 1).getPlaceId()))
+                ? placeToPoint(tripPlaces.get(firstJejuIndex - 1).getPlace())
                 : request.getOrigin();
 
         log.info("제주도 진입 전 마지막 장소의 좌표: {}", preJejuPoint);
@@ -246,26 +249,26 @@ public class CarDistanceService {
         newWaypoints.add(nearestDepartPort.getPoint());
         log.info("선택된 육지 출발 항구: {} ({})", nearestDepartPort.getName(), nearestDepartPort.getPoint());
 
-        Point firstJejuPoint = placeToPoint(placeService.getPlaceById(tripPlaces.get(firstJejuIndex).getPlaceId()));
+        Point firstJejuPoint = placeToPoint(tripPlaces.get(firstJejuIndex).getPlace());
         Port nearestJejuArrivePort = findNearestPort(firstJejuPoint, PortConst.JEJU_ARRIVE_PORTS);
         newWaypoints.add(nearestJejuArrivePort.getPoint());
         log.info("선택된 제주 도착 항구: {} ({})", nearestJejuArrivePort.getName(), nearestJejuArrivePort.getPoint());
 
         // 4. 제주도 내 기존 경유지 추가
         for (int i = firstJejuIndex; i <= lastJejuIndex; i++) {
-            newWaypoints.add(placeToPoint(placeService.getPlaceById(tripPlaces.get(i).getPlaceId())));
+            newWaypoints.add(placeToPoint(tripPlaces.get(i).getPlace()));
         }
         log.debug("제주도 내 경유지 추가 완료. 현재 waypoints: {}", newWaypoints);
 
         // 5. 제주도에서 육지로 돌아오는 항구 추가 (무조건 추가)
-        Point lastJejuPoint = placeToPoint(placeService.getPlaceById(tripPlaces.get(lastJejuIndex).getPlaceId()));
+        Point lastJejuPoint = placeToPoint(tripPlaces.get(lastJejuIndex).getPlace());
         Port nearestJejuDepartPort = findNearestPort(lastJejuPoint, PortConst.JEJU_ARRIVE_PORTS);
         newWaypoints.add(nearestJejuDepartPort.getPoint());
         log.info("선택된 제주 출발 항구: {} ({})", nearestJejuDepartPort.getName(), nearestJejuDepartPort.getPoint());
 
         // 다음 경유지 또는 최종 목적지
         Point postJejuPoint = (lastJejuIndex < tripPlaces.size() - 1)
-                ? placeToPoint(placeService.getPlaceById(tripPlaces.get(lastJejuIndex + 1).getPlaceId()))
+                ? placeToPoint(tripPlaces.get(lastJejuIndex + 1).getPlace())
                 : request.getDestination();
         Port nearestArrivePort = findNearestPort(postJejuPoint, PortConst.JEJU_DEPART_PORTS);
         newWaypoints.add(nearestArrivePort.getPoint());
@@ -275,7 +278,7 @@ public class CarDistanceService {
 
         // 6. 제주도 외의 나머지 경유지 추가
         for (int i = lastJejuIndex + 1; i < tripPlaces.size(); i++) {
-            newWaypoints.add(placeToPoint(placeService.getPlaceById(tripPlaces.get(i).getPlaceId())));
+            newWaypoints.add(placeToPoint(tripPlaces.get(i).getPlace()));
         }
 
         // 7. 기존 waypoints를 새로 구성된 리스트로 교체

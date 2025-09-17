@@ -35,7 +35,7 @@ public class TransDistanceService {
         tripPlaces.sort((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()));
 
         // 제주 여행 여부 판별
-        boolean isJejuTrip = DistanceUtils.isJejuTrip(tripPlaces, placeService);
+        boolean isJejuTrip = DistanceUtils.isJejuTrip(tripPlaces);
 
         List<TransDistanceRequest> requests = batchRequest.getRequests();
 
