@@ -22,11 +22,10 @@ import java.util.List;
 @EnableScheduling
 public class TripScheduler {
     private final TripRepository tripRepository;
-    private final FCMService fcmService;
     private final TripMessageService tripMessageService;
     private final TripService tripService;
 
-    @Scheduled(cron = "0 0 0 * * *") // 매일 자정
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul") // 매일 자정
     public void processTripsDaily() throws FirebaseMessagingException {
         LocalDateTime threshold = LocalDateTime.now().minusDays(7);
 

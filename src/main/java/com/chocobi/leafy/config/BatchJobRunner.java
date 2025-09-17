@@ -22,7 +22,7 @@ public class BatchJobRunner implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
-        log.info("Starting a one-time batch job run...");
+        /*log.info("Starting a one-time batch job run...");
 
         try {
             // Job 파라미터 생성
@@ -36,6 +36,6 @@ public class BatchJobRunner implements CommandLineRunner {
 
         } catch (JobExecutionException e) {
             log.error("Job execution failed", e);
-        }
+        }*/
     }
 }
