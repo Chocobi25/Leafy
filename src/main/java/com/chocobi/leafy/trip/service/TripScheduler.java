@@ -6,6 +6,7 @@ import com.chocobi.leafy.trip.entity.TripStatus;
 import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.entity.User;
 import com.google.firebase.messaging.FirebaseMessagingException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +26,8 @@ public class TripScheduler {
     private final TripMessageService tripMessageService;
     private final TripService tripService;
 
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul") // 매일 자정
+    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Seoul") // 매일 자정
+    @Transactional
     public void processTripsDaily() throws FirebaseMessagingException {
         LocalDateTime threshold = LocalDateTime.now().minusDays(7);
 

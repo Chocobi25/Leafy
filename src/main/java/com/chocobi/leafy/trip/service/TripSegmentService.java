@@ -1,15 +1,14 @@
 package com.chocobi.leafy.trip.service;
 
 import com.chocobi.leafy.constants.CarbonEmissionConst;
-import com.chocobi.leafy.distance.domain.CarDistanceRequest;
-import com.chocobi.leafy.distance.domain.DistanceResponse;
-import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
+import com.chocobi.leafy.distance.domain.*;
 import com.chocobi.leafy.distance.dto.CarDistanceResponse;
 import com.chocobi.leafy.distance.dto.RouteCalculationResult;
 import com.chocobi.leafy.distance.dto.Section;
 import com.chocobi.leafy.distance.service.CarDistanceService;
 import com.chocobi.leafy.distance.service.DistanceUtils;
 import com.chocobi.leafy.distance.service.TransDistanceService;
+import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.place.service.PlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
@@ -30,6 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.chocobi.leafy.distance.service.DistanceUtils.placeToPoint;
+import static com.chocobi.leafy.distance.service.DistanceUtils.regionToPoint;
 
 @Service
 @RequiredArgsConstructor
@@ -259,7 +261,6 @@ public class TripSegmentService {
      *
      * @param request
      * @param tripId
-     * @param tripPlaces ⭐️ tripPlaces를 인자로 받습니다.
      * @return
      */
     @Transactional
@@ -324,5 +325,59 @@ public class TripSegmentService {
     @Transactional
     public void deleteTripSegments(Trip trip) {
         tripSegmentRepository.deleteAllByTripId(trip);
+    }
+
+
+    @Transactional
+    public void recalculateRoutes(Trip trip, String transport) {
+        // 1. TripPlace 가져오기
+        List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(trip.getId());
+
+        // 2. 교통 수단별 재계산
+        if ("car".equals(transport)) {
+            // Car 경로 재계산
+            CarDistanceRequest carRequest = new CarDistanceRequest();
+            carRequest.setTripId(trip.getId());
+            carRequest.setOrigin(regionToPoint(trip.getDeparture()));
+            carRequest.setDestination(regionToPoint(trip.getArrival()));
+
+            // 중간 경유지 (waypoints)
+            if (tripPlaces.size() > 2) {
+                List<Point> waypoints = tripPlaces.subList(1, tripPlaces.size() - 1)
+                        .stream()
+                        .map(tp -> placeToPoint(tp.getPlace()))
+                        .toList();
+                carRequest.setWaypoints(waypoints);
+            }
+
+            // 제주도 항구 처리
+            carRequest = carDistanceService.addPortsToRequest(carRequest, tripPlaces);
+
+            // Car 경로 계산 & Redis 저장
+            carDistanceService.getDistance(carRequest);
+
+        } else if ("public".equals(transport)) {
+            // Public 경로 재계산
+            List<TransDistanceRequest> requests = new ArrayList<>();
+            for (int i = 0; i < tripPlaces.size() - 1; i++) {
+                PlaceDTO start = tripPlaces.get(i).getPlace();
+                PlaceDTO end = tripPlaces.get(i + 1).getPlace();
+
+                TransDistanceRequest req = new TransDistanceRequest();
+                req.setStartX(regionToPoint(trip.getDeparture()).getX());
+                req.setStartY(regionToPoint(trip.getDeparture()).getY());
+                req.setEndX(regionToPoint(trip.getArrival()).getX());
+                req.setEndY(regionToPoint(trip.getArrival()).getY());
+
+                requests.add(req);
+            }
+
+            TransDistanceBatchRequest batchRequest = new TransDistanceBatchRequest();
+            batchRequest.setTripId(trip.getId());
+            batchRequest.setRequests(requests);
+
+            // Public 경로 계산 & Redis 저장
+            transDistanceService.getBatchDistance(batchRequest);
+        }
     }
 }
