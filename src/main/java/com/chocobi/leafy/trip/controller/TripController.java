@@ -94,30 +94,12 @@ public class TripController {
         }
     }
 
-    // Test용 메서드(수정할 예정)
-    @PostMapping("/api/test/trip")
-    public ResponseEntity<Trip> createTrip(@RequestBody TripRequest tripRequest, Authentication authentication) {
-        // 여행 생성
-        Long createdTripId = tripService.createTrip(tripRequest, (Long) authentication.getPrincipal());
-
-        // 생성된 여행 정보 조회
-        Trip createdTrip = tripService.getTripById(createdTripId);
-
-        // HTTP 상태 코드와 함께 응답
-        if (createdTrip != null) {
-            return new ResponseEntity<>(createdTrip, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     @PostMapping("/api/trip/{tripId}/routes/car")
     public ResponseEntity<DistanceResponse> calculateCarRoute(@PathVariable Long tripId, @RequestBody CarDistanceRequest request, Authentication authentication) {
         try {
             Long kakaoId = (Long) authentication.getPrincipal();
-            System.out.println("자동차 경로 계산 요청 - tripId: " + tripId + ", request: " + request);
             DistanceResponse response = tripSegmentService.calculateAndSaveCarRoute(request, tripId);
-            System.out.println("자동차 경로 계산 완료 - response: " + response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("자동차 경로 계산 에러: " + e.getMessage());
@@ -133,6 +115,8 @@ public class TripController {
             List<RouteCalculationResult> results = tripSegmentService.calculateAndSavePublicRoute(request);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
+            System.err.println("대중교통 경로 계산 에러: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }

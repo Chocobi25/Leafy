@@ -46,7 +46,6 @@ public class TripSegmentService {
      * @param transport
      */
     public void completeTempTripSegments(Long tripId, List<Section> sections, String transport) {
-        
         List<TripSegmentRedisDto> tripSegmentDtos = createTripSegmentRedisDto(tripId, sections, transport);
         saveTempTripSegments(tripSegmentDtos);
     }
@@ -263,16 +262,13 @@ public class TripSegmentService {
 
         CarDistanceResponse carResponse;
 
-        // 2. 제주도 여행 여부 판별
+        // 제주도 여행 여부 판별 및 항구 포함 처리
         if (DistanceUtils.isJejuTrip(tripPlaces, placeService)) {
-            // 3. 제주도 여행이면, 항구 포함하도록 request 객체 수정
             CarDistanceRequest modifiedRequest = carDistanceService.addPortsToRequest(request, tripPlaces);
-
-            // 4. 수정된 request로 CarDistanceService 호출
             carResponse = carDistanceService.getDistance(modifiedRequest);
+        } else {
+            carResponse = carDistanceService.getDistance(request);
         }
-
-        carResponse = carDistanceService.getDistance(request);;
 
         // sections 가져오기
         List<Section> sections = carResponse.getSections();
@@ -291,7 +287,7 @@ public class TripSegmentService {
      */
     public List<RouteCalculationResult> calculateAndSavePublicRoute(TransDistanceBatchRequest batchRequest) {
         List<RouteCalculationResult> results = transDistanceService.getBatchDistance(batchRequest);
-        
+
         // RouteCalculationResult를 Section으로 변환
         List<Section> sections = new ArrayList<>();
         for (RouteCalculationResult result : results) {
@@ -302,9 +298,9 @@ public class TripSegmentService {
             section.setMaxCarbonEmission(result.getMaxCarbonEmission());
             sections.add(section);
         }
-        
+
         completeTempTripSegments(batchRequest.getTripId(), sections, "public");
-        
+
         return results;
     }
 }
