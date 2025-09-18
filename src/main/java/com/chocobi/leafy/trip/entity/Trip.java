@@ -1,5 +1,6 @@
 package com.chocobi.leafy.trip.entity;
 
+import com.chocobi.leafy.place.entity.RegionGroup;
 import com.chocobi.leafy.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,6 +34,12 @@ public class Trip implements Serializable {
 
     private LocalDate startDate;
     private LocalDate endDate;
+
+    @Enumerated(EnumType.STRING)
+    private RegionGroup departure;
+
+    @Enumerated(EnumType.STRING)
+    private RegionGroup arrival;
 
     @Builder.Default
     private double carbonSaved = 0.0;

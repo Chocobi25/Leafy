@@ -1,5 +1,6 @@
 package com.chocobi.leafy.trip.dto;
 
+import com.chocobi.leafy.place.entity.RegionGroup;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.user.entity.User;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,8 @@ public class TripDTO {
     private String title;
     private LocalDate startDate;
     private LocalDate endDate;
+    private RegionGroup departure;
+    private RegionGroup arrival;
     private double carbonSaved;
     private double carbonEmission;
     private Long userId;
@@ -27,6 +30,8 @@ public class TripDTO {
                 trip.getTitle(),
                 trip.getStartDate(),
                 trip.getEndDate(),
+                trip.getDeparture(),
+                trip.getArrival(),
                 trip.getCarbonSaved(),
                 trip.getCarbonEmission(),
                 trip.getUser().getKakaoId(),
