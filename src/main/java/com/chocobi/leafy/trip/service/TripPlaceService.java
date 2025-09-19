@@ -35,10 +35,10 @@ public class TripPlaceService {
 
     @Transactional
     public void editTripPlaceDetails(Trip trip, List<TripPlaceRequest> request) {
-        // 1. TripPlace 전체 삭제
+        // 기존 TripPlace 삭제
         deleteTripPlaces(trip);
 
-        // 2. TripPlace 전체 저장
+        // 새로운 TripPlace 저장
         List<TripPlace> tripPlaces = request.stream()
                 .map(placeReq -> TripPlace.builder()
                         .trip(trip)

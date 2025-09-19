@@ -11,6 +11,7 @@ import com.chocobi.leafy.distance.service.TransDistanceService;
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.place.service.PlaceService;
+import com.chocobi.leafy.trip.dto.TripPlaceRequest;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
@@ -41,6 +42,7 @@ public class TripSegmentService {
     private final CarDistanceService carDistanceService;
     private final TransDistanceService transDistanceService;
     private final TripPlaceService tripPlaceService;
+    private final PlaceService placeService;
 
     /**
      * TripSegmentRedisDto를 만들고 Redis에 임시 저장하는 편의 통합 메서드
@@ -329,46 +331,47 @@ public class TripSegmentService {
 
 
     @Transactional
-    public void recalculateRoutes(Trip trip, String transport) {
-        // 1. TripPlace 가져오기
-        List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(trip.getId());
+    public void recalculateRoutesAndSave(Trip trip, String transport, List<TripPlaceRequest> tripPlaceRequests) {
+        List<TripPlaceResponse> tripPlaces = tripPlaceRequests.stream()
+                .map(req -> TripPlaceResponse.builder()
+                        .tripId(trip.getId())
+                        .place(PlaceDTO.fromEntity(placeService.getPlaceById(req.getPlaceId())))
+                        .day_index(req.getDayIndex())
+                        .visitOrder(req.getVisitOrder())
+                        .memo(req.getMemo())
+                        .build())
+                .toList();
 
-        // 2. 교통 수단별 재계산
+        System.out.println("[DEBUG] TripPlaces to recalc: " + tripPlaces);
+
         if ("car".equals(transport)) {
-            // Car 경로 재계산
             CarDistanceRequest carRequest = new CarDistanceRequest();
             carRequest.setTripId(trip.getId());
             carRequest.setOrigin(regionToPoint(trip.getDeparture()));
             carRequest.setDestination(regionToPoint(trip.getArrival()));
 
-            // 중간 경유지 (waypoints)
             if (tripPlaces.size() > 2) {
-                List<Point> waypoints = tripPlaces.subList(1, tripPlaces.size() - 1)
-                        .stream()
-                        .map(tp -> placeToPoint(tp.getPlace()))
-                        .toList();
-                carRequest.setWaypoints(waypoints);
+                carRequest.setWaypoints(
+                        tripPlaces.subList(1, tripPlaces.size() - 1)
+                                .stream()
+                                .map(tp -> placeToPoint(tp.getPlace()))
+                                .toList()
+                );
             }
 
-            // 제주도 항구 처리
-            carRequest = carDistanceService.addPortsToRequest(carRequest, tripPlaces);
-
-            // Car 경로 계산 & Redis 저장
+            System.out.println("[DEBUG] CarDistanceRequest: " + carRequest);
             carDistanceService.getDistance(carRequest);
-
         } else if ("public".equals(transport)) {
-            // Public 경로 재계산
             List<TransDistanceRequest> requests = new ArrayList<>();
             for (int i = 0; i < tripPlaces.size() - 1; i++) {
                 PlaceDTO start = tripPlaces.get(i).getPlace();
                 PlaceDTO end = tripPlaces.get(i + 1).getPlace();
 
                 TransDistanceRequest req = new TransDistanceRequest();
-                req.setStartX(regionToPoint(trip.getDeparture()).getX());
-                req.setStartY(regionToPoint(trip.getDeparture()).getY());
-                req.setEndX(regionToPoint(trip.getArrival()).getX());
-                req.setEndY(regionToPoint(trip.getArrival()).getY());
-
+                req.setStartX(start.getLongitude());
+                req.setStartY(start.getLatitude());
+                req.setEndX(end.getLongitude());
+                req.setEndY(end.getLatitude());
                 requests.add(req);
             }
 
@@ -376,7 +379,7 @@ public class TripSegmentService {
             batchRequest.setTripId(trip.getId());
             batchRequest.setRequests(requests);
 
-            // Public 경로 계산 & Redis 저장
+            System.out.println("[DEBUG] PublicTransport BatchRequest: " + batchRequest);
             transDistanceService.getBatchDistance(batchRequest);
         }
     }

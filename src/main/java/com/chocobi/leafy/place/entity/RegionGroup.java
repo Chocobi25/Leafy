@@ -59,6 +59,10 @@ public enum RegionGroup {
     );
 
     public static RegionGroup fromRegionName(String region1DepthName) {
-        return REGION_MAP.get(region1DepthName);
+        try {
+            return RegionGroup.valueOf(region1DepthName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return REGION_MAP.get(region1DepthName);
+        }
     }
 }

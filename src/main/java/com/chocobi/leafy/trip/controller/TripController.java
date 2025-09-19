@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,11 +67,17 @@ public class TripController {
     public ResponseEntity<Map<String, String>> editTripPlaceDetails(@RequestBody RecalculateRoutesRequest request) {
         Trip trip = tripService.getTripById(request.getTripId());
 
+        // 1. TripPlace 업데이트
         tripPlaceService.editTripPlaceDetails(trip, request.getPlaces());
-        tripSegmentService.recalculateRoutes(trip, request.getTransport());
+
+        // 2. TripSegment 재계산 (Redis 저장 포함)
+        tripSegmentService.recalculateRoutesAndSave(trip, request.getTransport(), request.getPlaces());
+
+        // 3. Redis에 있는 임시 세그먼트를 DB에 저장
+        tripSegmentService.completeTripSegments(trip.getId(), request.getTransport());
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", "여행지 정보가 성공적으로 업데이트되었습니다.");
+        response.put("message", "여행지 정보 및 경로가 성공적으로 업데이트되었습니다.");
         return ResponseEntity.ok(response);
     }
 
@@ -185,5 +192,19 @@ public class TripController {
             // 기타 예상치 못한 오류
             return ResponseEntity.internalServerError().body("여행 인증 중 오류가 발생했습니다: " + e.getMessage());
         }
+    }
+
+    @PatchMapping("/{tripId}")
+    public ResponseEntity<Map<String, String>> updateTrip(@PathVariable Long tripId,
+                                                          @RequestBody Map<String, String> request) {
+        Trip trip = tripService.getTripById(tripId);
+
+        String newTitle = request.get("title");
+        LocalDate startDate = request.containsKey("startDate") ? LocalDate.parse(request.get("startDate")) : trip.getStartDate();
+        LocalDate endDate = request.containsKey("endDate") ? LocalDate.parse(request.get("endDate")) : trip.getEndDate();
+
+        tripService.updateTripInfo(trip, newTitle, startDate, endDate);
+
+        return ResponseEntity.ok(Map.of("message", "여행 정보가 성공적으로 수정되었습니다."));
     }
 }

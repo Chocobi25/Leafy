@@ -13,6 +13,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -103,6 +104,12 @@ public class TripService {
         trip.certify();
 
         // 변경사항 저장
+        tripRepository.save(trip);
+    }
+
+
+    public void updateTripInfo(Trip trip, String title, LocalDate startDate, LocalDate endDate) {
+        trip.update(title, startDate, endDate); // 엔티티에 이미 있는 update 메서드 활용
         tripRepository.save(trip);
     }
 }
