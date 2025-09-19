@@ -52,9 +52,8 @@ public class TripSegmentService {
      * @param transport
      * @param tripPlaces ⭐️ tripPlaces를 인자로 받습니다.
      */
-    public void completeTempTripSegments(Long tripId, List<Section> sections, String transport, List<TripPlaceResponse> tripPlaces) {
-
-        List<TripSegmentRedisDto> tripSegmentDtos = createTripSegmentRedisDto(tripId, sections, transport, tripPlaces);
+    public void completeTempTripSegments(Long tripId, List<Section> sections, String transport) {
+        List<TripSegmentRedisDto> tripSegmentDtos = createTripSegmentRedisDto(tripId, sections, transport);
         saveTempTripSegments(tripSegmentDtos);
     }
 
@@ -273,14 +272,13 @@ public class TripSegmentService {
         CarDistanceResponse carResponse;
         CarDistanceRequest finalRequest = request;
 
-        // 2. 제주도 여행 여부 판별
+        // 제주도 여행 여부 판별 및 항구 포함 처리
         if (DistanceUtils.isJejuTrip(tripPlaces)) {
-            // 3. 제주도 여행이면, 항구 포함하도록 request 객체를 새로 생성
-            finalRequest = carDistanceService.addPortsToRequest(request, tripPlaces);
+            CarDistanceRequest modifiedRequest = carDistanceService.addPortsToRequest(request, tripPlaces);
+            carResponse = carDistanceService.getDistance(modifiedRequest);
+        } else {
+            carResponse = carDistanceService.getDistance(request);
         }
-
-        // 4. 최종 요청 객체로 CarDistanceService 호출
-        carResponse = carDistanceService.getDistance(finalRequest);
 
         // sections 가져오기
         List<Section> sections = carResponse.getSections();
@@ -312,7 +310,7 @@ public class TripSegmentService {
             sections.add(section);
         }
 
-        completeTempTripSegments(batchRequest.getTripId(), sections, "public", tripPlaces);
+        completeTempTripSegments(batchRequest.getTripId(), sections, "public");
 
         return results;
     }

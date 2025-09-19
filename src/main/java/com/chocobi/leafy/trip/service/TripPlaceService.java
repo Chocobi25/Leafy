@@ -56,8 +56,6 @@ public class TripPlaceService {
     public List<TripPlaceResponse> getTripPlaces(Long tripId) {
         List<TripPlace> places = tripPlaceRepository.findByTripId(tripId);
 
-        // ⭐⭐⭐ 핵심 수정 부분 ⭐⭐⭐
-        // place 객체가 null인 경우를 필터링하여 NPE를 방지합니다.
         return places.stream()
                 .filter(tripPlace -> tripPlace.getPlace() != null) // null 체크 추가
                 .map(TripPlaceResponse::toDTO)
