@@ -6,5 +6,5 @@ import lombok.Data;
 public class GeocodeResult {
     private final double latitude;
     private final double longitude;
-    private final String address;
+    private final Address address;
 }

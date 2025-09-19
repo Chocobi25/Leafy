@@ -20,12 +20,9 @@ import java.util.stream.Collectors;
 @Transactional
 public class TripPlaceService {
     private final TripPlaceRepository tripPlaceRepository;
-    private final TripService tripService;
     private final PlaceService placeService;
 
-    public void saveTripPlaces(TripPlacesListRequest request) {
-        Trip trip = tripService.getTripById(request.getTripId());
-
+    public void saveTripPlaces(Trip trip, TripPlacesListRequest request) {
         List<TripPlace> tripPlaces = request.getPlaces().stream()
                 .map(placeReq -> TripPlace.builder()
                         .trip(trip)
@@ -37,10 +34,8 @@ public class TripPlaceService {
         tripPlaceRepository.saveAll(tripPlaces);
     }
 
-    public void updateTripPlaceDetails(TripPlacesListRequest request) {
-        Trip trip = tripService.getTripById(request.getTripId());
-
-        List<TripPlace> tripPlaces = tripPlaceRepository.findByTripId(request.getTripId());
+    public void updateTripPlaceDetails(Trip trip, TripPlacesListRequest request) {
+        List<TripPlace> tripPlaces = tripPlaceRepository.findByTripId(trip.getId());
 
         Map<Long, TripPlace> tripPlaceMap = tripPlaces.stream()
                 .collect(Collectors.toMap(tp -> tp.getPlace().getId(), tp -> tp));
@@ -67,5 +62,10 @@ public class TripPlaceService {
 
     public void deleteTripPlace(Long tripPlaceId) {
         tripPlaceRepository.deleteById(tripPlaceId);
+    }
+
+    @Transactional
+    public void deleteTripPlaces(Trip trip) {
+        tripPlaceRepository.deleteAllByTrip(trip);
     }
 }

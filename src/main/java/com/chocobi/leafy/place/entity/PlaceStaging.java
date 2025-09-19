@@ -31,6 +31,11 @@ public class PlaceStaging {
     @Column(nullable = false)
     private String address;
 
+    @Enumerated(EnumType.STRING)
+    private RegionGroup regionGroup;
+
+    private String regionDetail;
+
     private Double latitude;
     private Double longitude;
 

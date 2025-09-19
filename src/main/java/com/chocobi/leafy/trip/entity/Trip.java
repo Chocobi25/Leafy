@@ -31,8 +31,8 @@ public class Trip implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
-    private LocalDate start_date;
-    private LocalDate end_date;
+    private LocalDate startDate;
+    private LocalDate endDate;
 
     @Builder.Default
     private double carbonSaved = 0.0;
@@ -61,8 +61,8 @@ public class Trip implements Serializable {
 
     public void update(String title, LocalDate startDate, LocalDate endDate) {
         this.title = title;
-        this.start_date = startDate;
-        this.end_date = endDate;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
     public void certify() {
@@ -70,5 +70,9 @@ public class Trip implements Serializable {
             throw new IllegalStateException("이미 위치 인증을 완료했습니다.");
         }
         this.certificationAt = LocalDateTime.now();
+    }
+
+    public void editStatus(TripStatus status) {
+        this.status = status;
     }
 }

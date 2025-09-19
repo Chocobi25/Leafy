@@ -4,7 +4,8 @@ import com.chocobi.leafy.place.batch.*;
 import com.chocobi.leafy.place.entity.Image;
 import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.place.entity.PlaceStaging;
-import com.chocobi.leafy.place.fetcher.image.ImageSearchClient;
+import com.chocobi.leafy.place.fetcher.image.ImageSearchService;
+import com.chocobi.leafy.place.fetcher.image.NaverImageClient;
 import com.chocobi.leafy.place.repository.ImageRepository;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,11 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Qualifier; // Qualifier import 추가
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.List;
@@ -32,24 +36,33 @@ public class BatchConfig {
     private final PlatformTransactionManager transactionManager;
     private final EntityManagerFactory entityManagerFactory;
 
+    // Tasklet과 Processor, Writer 빈들은 @Bean으로 관리되므로, @Qualifier를 사용해 명확히 주입받습니다.
     private final PlaceStagingTasklet placeStagingTasklet;
-
     private final PlaceGeocodeProcessor placeGeocodeProcessor;
     private final PlaceWriter placeWriter;
-
-    private final ImageSearchClient imageSearchClient;
+    private final ImageSearchService imageSearchService;
     private final ImageRepository imageRepository;
-    private final PlaceImageProcessor placeImageProcessor;
     private final ImageWriter imageWriter;
 
     @Bean
+    public TaskExecutor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(20);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("batch-image-thread-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean(name = "placeStagingStep")
     public Step placeStagingStep() {
         return new StepBuilder("placeStagingStep", jobRepository)
                 .tasklet(placeStagingTasklet, transactionManager)
                 .build();
     }
 
-    @Bean
+    @Bean(name = "placeStagingReader")
     public ItemReader<PlaceStaging> placeStagingReader() {
         return new JpaPagingItemReaderBuilder<PlaceStaging>()
                 .name("placeStagingReader")
@@ -59,7 +72,7 @@ public class BatchConfig {
                 .build();
     }
 
-    @Bean
+    @Bean(name = "placeReader")
     public ItemReader<Place> placeReader() {
         return new JpaPagingItemReaderBuilder<Place>()
                 .name("placeReader")
@@ -69,11 +82,13 @@ public class BatchConfig {
                 .build();
     }
 
-    @Bean
-    public Step placeProcessStep() {
+    @Bean(name = "placeProcessStep")
+    public Step placeProcessStep(@Qualifier("placeStagingReader") ItemReader<PlaceStaging> placeStagingReader,
+                                 @Qualifier("placeGeocodeProcessor") PlaceGeocodeProcessor placeGeocodeProcessor,
+                                 @Qualifier("placeWriter") PlaceWriter placeWriter) {
         return new StepBuilder("placeProcessStep", jobRepository)
                 .<PlaceStaging, Place>chunk(100, transactionManager)
-                .reader(placeStagingReader())
+                .reader(placeStagingReader)
                 .processor(placeGeocodeProcessor)
                 .writer(placeWriter)
                 .build();
@@ -82,26 +97,32 @@ public class BatchConfig {
     @Bean
     @StepScope
     public PlaceImageProcessor placeImageProcessor() {
-        return new PlaceImageProcessor(imageSearchClient, imageRepository);
+        return new PlaceImageProcessor(imageSearchService, imageRepository);
     }
 
-    @Bean
-    public Step imageStep() {
+    @Bean(name = "imageStep")
+    public Step imageStep(@Qualifier("placeReader") ItemReader<Place> placeReader,
+                          @Qualifier("placeImageProcessor") PlaceImageProcessor placeImageProcessor,
+                          @Qualifier("imageWriter") ImageWriter imageWriter,
+                          @Qualifier("taskExecutor") TaskExecutor taskExecutor) {
         return new StepBuilder("imageStep", jobRepository)
                 .<Place, List<Image>>chunk(100, transactionManager)
-                .reader(placeReader())
+                .reader(placeReader)
                 .processor(placeImageProcessor)
                 .writer(imageWriter)
+                .taskExecutor(taskExecutor)
                 .build();
     }
 
 
     @Bean
-    public Job placeDataJob() {
+    public Job placeDataJob(@Qualifier("placeStagingStep") Step placeStagingStep,
+                            @Qualifier("placeProcessStep") Step placeProcessStep,
+                            @Qualifier("imageStep") Step imageStep) {
         return new JobBuilder("placeDataJob", jobRepository)
-                .start(placeStagingStep())
-                .next(placeProcessStep())
-                .next(imageStep())
+                .start(placeStagingStep)
+                .next(placeProcessStep)
+                .next(imageStep)
                 .build();
     }
 }
