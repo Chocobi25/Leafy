@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
@@ -62,7 +63,7 @@ public class TripMessageService {
     public void requestLocationCheck(User user, Trip trip) throws FirebaseMessagingException {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
-                "url", "/trips/certification" + trip.getId()  // 프론트 라우팅 경로
+                "url", "/trips/details/" + trip.getId()  // 프론트 라우팅 경로
         );
 
         fcmService.sendNotification(
@@ -74,17 +75,17 @@ public class TripMessageService {
     }
 
     @Transactional
-    public void certifyTrip(Long id, Trip trip) throws FirebaseMessagingException {
-        User user = userService.findByKakaoId(id);
-        trip.certify(); // 인증 시간 업데이트
-        tripService.saveTrip(trip);
+    public void certifyTrip(User user, Trip trip) throws FirebaseMessagingException {
+        Map<String, String> data = Map.of(
+                "tripId", trip.getId().toString(),
+                "url", "/trips/details/" + trip.getId()
+        );
 
-        // 인증 완료 알림
         fcmService.sendNotification(
                 user,
-                "위치 인증 완료!",
-                trip.getTitle() + " 여행의 위치 인증이 완료되었습니다.",
-                Map.of("tripId", trip.getId().toString())
+                "여행 인증 완료!",
+                trip.getTitle() + " 여행 인증이 완료되었습니다. 즐거운 여행 되세요! 🌿",
+                data
         );
     }
 }

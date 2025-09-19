@@ -4,6 +4,7 @@ import com.chocobi.leafy.distance.domain.Point;
 import com.chocobi.leafy.distance.domain.Port;
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.entity.RegionGroup;
 import com.chocobi.leafy.place.service.PlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 
@@ -59,6 +60,13 @@ public class DistanceUtils {
      */
     public static Point placeToPoint(PlaceDTO place) {
         return new Point(place.getLongitude(), place.getLatitude());
+    }
+
+    /**
+     * Region → Point 변환
+     */
+    public static Point regionToPoint(RegionGroup region) {
+        return new Point(region.getLongitude(), region.getLatitude());
     }
 
     /**

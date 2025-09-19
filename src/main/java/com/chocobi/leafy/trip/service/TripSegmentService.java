@@ -1,17 +1,17 @@
 package com.chocobi.leafy.trip.service;
 
 import com.chocobi.leafy.constants.CarbonEmissionConst;
-import com.chocobi.leafy.distance.domain.CarDistanceRequest;
-import com.chocobi.leafy.distance.domain.DistanceResponse;
-import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
+import com.chocobi.leafy.distance.domain.*;
 import com.chocobi.leafy.distance.dto.CarDistanceResponse;
 import com.chocobi.leafy.distance.dto.RouteCalculationResult;
 import com.chocobi.leafy.distance.dto.Section;
 import com.chocobi.leafy.distance.service.CarDistanceService;
 import com.chocobi.leafy.distance.service.DistanceUtils;
 import com.chocobi.leafy.distance.service.TransDistanceService;
+import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.place.service.PlaceService;
+import com.chocobi.leafy.trip.dto.TripPlaceRequest;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
@@ -31,6 +31,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.chocobi.leafy.distance.service.DistanceUtils.placeToPoint;
+import static com.chocobi.leafy.distance.service.DistanceUtils.regionToPoint;
+
 @Service
 @RequiredArgsConstructor
 public class TripSegmentService {
@@ -39,6 +42,7 @@ public class TripSegmentService {
     private final CarDistanceService carDistanceService;
     private final TransDistanceService transDistanceService;
     private final TripPlaceService tripPlaceService;
+    private final PlaceService placeService;
 
     /**
      * TripSegmentRedisDto를 만들고 Redis에 임시 저장하는 편의 통합 메서드
@@ -258,7 +262,6 @@ public class TripSegmentService {
      *
      * @param request
      * @param tripId
-     * @param tripPlaces ⭐️ tripPlaces를 인자로 받습니다.
      * @return
      */
     @Transactional
@@ -322,5 +325,60 @@ public class TripSegmentService {
     @Transactional
     public void deleteTripSegments(Trip trip) {
         tripSegmentRepository.deleteAllByTripId(trip);
+    }
+
+
+    @Transactional
+    public void recalculateRoutesAndSave(Trip trip, String transport, List<TripPlaceRequest> tripPlaceRequests) {
+        List<TripPlaceResponse> tripPlaces = tripPlaceRequests.stream()
+                .map(req -> TripPlaceResponse.builder()
+                        .tripId(trip.getId())
+                        .place(PlaceDTO.fromEntity(placeService.getPlaceById(req.getPlaceId())))
+                        .day_index(req.getDayIndex())
+                        .visitOrder(req.getVisitOrder())
+                        .memo(req.getMemo())
+                        .build())
+                .toList();
+
+        System.out.println("[DEBUG] TripPlaces to recalc: " + tripPlaces);
+
+        if ("car".equals(transport)) {
+            CarDistanceRequest carRequest = new CarDistanceRequest();
+            carRequest.setTripId(trip.getId());
+            carRequest.setOrigin(regionToPoint(trip.getDeparture()));
+            carRequest.setDestination(regionToPoint(trip.getArrival()));
+
+            if (tripPlaces.size() > 2) {
+                carRequest.setWaypoints(
+                        tripPlaces.subList(1, tripPlaces.size() - 1)
+                                .stream()
+                                .map(tp -> placeToPoint(tp.getPlace()))
+                                .toList()
+                );
+            }
+
+            System.out.println("[DEBUG] CarDistanceRequest: " + carRequest);
+            carDistanceService.getDistance(carRequest);
+        } else if ("public".equals(transport)) {
+            List<TransDistanceRequest> requests = new ArrayList<>();
+            for (int i = 0; i < tripPlaces.size() - 1; i++) {
+                PlaceDTO start = tripPlaces.get(i).getPlace();
+                PlaceDTO end = tripPlaces.get(i + 1).getPlace();
+
+                TransDistanceRequest req = new TransDistanceRequest();
+                req.setStartX(start.getLongitude());
+                req.setStartY(start.getLatitude());
+                req.setEndX(end.getLongitude());
+                req.setEndY(end.getLatitude());
+                requests.add(req);
+            }
+
+            TransDistanceBatchRequest batchRequest = new TransDistanceBatchRequest();
+            batchRequest.setTripId(trip.getId());
+            batchRequest.setRequests(requests);
+
+            System.out.println("[DEBUG] PublicTransport BatchRequest: " + batchRequest);
+            transDistanceService.getBatchDistance(batchRequest);
+        }
     }
 }
