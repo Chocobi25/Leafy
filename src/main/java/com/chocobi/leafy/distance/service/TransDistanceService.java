@@ -60,6 +60,14 @@ public class TransDistanceService {
      * 두 좌표 사이의 거리와 시간 정보를 얻어오는 메서드
      */
     public RouteCalculationResult getDistance(TransDistanceRequest request, boolean isJejuTrip) {
+        // 좌표 유효성 검증
+        boolean validStartCoords = isValidKoreanCoordinates(request.getStartX(), request.getStartY());
+        boolean validEndCoords = isValidKoreanCoordinates(request.getEndX(), request.getEndY());
+
+        if (!validStartCoords || !validEndCoords) {
+            throw new IllegalArgumentException("유효하지 않은 좌표입니다.");
+        }
+
         // 티맵 대중교통 api 호출
         TmapResponse tmapResponse = callTmapApi(request);
 
@@ -134,6 +142,16 @@ public class TransDistanceService {
                 .uri(DistanceConst.tmapUri)
                 .bodyValue(request)
                 .retrieve()
+                .onStatus(
+                    status -> status.is4xxClientError(),
+                    clientResponse -> {
+                        return clientResponse.bodyToMono(String.class)
+                            .map(errorBody -> {
+                                System.err.println("Tmap API 400 에러: " + errorBody);
+                                return new RuntimeException("Tmap API 400 에러: " + errorBody);
+                            });
+                    }
+                )
                 .bodyToMono(TmapResponse.class)
                 .block();
 
@@ -154,6 +172,24 @@ public class TransDistanceService {
         }
 
         return response;
+    }
+
+
+    /**
+     * 한국 좌표 범위 유효성 검증 메소드
+     */
+    private boolean isValidKoreanCoordinates(String xStr, String yStr) {
+        try {
+            double x = Double.parseDouble(xStr);
+            double y = Double.parseDouble(yStr);
+            // 한국 영역 대략적 범위
+            // 경도(X): 124° ~ 132° (124.0 ~ 132.0)
+            // 위도(Y): 33° ~ 43° (33.0 ~ 43.0)
+            return x >= 124.0 && x <= 132.0 && y >= 33.0 && y <= 43.0;
+        } catch (NumberFormatException e) {
+            System.err.println("좌표 파싱 오류: " + e.getMessage());
+            return false;
+        }
     }
 
 

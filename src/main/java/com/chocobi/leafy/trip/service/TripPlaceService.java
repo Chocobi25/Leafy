@@ -26,7 +26,7 @@ public class TripPlaceService {
         List<TripPlace> tripPlaces = request.getPlaces().stream()
                 .map(placeReq -> TripPlace.builder()
                         .trip(trip)
-                        .place(placeService.getPlaceById(placeReq.getTripPlaceId()))
+                        .place(placeService.getPlaceById(placeReq.getPlaceId()))
                         .memo(placeReq.getMemo())
                         .build())
                 .toList();
@@ -41,7 +41,7 @@ public class TripPlaceService {
                 .collect(Collectors.toMap(tp -> tp.getPlace().getId(), tp -> tp));
 
         for (TripPlaceRequest req : request.getPlaces()) {
-            TripPlace tp = tripPlaceMap.get(req.getTripPlaceId());
+            TripPlace tp = tripPlaceMap.get(req.getPlaceId());
             if (tp != null) {
                 tp.updateDetails(req.getDayIndex(), req.getVisitOrder(), req.getMemo());
             }

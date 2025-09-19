@@ -111,9 +111,7 @@ public class TripController {
         try {
             Long kakaoId = (Long) authentication.getPrincipal();
             System.out.println("자동차 경로 계산 요청 - tripId: " + tripId + ", request: " + request);
-
             DistanceResponse response = tripSegmentService.calculateAndSaveCarRoute(request, tripId);
-
             System.out.println("자동차 경로 계산 완료 - response: " + response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -134,6 +132,8 @@ public class TripController {
 
             return ResponseEntity.ok(results);
         } catch (Exception e) {
+            System.err.println("대중교통 경로 계산 에러: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
@@ -156,7 +156,7 @@ public class TripController {
         }
     }
 
-    // ⭐️ 여행 기록 삭제 API 엔드포인트 추가
+    
     @DeleteMapping("/{tripId}")
     public ResponseEntity<String> deleteTrip(@PathVariable Long tripId) {
         try {
