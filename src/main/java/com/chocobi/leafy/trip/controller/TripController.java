@@ -4,6 +4,7 @@ import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.dto.RouteCalculationResult;
+import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.dto.TripDetailsDTO;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
@@ -169,6 +170,20 @@ public class TripController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("여행 기록 삭제 중 오류가 발생했습니다.");
+        }
+    }
+
+    @PostMapping("/{tripId}/certify")
+    public ResponseEntity<?> certifyTrip(@RequestBody TransCoordDTO transCoordDTO) {
+        try {
+            tripService.certifyTrip(transCoordDTO);
+            return ResponseEntity.ok("여행이 성공적으로 인증되었습니다.");
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            // 여행 상태 오류 또는 위치 불일치 오류
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            // 기타 예상치 못한 오류
+            return ResponseEntity.internalServerError().body("여행 인증 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 }
