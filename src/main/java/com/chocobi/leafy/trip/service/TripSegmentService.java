@@ -357,10 +357,10 @@ public class TripSegmentService {
                 PlaceDTO end = tripPlaces.get(i + 1).getPlace();
 
                 TransDistanceRequest req = new TransDistanceRequest();
-                req.setStartX(start.getLongitude());
-                req.setStartY(start.getLatitude());
-                req.setEndX(end.getLongitude());
-                req.setEndY(end.getLatitude());
+                req.setStartX(String.valueOf(start.getLongitude()));
+                req.setStartY(String.valueOf(start.getLatitude()));
+                req.setEndX(String.valueOf(end.getLongitude()));
+                req.setEndY(String.valueOf(end.getLatitude()));
                 requests.add(req);
             }
 
@@ -421,10 +421,10 @@ public class TripSegmentService {
                 PlaceDTO end = sortedPlaces.get(i + 1).getPlace();
 
                 TransDistanceRequest req = new TransDistanceRequest();
-                req.setStartX(start.getLongitude());
-                req.setStartY(start.getLatitude());
-                req.setEndX(end.getLongitude());
-                req.setEndY(end.getLatitude());
+                req.setStartX(String.valueOf(start.getLongitude()));
+                req.setStartY(String.valueOf(start.getLatitude()));
+                req.setEndX(String.valueOf(end.getLongitude()));
+                req.setEndY(String.valueOf(end.getLatitude()));
                 requests.add(req);
             }
 
