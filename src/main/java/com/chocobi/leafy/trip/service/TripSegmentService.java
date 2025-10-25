@@ -361,6 +361,7 @@ public class TripSegmentService {
                 req.setStartY(String.valueOf(start.getLatitude()));
                 req.setEndX(String.valueOf(end.getLongitude()));
                 req.setEndY(String.valueOf(end.getLatitude()));
+              
                 requests.add(req);
             }
 
@@ -425,6 +426,7 @@ public class TripSegmentService {
                 req.setStartY(String.valueOf(start.getLatitude()));
                 req.setEndX(String.valueOf(end.getLongitude()));
                 req.setEndY(String.valueOf(end.getLatitude()));
+
                 requests.add(req);
             }
 
