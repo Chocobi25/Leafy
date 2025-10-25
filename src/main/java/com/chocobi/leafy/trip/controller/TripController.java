@@ -70,10 +70,13 @@ public class TripController {
         // 1. TripPlace 업데이트
         tripPlaceService.editTripPlaceDetails(trip, request.getPlaces());
 
-        // 2. TripSegment 재계산 (Redis 저장 포함)
-        tripSegmentService.recalculateRoutesAndSave(trip, request.getTransport(), request.getPlaces());
+        // 2. 🔥 DB에서 업데이트된 TripPlace 다시 조회
+        List<TripPlaceResponse> updatedTripPlaces = tripPlaceService.getTripPlaces(trip.getId());
 
-        // 3. Redis에 있는 임시 세그먼트를 DB에 저장
+        // 3. TripSegment 재계산 (업데이트된 데이터 사용)
+        tripSegmentService.recalculateRoutesAndSaveV2(trip, request.getTransport(), updatedTripPlaces);
+
+        // 4. Redis에 있는 임시 세그먼트를 DB에 저장
         tripSegmentService.completeTripSegments(trip.getId(), request.getTransport());
 
         Map<String, String> response = new HashMap<>();
