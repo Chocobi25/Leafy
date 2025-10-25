@@ -1,6 +1,5 @@
 package com.chocobi.leafy.trip.service;
 
-import com.chocobi.leafy.constants.CarbonEmissionConst;
 import com.chocobi.leafy.distance.domain.*;
 import com.chocobi.leafy.distance.dto.CarDistanceResponse;
 import com.chocobi.leafy.distance.dto.RouteCalculationResult;
@@ -362,6 +361,7 @@ public class TripSegmentService {
                 req.setStartY(String.valueOf(start.getLatitude()));
                 req.setEndX(String.valueOf(end.getLongitude()));
                 req.setEndY(String.valueOf(end.getLatitude()));
+              
                 requests.add(req);
             }
 
@@ -371,6 +371,71 @@ public class TripSegmentService {
 
             System.out.println("[DEBUG] PublicTransport BatchRequest: " + batchRequest);
             calculateAndSavePublicRoute(batchRequest, tripPlaces);
+        }
+    }
+
+    /**
+     * 재계산 진입점: DB에서 조회한 TripPlaceResponse를 직접 사용
+     * (프론트엔드에서 온 request가 아닌, DB에 저장된 최신 데이터 사용)
+     */
+    @Transactional
+    public void recalculateRoutesAndSaveV2(Trip trip, String transport, List<TripPlaceResponse> tripPlaces) {
+        System.out.println("[DEBUG] TripPlaces to recalc (from DB): " + tripPlaces);
+
+        // visitOrder로 정렬
+        List<TripPlaceResponse> sortedPlaces = new ArrayList<>(tripPlaces);
+        sortedPlaces.sort(Comparator.comparing(TripPlaceResponse::getVisitOrder));
+
+        String normalized = transport == null ? "car" : transport.toLowerCase();
+
+        if ("car".equals(normalized)) {
+            CarDistanceRequest carRequest = new CarDistanceRequest();
+            carRequest.setTripId(trip.getId());
+
+            // 🔥 첫 번째와 마지막 장소를 origin/destination으로 사용
+            if (!sortedPlaces.isEmpty()) {
+                PlaceDTO firstPlace = sortedPlaces.get(0).getPlace();
+                PlaceDTO lastPlace = sortedPlaces.get(sortedPlaces.size() - 1).getPlace();
+
+                carRequest.setOrigin(placeToPoint(firstPlace));
+                carRequest.setDestination(placeToPoint(lastPlace));
+
+                // 중간 장소들을 waypoints로 설정
+                if (sortedPlaces.size() > 2) {
+                    carRequest.setWaypoints(
+                            sortedPlaces.subList(1, sortedPlaces.size() - 1)
+                                    .stream()
+                                    .map(tp -> placeToPoint(tp.getPlace()))
+                                    .toList()
+                    );
+                }
+            }
+
+            System.out.println("[DEBUG] CarDistanceRequest: " + carRequest);
+            calculateAndSaveCarRoute(carRequest, trip.getId());
+
+        } else if ("public".equals(normalized)) {
+            List<TransDistanceRequest> requests = new ArrayList<>();
+
+            for (int i = 0; i < sortedPlaces.size() - 1; i++) {
+                PlaceDTO start = sortedPlaces.get(i).getPlace();
+                PlaceDTO end = sortedPlaces.get(i + 1).getPlace();
+
+                TransDistanceRequest req = new TransDistanceRequest();
+                req.setStartX(String.valueOf(start.getLongitude()));
+                req.setStartY(String.valueOf(start.getLatitude()));
+                req.setEndX(String.valueOf(end.getLongitude()));
+                req.setEndY(String.valueOf(end.getLatitude()));
+
+                requests.add(req);
+            }
+
+            TransDistanceBatchRequest batchRequest = new TransDistanceBatchRequest();
+            batchRequest.setTripId(trip.getId());
+            batchRequest.setRequests(requests);
+
+            System.out.println("[DEBUG] PublicTransport BatchRequest: " + batchRequest);
+            calculateAndSavePublicRoute(batchRequest, sortedPlaces);
         }
     }
 }
