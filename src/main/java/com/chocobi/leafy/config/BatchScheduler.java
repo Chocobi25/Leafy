@@ -20,7 +20,7 @@ public class BatchScheduler {
     private final JobLauncher jobLauncher;
     private final Job placeDataJob;
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 0 14 * * *")
     public void runPlaceDataJob() {
         try {
             JobParameters jobParameters = new JobParametersBuilder()

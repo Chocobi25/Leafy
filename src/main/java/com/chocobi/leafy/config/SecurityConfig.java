@@ -29,13 +29,15 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper;
     private final JwtAuthenticationFilter jwtAuthenticationFilter; // JwtAuthenticationFilter 주입
+    private final Kakao kakao;
 
     // 생성자 수정
-    public SecurityConfig(OAuth2UserService oAuth2UserService, JwtUtil jwtUtil, ObjectMapper objectMapper, JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(OAuth2UserService oAuth2UserService, JwtUtil jwtUtil, ObjectMapper objectMapper, JwtAuthenticationFilter jwtAuthenticationFilter, Kakao kakao) {
         this.oAuth2UserService = oAuth2UserService;
         this.jwtUtil = jwtUtil;
         this.objectMapper = objectMapper;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.kakao = kakao;
     }
 
     @Bean
@@ -54,6 +56,7 @@ public class SecurityConfig {
 
         // API 경로에 대한 접근 권한 설정 (예시: /api/** 경로는 인증 필요)
         http.authorizeHttpRequests(config -> config
+                .requestMatchers("/").permitAll()
                 .requestMatchers("/api/place/**").permitAll()
                 .requestMatchers("/api/posts").permitAll() // 포스트 목록 조회 공개
                 .requestMatchers("/api/posts/likes/me").permitAll() // 사용자 좋아요 목록 공개
@@ -71,6 +74,9 @@ public class SecurityConfig {
     public AuthenticationSuccessHandler successHandler() {
         return ((request, response, authentication) -> {
             try {
+
+                System.out.println("kakao.redirectUri: " + kakao.redirectUri);
+                System.out.println("redirectUrl: " + kakao.redirectUri);
                 // OAuth2 로그인 결과로 받은 사용자 정보
                 DefaultOAuth2User defaultOAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
 
@@ -85,7 +91,7 @@ public class SecurityConfig {
 
                 // 프론트엔드 콜백 페이지로 리다이렉트
                 String redirectUrl = String.format("%s?token=%s&userId=%s",
-                        Kakao.redirectUri, token, userId);
+                        kakao.redirectUri, token, userId);
 
                 response.sendRedirect(redirectUrl);
 
@@ -109,7 +115,7 @@ public class SecurityConfig {
 
                 try {
                     String errorMessage = URLEncoder.encode("로그인 처리 중 오류가 발생했습니다.", "UTF-8");
-                    String errorRedirectUrl = Kakao.redirectUri + "?error=" + errorMessage;
+                    String errorRedirectUrl = kakao.redirectUri + "?error=" + errorMessage;
                     response.sendRedirect(errorRedirectUrl);
                 } catch (Exception redirectException) {
                     redirectException.printStackTrace();
@@ -125,7 +131,7 @@ public class SecurityConfig {
 
         // 허용할 오리진 설정
         configuration.setAllowedOrigins(Arrays.asList(
-                Kakao.clientUri
+                kakao.clientUri
         ));
 
         // 허용할 HTTP 메서드

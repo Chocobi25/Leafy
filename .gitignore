@@ -39,4 +39,4 @@ out/
 /src/main/resources/application-secret.properties
 /src/main/resources/application-oauth.properties
 .env
-/src/main/resources/firebase/leafy-4f5c0-firebase-adminsdk-fbsvc-74b6a4ab9b.json
+/src/main/resources/firebase/
