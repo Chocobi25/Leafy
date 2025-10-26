@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class TripPlaceRequest {
-    private Long tripPlaceId;
+    private Long placeId;
     private int visitOrder;
     private int dayIndex;
     private String memo;

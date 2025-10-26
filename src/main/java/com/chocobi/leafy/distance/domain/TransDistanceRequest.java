@@ -4,8 +4,8 @@ import lombok.Data;
 
 @Data
 public class TransDistanceRequest {
-    private double startX;
-    private double startY;
-    private double endX;
-    private double endY;
+    private String startX;
+    private String startY;
+    private String endX;
+    private String endY;
 }

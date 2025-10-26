@@ -11,4 +11,6 @@ import java.util.List;
 public interface TripPlaceRepository extends JpaRepository<TripPlace, Long> {
     List<TripPlace> findByTripId(Long tripId);
     void deleteAllByTrip(Trip trip);
+    List<TripPlace> findByTripIdOrderByVisitOrderAsc(Long tripId);
+    List<TripPlace> findByTripId_Id(Long tripId);
 }

@@ -5,6 +5,7 @@ import com.chocobi.leafy.post.dto.PostResponse;
 import com.chocobi.leafy.post.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,7 +43,18 @@ public class PostController {
     }
   
     @PostMapping("/{postId}/like")
-    public ResponseEntity<PostResponse> toggleLike(@PathVariable Long postId, @RequestParam boolean isLiked) {
-        return ResponseEntity.ok(postService.toggleLike(postId, isLiked));
+    public ResponseEntity<PostResponse> toggleLike(@PathVariable Long postId, Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(postService.toggleLike(postId, userId));
+    }
+
+    @GetMapping("/likes/me")
+    public ResponseEntity<List<Long>> getUserLikedPosts(Authentication authentication) {
+        if (authentication == null) {
+            // 비로그인 사용자는 빈 배열 반환
+            return ResponseEntity.ok(List.of());
+        }
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(postService.getUserLikedPostIds(userId));
     }
 }

@@ -48,4 +48,10 @@ public class UserDeviceService {
                 .ifPresent(userDeviceRepository::delete);
         log.info("사용자 ID {}의 FCM 토큰 {}이 성공적으로 삭제되었습니다.", userId, fcmToken);
     }
+
+    public String getFcmTokenByUserId(User user) {
+        return userDeviceRepository.findByUser(user)
+                .map(UserDevice::getFcmToken)
+                .orElse(null);
+    }
 }
