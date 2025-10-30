@@ -54,11 +54,25 @@ public class SecurityConfig {
 
         // API 경로에 대한 접근 권한 설정 (예시: /api/** 경로는 인증 필요)
         http.authorizeHttpRequests(config -> config
-                .requestMatchers("/api/place/**").permitAll()
-                .requestMatchers("/api/posts").permitAll() // 포스트 목록 조회 공개
-                .requestMatchers("/api/posts/likes/me").permitAll() // 사용자 좋아요 목록 공개
-                .requestMatchers("/api/**").authenticated() // /api/로 시작하는 모든 경로는 인증 필요
-                .anyRequest().permitAll()); // 그 외 모든 요청은 허용
+                // 공개 API - 인증 불필요
+                .requestMatchers("/api/place/list").permitAll()  // 지역별 장소 조회
+                .requestMatchers("/api/place/api-places").permitAll()  // API 장소 목록
+                .requestMatchers("/api/place/user-place").authenticated()  // 사용자 장소 등록 (인증 필요)
+
+                // 관리자 전용 API - ADMIN 권한 필요
+                .requestMatchers("/api/place/all").hasRole("ADMIN")  // 모든 장소 조회
+                .requestMatchers("/api/place/{placeId}").hasRole("ADMIN")  // 장소 삭제
+                .requestMatchers("/api/place/image/{imageId}").hasRole("ADMIN")  // 이미지 삭제
+
+                // 포스트 관련
+                .requestMatchers("/api/posts").permitAll()
+                .requestMatchers("/api/posts/likes/me").permitAll()
+
+                // 나머지 /api/** 경로는 인증 필요
+                .requestMatchers("/api/**").authenticated()
+
+                // 그 외 모든 요청은 허용
+                .anyRequest().permitAll());
 
         // 직접 만든 JWT 필터를 Spring Security 필터 체인에 추가
         // UsernamePasswordAuthenticationFilter 이전에 실행되도록 설정

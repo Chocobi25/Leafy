@@ -81,4 +81,14 @@ public class JwtUtil {
             return false;
         }
     }
+
+    /**
+     * 토큰에서 역할(Role)을 추출한다.
+     * @param token
+     * @return
+     */
+    public String getRoleFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("role", String.class);
+    }
 }
