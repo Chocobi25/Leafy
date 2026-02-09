@@ -40,6 +40,7 @@ public class Post {
     private Integer rating;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer likes = 0;
 
     @CreationTimestamp

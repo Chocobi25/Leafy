@@ -8,4 +8,5 @@ import java.util.List;
 public class TripPlacesListRequest {
     private Long tripId;
     private List<TripPlaceRequest> places;
+    String transport;
 }

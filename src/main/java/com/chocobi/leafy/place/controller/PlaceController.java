@@ -6,6 +6,7 @@ import com.chocobi.leafy.place.entity.PlaceSourceType;
 import com.chocobi.leafy.place.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,35 @@ public class PlaceController {
     @GetMapping("/api-places")
     public ResponseEntity<List<PlaceDTO>> getPlacesByApi() {
         List<PlaceDTO> places = placeService.getPlaceBySourceType(PlaceSourceType.API);
+        return ResponseEntity.ok(places);
+    }
+
+    @DeleteMapping("/{placeId}")
+    @PreAuthorize("hasRole('ADMIN')") // 관리자만 접근 가능
+    public ResponseEntity<Map<String, String>> deletePlace(@PathVariable Long placeId) {
+        try {
+            placeService.deletePlace(placeId);
+            return ResponseEntity.ok(Map.of("message", "장소가 성공적으로 삭제되었습니다."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/image/{imageId}")
+    @PreAuthorize("hasRole('ADMIN')") // 관리자만 접근 가능
+    public ResponseEntity<Map<String, String>> deleteImage(@PathVariable Long imageId) {
+        try {
+            placeService.deleteImage(imageId);
+            return ResponseEntity.ok(Map.of("message", "이미지가 성공적으로 삭제되었습니다."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')") // 관리자만 접근 가능
+    public ResponseEntity<List<PlaceDTO>> getAllPlaces() {
+        List<PlaceDTO> places = placeService.getAllPlaces();
         return ResponseEntity.ok(places);
     }
 }

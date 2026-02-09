@@ -9,18 +9,18 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class TripMessageService {
+
     private final FCMService fcmService;
     private final TripService tripService;
     private final UserService userService;
 
     /**
-     * 여행 생성 시 알림
+     * 여행 생성 알림 🌱
      */
     @Transactional
     public void notifyTripCreated(Long userId, Long tripId) throws FirebaseMessagingException {
@@ -29,62 +29,67 @@ public class TripMessageService {
 
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
-                "url", "/trips/" + trip.getId() // 프론트 라우팅
+                "url", "/trip/" + trip.getId()
         );
 
         fcmService.sendNotification(
                 user,
-                "여행 생성 완료!",
-                trip.getTitle() + " 여행이 생성되었습니다.",
+                "🌿 여행이 준비되었어요!",
+                "‘" + trip.getTitle() + "’ 여행이 성공적으로 생성되었습니다.",
                 data
         );
     }
 
     /**
-     * 여행 출발 알림 (스케줄러 호출용)
+     * 여행 출발 알림 ✈️
      */
     @Transactional
     public void notifyTripStart(User user, Trip trip) throws FirebaseMessagingException {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
-                "url", "/trips/" + trip.getId()
+                "url", "/trip/" + trip.getId()
         );
 
         fcmService.sendNotification(
                 user,
-                "여행 출발!",
-                trip.getTitle() + " 여행이 오늘 출발합니다!",
+                "✈️ 출발 준비 완료!",
+                "오늘은 ‘" + trip.getTitle() + "’ 여행이 시작되는 날이에요. 즐거운 여행 되세요!",
                 data
         );
     }
 
-
+    /**
+     * 위치 인증 요청 📍
+     */
     @Transactional
     public void requestLocationCheck(User user, Trip trip) throws FirebaseMessagingException {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
-                "url", "/trips/details/" + trip.getId()  // 프론트 라우팅 경로
+                "url", "/trip/" + trip.getId() + "/certify"
         );
 
         fcmService.sendNotification(
                 user,
-                "위치 인증 요청",
-                trip.getTitle() + " 여행에서 위치 인증을 해주세요!",
+                "📍 위치 인증이 필요해요",
+                "‘" + trip.getTitle() + "’ 여행의 인증을 위해 현재 위치를 확인해주세요.",
                 data
         );
     }
 
+    /**
+     * 여행 인증 완료 🎉
+     */
     @Transactional
     public void certifyTrip(User user, Trip trip) throws FirebaseMessagingException {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
-                "url", "/trips/details/" + trip.getId()
+                "url", "/trip/" + trip.getId()
         );
 
         fcmService.sendNotification(
                 user,
-                "여행 인증 완료!",
-                trip.getTitle() + " 여행 인증이 완료되었습니다. 즐거운 여행 되세요! 🌿",
+                "🎉 여행 인증 완료!",
+                "‘" + trip.getTitle() + "’ 여행 인증이 완료되었습니다. 다음 여정을 향해 나아가볼까요? 🌿",
                 data
         );
     }
