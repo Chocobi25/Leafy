@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: leafy
+  profiles:
+    active: local
+    include: oauth, secret
+
+  codec:
+    max-in-memory-size: 5MB

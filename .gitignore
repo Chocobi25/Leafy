@@ -36,7 +36,7 @@ out/
 ### VS Code ###
 .vscode/
 
-/src/main/resources/application-secret.properties
-/src/main/resources/application-oauth.properties
+/src/main/resources/application-secret.yml
+/src/main/resources/application-oauth.yml
 .env
 /src/main/resources/firebase/
