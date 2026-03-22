@@ -58,7 +58,14 @@ dependencies {
     // fcm
     implementation 'com.google.firebase:firebase-admin:9.5.0'
 
-    // test
+    // monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    runtimeOnly 'com.h2database:h2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -66,4 +73,30 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.named('jar') {
+	enabled = false
+}
+
+tasks.register('buildZip', Zip) {
+	dependsOn build
+	archiveFileName = "leafy-deployment.zip"
+	destinationDirectory = file("$buildDir/distributions")
+
+	from("$buildDir/libs") {
+		include '*.jar'
+	}
+
+	from('.') {
+		include '.ebextensions/**'
+	}
+
+	from('.') {
+		include 'Procfile'
+	}
+}
+
+tasks.named('build') {
+	finalizedBy(buildZip)
 }
