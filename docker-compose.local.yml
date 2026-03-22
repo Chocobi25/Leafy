@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:  # 실행할 컨테이너 목록 (prometheus, grafana)
+  prometheus:  # prometheus 서비스
+    image: prom/prometheus:latest  # Docker Hub 공식 Prometheus 이미지 사용 (최신 버전)
+    container_name: prometheus  # 컨테이너 이름
+    ports:  # 호스트 : 컨테이너 형식. 로컬9090 -> 컨테이너9090으로 연결. localhost:9090으로 접근 가능해짐
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml  # prometheus.yml을 컨테이너 내부 설정 파일 경로에 마운트. 내가 수정하면 컨테이너도 반영됨
+      - prometheus-data:/prometheus  # named volume으로 수집된 메트릭 데이터를 Docker가 관리하는 공간에 저장
+    command:  # Prometheus 실행 옵션
+      - '--config.file=/etc/prometheus/prometheus.yml'  # 설정 파일 경로 지정
+      - '--storage.tsdb.retention.time=3d'  # 메트릭 데이터 3일치만 보관
+    restart: unless-stopped  # 컨테이너 멈추면 자동 재시작. docker stop으로 직접 멈춘 경우엔 재시작 x
+
+  grafana:  # grafana 서비스
+    image: grafana/grafana:latest  # Docker Hub 공식 grafana 이미지 사용 (최신 버전)
+    container_name: grafana  # 컨테이너 이름
+    ports:  # 호스트 : 컨테이너 형식.
+      - "3000:3000"
+    volumes:  # Grafana 설정 데이터 저장. 컨테이너 재시작해도 설정 유지됨.
+      - grafana-data:/var/lib/grafana
+    depends_on:  # Prometheus 컨테이너가 먼저 시작된 후 Grafana 시작.
+      - prometheus
+    restart: unless-stopped
+
+volumes:  # named volume 선언부. 여기 명시해야 Docker가 볼륨을 생성하고 관리함.
+  prometheus-data:
+  grafana-data:
