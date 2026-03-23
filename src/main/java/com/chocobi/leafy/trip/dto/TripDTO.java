@@ -40,7 +40,7 @@ public class TripDTO {
                 trip.getCarbonEmission(),
                 trip.getStatus(),
                 trip.getCertificationAt(),
-                trip.getUser().getKakaoId(),
+                trip.getUser().getId(),  // TODO: 로직 동작 확인
                 trip.getTripPlaces().stream()
                         .map(TripPlaceResponse::toDTO)
                         .sorted(Comparator.comparingInt(TripPlaceResponse::getVisitOrder))

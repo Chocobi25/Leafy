@@ -11,10 +11,11 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByKakaoId(Long kakaoId); // 유저가 있을 수도 있고, 없을 수도 있음
 
     @Modifying
     @Transactional
-    @Query("update User u set u.totalCarbonSaved = u.totalCarbonSaved + ?2 where u.kakaoId = ?1")
-    void updateCarbonSaved(Long kakaoId, double carbonSaved);
+    @Query("update User u set u.totalCarbonSaved = u.totalCarbonSaved + ?2 where u.id = ?1")  // TODO: 로직 동작 확인
+    void updateCarbonSaved(Long id, double carbonSaved);
+
+    Optional<User> findByProviderId(String providerId);  // TODO: 로직 동작 확인
 }

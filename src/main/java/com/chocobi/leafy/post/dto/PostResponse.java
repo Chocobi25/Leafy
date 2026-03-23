@@ -42,7 +42,7 @@ public class PostResponse {
         UserInfo userInfo = null;
         if (post.getUser() != null) {
             userInfo = new UserInfo(
-                    post.getUser().getKakaoId(),
+                    post.getUser().getId(),  // TODO: 로직 동작 확인
                     post.getUser().getNickname(),
                     post.getUser().getProfileImageUrl()
             );

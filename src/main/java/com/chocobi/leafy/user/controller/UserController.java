@@ -1,6 +1,6 @@
 package com.chocobi.leafy.user.controller;
 
-import com.chocobi.leafy.user.entity.Level;
+import com.chocobi.leafy.user.enums.Level;
 import com.chocobi.leafy.user.entity.User;
 import com.chocobi.leafy.user.dto.LevelIconUpdateDto;
 import com.chocobi.leafy.user.dto.NicknameUpdateDto;
@@ -48,7 +48,7 @@ public class UserController {
         Long kakaoId = Long.parseLong(authentication.getName());
 
         // 기존 사용자 정보 조회
-        User user = userService.findByKakaoId(kakaoId);
+        User user = userService.findById(kakaoId);  // TODO: 로직 동작 확인
 
         // 닉네임 수정
         user.updateNickname(nicknameUpdateDto.getNickname());
@@ -69,7 +69,7 @@ public class UserController {
     @PutMapping("/test/level")
     public ResponseEntity<String> updateTestLevel(@RequestBody Map<String, String> request, Authentication authentication) {
         Long kakaoId = Long.parseLong(authentication.getName());
-        User user = userService.findByKakaoId(kakaoId);
+        User user = userService.findById(kakaoId);  // TODO: 로직 동작 확인
 
         try {
             Level newLevel = Level.valueOf(request.get("level"));
@@ -86,7 +86,7 @@ public class UserController {
     @PutMapping("/test/carbon")
     public ResponseEntity<String> updateTestCarbon(@RequestBody Map<String, Double> request, Authentication authentication) {
         Long kakaoId = Long.parseLong(authentication.getName());
-        User user = userService.findByKakaoId(kakaoId);
+        User user = userService.findById(kakaoId);  // TODO: 로직 동작 확인
 
         try {
             Double carbonAmount = request.get("totalCarbonSaved");
