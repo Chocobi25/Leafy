@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class UserProfileDto {
-    private Long kakaoId;
+    private String kakaoId;  // TODO: 로직 동작 확인
     private String nickname;
     private String profileImageUrl;
     private String role;

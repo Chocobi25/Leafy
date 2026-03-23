@@ -27,7 +27,7 @@ public class FCMService {
         // 1. 사용자 디바이스 토큰 가져오기 (단일)
         Optional<UserDevice> deviceOpt = userDeviceRepository.findByUser(user);
         if (deviceOpt.isEmpty()) {
-            log.warn("❌ 사용자 {} 에 등록된 FCM 토큰이 없습니다.", user.getKakaoId());
+            log.warn("❌ 사용자 {} 에 등록된 FCM 토큰이 없습니다.", user.getId());  // TODO: 로직 동작 확인
             return;
         }
 
@@ -50,9 +50,9 @@ public class FCMService {
         // 3. 발송
         try {
             String response = FirebaseMessaging.getInstance().send(message);
-            log.info("✅ FCM 알림 전송 완료 - user={}, token={}, response={}", user.getKakaoId(), fcmToken, response);
+            log.info("✅ FCM 알림 전송 완료 - user={}, token={}, response={}", user.getId(), fcmToken, response);  // TODO: 로직 동작 확인
         } catch (FirebaseMessagingException e) {
-            log.error("❌ FCM 전송 실패 - user={}, token={}, reason={}", user.getKakaoId(), fcmToken, e.getMessagingErrorCode(), e);
+            log.error("❌ FCM 전송 실패 - user={}, token={}, reason={}", user.getId(), fcmToken, e.getMessagingErrorCode(), e);  // TODO: 로직 동작 확인
             // 실패 토큰 삭제
             userDeviceRepository.findByFcmToken(fcmToken)
                     .ifPresent(userDeviceRepository::delete);

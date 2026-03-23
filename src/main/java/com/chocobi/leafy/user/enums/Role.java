@@ -1,4 +1,4 @@
-package com.chocobi.leafy.user.entity;
+package com.chocobi.leafy.user.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

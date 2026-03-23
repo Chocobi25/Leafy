@@ -3,7 +3,7 @@ package com.chocobi.leafy.user.service;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.dto.UserTripDto;
-import com.chocobi.leafy.user.entity.Level;
+import com.chocobi.leafy.user.enums.Level;
 import com.chocobi.leafy.user.entity.User;
 import com.chocobi.leafy.user.dto.UserProfileDto;
 import com.chocobi.leafy.user.repository.UserRepository;
@@ -28,11 +28,11 @@ public class UserService {
      * @param profileImageUrl
      * @return
      */
-    public User saveOrGetUser(Long kakaoId, String nickname, String profileImageUrl) {
-        return userRepository.findByKakaoId(kakaoId)
+    public User saveOrGetUser(String kakaoId, String nickname, String profileImageUrl) {
+        return userRepository.findByProviderId((kakaoId))  // TODO: 로직 동작 확인
                 .orElseGet(() -> { // Optional<User>이 비어있으면, 안에 있는 함수를 실행해서 값을 새로 만들어 리턴함
                     User newUser = User.builder()
-                            .kakaoId(kakaoId)
+                            .providerId(kakaoId)  // TODO: 로직 동작 확인
                             .nickname(nickname)
                             .profileImageUrl(profileImageUrl)
                             .build();
@@ -49,19 +49,20 @@ public class UserService {
         userRepository.updateCarbonSaved(kakaoId, carbonSaved);
     }
 
-    public User findByKakaoId(Long kakaoId) {
-        return userRepository.findByKakaoId(kakaoId)
+    // TODO: 로직 동작 확인
+    public User findById(Long id) {
+        return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
     }
 
     @Transactional(readOnly = true) // 읽기 전용
-    public UserProfileDto getUserProfile(Long kakaoId) {
-        User user = userRepository.findByKakaoId(kakaoId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with kakaoId: " + kakaoId));
+    public UserProfileDto getUserProfile(Long id) {
+        User user = userRepository.findById(id)  // TODO: 로직 동작 확인
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
         // User 엔티티를 UserProfileDto로 변환
         return UserProfileDto.builder()
-                .kakaoId(user.getKakaoId())
+                .kakaoId(user.getProviderId())  // TODO: 로직 동작 확인
                 .nickname(user.getNickname())
                 .profileImageUrl(user.getProfileImageUrl())
                 .role(user.getRole().name())
@@ -73,9 +74,9 @@ public class UserService {
     }
 
     @Transactional
-    public void updateSelectedLevelIcon(Long kakaoId, String selectedLevelIcon) {
+    public void updateSelectedLevelIcon(Long id, String selectedLevelIcon) {
 
-        User user = findByKakaoId(kakaoId);
+        User user = findById(id);  // TODO: 로직 동작 확인
 
         Level iconLevel;
         try {
@@ -99,8 +100,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserTripDto> getUserTrips(Long kakaoId) {
-        List<Trip> trips = tripRepository.findByUserKakaoIdOrderByCreatedAtDesc(kakaoId);
+    public List<UserTripDto> getUserTrips(Long id) {
+        List<Trip> trips = tripRepository.findByUserIdOrderByCreatedAtDesc(id);  // TODO: 로직 동작 확인
         
         return trips.stream()
                 .map(trip -> UserTripDto.builder()

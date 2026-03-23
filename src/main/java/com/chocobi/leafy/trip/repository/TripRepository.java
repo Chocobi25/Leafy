@@ -13,7 +13,7 @@ import java.util.List;
 @Repository
 public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findByStatusAndCreatedAtBefore(TripStatus status, LocalDateTime createdAt);
-    List<Trip> findByUserKakaoIdOrderByCreatedAtDesc(Long kakaoId);
+    List<Trip> findByUserIdOrderByCreatedAtDesc(Long id);  // TODO: 로직 동작 확인
     List<Trip> findAllByStartDateAndStatus(LocalDate startDate, TripStatus status);
     List<Trip> findAllByUser(User user);
 }

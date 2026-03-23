@@ -34,7 +34,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                 .getUserNameAttributeName();
 
         Map<String, Object> attributes = oAuth2User.getAttributes();
-        Long kakaoId = ((Number) attributes.get("id")).longValue();
+        String kakaoId = attributes.get("id").toString();  // TODO: 로직 동작 확인
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
         Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
 

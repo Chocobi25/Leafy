@@ -29,7 +29,7 @@ public class PostService {
         Post post = Post.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
-                .user(userService.findByKakaoId(request.getUserId()))
+                .user(userService.findById(request.getUserId()))  // TODO: 로직 동작 확인
                 .place(placeService.getPlaceById(request.getPlaceId()))
                 .rating(request.getRating())
                 .likes(0)
@@ -65,7 +65,7 @@ public class PostService {
     }
 
     public List<PostResponse> getPostByUser(Long userId) {
-        return postRepository.findByUser(userService.findByKakaoId(userId)).stream()
+        return postRepository.findByUser(userService.findById(userId)).stream()  // TODO: 로직 동작 확인
                 .map(PostResponse::fromEntity)
                 .toList();
     }
@@ -79,7 +79,7 @@ public class PostService {
     @Transactional
     public PostResponse toggleLike(Long postId, Long userId) {
         Post post = getPostById(postId);
-        User user = userService.findByKakaoId(userId);
+        User user = userService.findById(userId);  // TODO: 로직 동작 확인
 
         boolean isCurrentlyLiked = userPostLikeRepository.existsByUserAndPost(user, post);
 
@@ -102,7 +102,7 @@ public class PostService {
     }
 
     public List<Long> getUserLikedPostIds(Long userId) {
-        User user = userService.findByKakaoId(userId);
+        User user = userService.findById(userId);  // TODO: 로직 동작 확인
         return userPostLikeRepository.findPostIdsByUser(user);
     }
 }
