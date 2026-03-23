@@ -40,3 +40,5 @@ out/
 /src/main/resources/application-oauth.yml
 .env
 /src/main/resources/firebase/
+
+.claude
