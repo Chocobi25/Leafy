@@ -1,4 +1,4 @@
-package com.chocobi.leafy.user.util;
+package com.chocobi.leafy.auth.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
