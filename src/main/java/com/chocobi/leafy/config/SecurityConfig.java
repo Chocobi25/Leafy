@@ -62,6 +62,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/posts").permitAll()
                 .requestMatchers("/api/posts/likes/me").permitAll()
 
+                // RefreshToken 재발급
+                .requestMatchers("/api/auth/refresh").permitAll()
+
                 // 나머지 /api/** 경로는 인증 필요
                 .requestMatchers("/api/**").authenticated()
 

@@ -1,6 +1,7 @@
 package com.chocobi.leafy.auth.util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -9,37 +10,75 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Date;
+
+import static java.time.temporal.ChronoUnit.MILLIS;
 
 @Component
 public class JwtUtil {
 
     private final SecretKey secretKey;
-    private final long expirationTime;
+    private final long accessTokenExpiration;
+    private final long refreshTokenExpiration;
 
-    // 생성자에서 secretKey와 expirationTime 주입
-    public JwtUtil(@Value("${jwt.secret}") String secret, @Value("${jwt.expiration.time}") long expirationTime) {
+    public JwtUtil(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.access-token.expiration}") long accessTokenExpiration,
+            @Value("${jwt.refresh-token.expiration}") long refreshTokenExpiration
+            ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expirationTime = expirationTime;
+        this.accessTokenExpiration = accessTokenExpiration;
+        this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
     /**
-     * 사용자 ID와 역할을 기반으로 JWT를 생성한다.
+     * AccessToken 생성
      * @param userId
      * @param role
      * @return
      */
-    public String createToken(Long userId, String role) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expirationTime);
+    public String createAccessToken(Long userId, String role) {
+        return buildToken(userId, role, accessTokenExpiration);
+    }
 
-        return Jwts.builder()
-                .subject(userId.toString())  // 토큰의 주체로 사용자 ID를 설정
-                .claim("role", role)         // 사용자 역할을 클레임으로 추가
-                .issuedAt(now)               // 토큰 발급 시간
-                .expiration(expiryDate)      // 토큰 만료 시간
-                .signWith(secretKey)  // 서명
-                .compact();
+    /**
+     * RefreshToken 생성
+     * @param userId
+     * @return
+     */
+    public String createRefreshToken(Long userId) {
+        return buildToken(userId, null, refreshTokenExpiration);
+    }
+
+    /**
+     * userId, role, expiration으로 token을 만들어서 반환
+     * @param userId the ID of the user for whom the token is being created
+     * @param role the role of the user to be included in the token (can be null)
+     * @param expiration the expiration time for the token in milliseconds
+     * @return a compact JWT token as a String
+     */
+    private String buildToken(Long userId, String role, long expiration) {
+        Date now = new Date();
+        JwtBuilder builder = Jwts.builder()
+                .subject(userId.toString())
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + expiration))
+                .signWith(secretKey);
+
+        if (role != null) {
+            builder.claim("role", role);
+        }
+
+        return builder.compact();
+    }
+
+    /**
+     * DB 저장용 RefreshToken 만료 시간 반환
+     * @return
+     */
+    public LocalDateTime getRefreshTokenExpiration() {
+        return LocalDateTime.now().plus(refreshTokenExpiration, MILLIS);
     }
 
     /**

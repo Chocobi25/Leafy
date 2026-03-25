@@ -1,25 +1,34 @@
 package com.chocobi.leafy.auth.handler;
 
+import com.chocobi.leafy.auth.service.RefreshTokenService;
 import com.chocobi.leafy.auth.util.JwtUtil;
+import com.chocobi.leafy.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
+    private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${app.frontend.redirect-uri}")
     private String redirectUri;
+
+    @Value("${cookie.secure}")
+    private boolean cookieSecure;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -29,8 +38,22 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         Long userId = (Long) defaultOAuth2User.getAttributes().get("userId");
         String role = defaultOAuth2User.getAuthorities().iterator().next().getAuthority();
-        String token = jwtUtil.createToken(userId, role);
-        String redirectUrl = String.format("%s?token=%s&userId=%s", redirectUri, token, userId);
+        String accessToken = jwtUtil.createAccessToken(userId, role);
+        String refreshToken = jwtUtil.createRefreshToken(userId);
+
+        refreshTokenService.saveRefreshToken(userService.findById(userId), refreshToken, jwtUtil.getRefreshTokenExpiration());
+
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Strict")
+                .path("/api/auth")
+                .maxAge(Duration.ofDays(14))
+                .build();
+
+        response.setHeader("Set-Cookie", cookie.toString());
+
+        String redirectUrl = String.format("%s?accessToken=%s&userId=%s", redirectUri, accessToken, userId);
 
         response.sendRedirect(redirectUrl);
     }

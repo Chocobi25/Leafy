@@ -1,6 +1,8 @@
 package com.chocobi.leafy.auth.filter;
 
 import com.chocobi.leafy.auth.util.JwtUtil;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,25 +45,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authorizationHeader.substring(7);
         log.info("Extracted Token: {}...", token.substring(0, Math.min(token.length(), 10)));
 
-        if (jwtUtil.validateToken(token)) {
-            log.info("Token is valid.");
-
+        try {
             Long userId = jwtUtil.getUserIdFromToken(token);
-            String role = jwtUtil.getRoleFromToken(token); // Role 정보 추출
+            String role = jwtUtil.getRoleFromToken(token);
 
-            log.info("User ID from token: {}, Role: {}", userId, role);
+            log.info("User ID: {}, Role: {}", userId, role);
 
-            // Role에 따라 권한 설정
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                    userId,
-                    null,
-                    Collections.singletonList(new SimpleGrantedAuthority(role)) // JWT에서 추출한 Role 사용
-            );
+                    userId, null, Collections.singleton(new SimpleGrantedAuthority(role)));
 
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            log.info("Authentication successful. SecurityContext updated.");
-        } else {
-            log.warn("Token is invalid.");
+            log.info("Authentication successful. SecurityContext updated");
+        } catch (ExpiredJwtException e) {
+            log.warn("Token is expired");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "토큰이 만료되었습니다.");
+            return;
+        } catch (JwtException e) {
+            log.warn("Token is invalid");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+            return;
         }
 
         filterChain.doFilter(request, response);
