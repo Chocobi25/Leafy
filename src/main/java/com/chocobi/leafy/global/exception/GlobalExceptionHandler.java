@@ -1,5 +1,6 @@
 package com.chocobi.leafy.global.exception;
 
+import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -35,13 +36,13 @@ public class GlobalExceptionHandler {
                         .status(ErrorCode.INVALID_INPUT_VALUE.getStatus().value())
                         .code(ErrorCode.INVALID_INPUT_VALUE.name())
                         .message(message)
-                        .timestamp(java.time.LocalDateTime.now())
+                        .timestamp(LocalDateTime.now())
                         .build());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
-        log.error("서버 내부 오류 발생: {}", e.getMessage());
+        log.error("서버 내부 오류 발생: {}", e.getMessage(), e);
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR));
