@@ -41,6 +41,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String accessToken = jwtUtil.createAccessToken(userId, role);
         String refreshToken = jwtUtil.createRefreshToken(userId);
 
+        // 기존 RefreshToken 삭제
+        refreshTokenService.deleteAllByUserId(userId);
+
         refreshTokenService.saveRefreshToken(userService.findById(userId), refreshToken, jwtUtil.getRefreshTokenExpiration());
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
