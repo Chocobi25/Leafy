@@ -2,7 +2,6 @@ package com.chocobi.leafy.auth.handler;
 
 import com.chocobi.leafy.auth.service.RefreshTokenService;
 import com.chocobi.leafy.auth.util.JwtUtil;
-import com.chocobi.leafy.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,6 @@ import java.time.Duration;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
-    private final UserService userService;
     private final RefreshTokenService refreshTokenService;
 
     @Value("${app.frontend.redirect-uri}")
@@ -41,10 +39,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String accessToken = jwtUtil.createAccessToken(userId, role);
         String refreshToken = jwtUtil.createRefreshToken(userId);
 
-        // 기존 RefreshToken 삭제
-        refreshTokenService.deleteAllByUserId(userId);
-
-        refreshTokenService.saveRefreshToken(userService.findById(userId), refreshToken, jwtUtil.getRefreshTokenExpiration());
+        // 기존 Refresh Token 삭제 & 새로 발급한 Refresh Token 등록
+        refreshTokenService.rotateRefreshToken(userId, refreshToken, jwtUtil.getRefreshTokenExpiration());
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
