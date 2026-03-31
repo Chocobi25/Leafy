@@ -28,10 +28,10 @@ public class UserService {
      * @return
      */
     public User saveOrGetUser(OAuthAttributes oAuthAttributes) {
-        return userRepository.findByProviderId((oAuthAttributes.getProviderId()))  // TODO: 로직 동작 확인
+        return userRepository.findByProviderAndProviderId(oAuthAttributes.getProvider(), oAuthAttributes.getProviderId())
                 .orElseGet(() -> { // Optional<User>이 비어있으면, 안에 있는 함수를 실행해서 값을 새로 만들어 리턴함
                     User newUser = User.builder()
-                            .providerId(oAuthAttributes.getProviderId())  // TODO: 로직 동작 확인
+                            .providerId(oAuthAttributes.getProviderId())
                             .nickname(oAuthAttributes.getNickname())
                             .profileImageUrl(oAuthAttributes.getProfileImageUrl())
                             .provider(oAuthAttributes.getProvider())
