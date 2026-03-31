@@ -1,8 +1,8 @@
-package com.chocobi.leafy.post.controller;
+package com.chocobi.leafy.post.presentation;
 
+import com.chocobi.leafy.post.application.PostService;
 import com.chocobi.leafy.post.dto.PostRequest;
 import com.chocobi.leafy.post.dto.PostResponse;
-import com.chocobi.leafy.post.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -31,17 +31,17 @@ public class PostController {
         return ResponseEntity.ok(postService.getAllPosts());
     }
 
-    @GetMapping("/place/{placeId}")
+    /*@GetMapping("/place/{placeId}")
     public ResponseEntity<List<PostResponse>> getPostsByPlace(@PathVariable Long placeId) {
         return ResponseEntity.ok(postService.getPostByPlace(placeId));
-    }
+    }*/
 
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
         postService.delete(postId);
         return ResponseEntity.noContent().build();
     }
-  
+
     @PostMapping("/{postId}/like")
     public ResponseEntity<PostResponse> toggleLike(@PathVariable Long postId, Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
@@ -57,4 +57,5 @@ public class PostController {
         Long userId = Long.parseLong(authentication.getName());
         return ResponseEntity.ok(postService.getUserLikedPostIds(userId));
     }
+
 }
