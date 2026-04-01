@@ -14,7 +14,9 @@ import static com.chocobi.leafy.user.util.LevelCalculator.calculateLevel;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"provider", "provider_id"})
+})
 public class User extends BaseEntity {
 
     @Column(name = "nickname", nullable = false, length = 12)

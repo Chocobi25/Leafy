@@ -1,5 +1,6 @@
 package com.chocobi.leafy.user.service;
 
+import com.chocobi.leafy.auth.dto.OAuthAttributes;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.dto.UserTripDto;
@@ -23,18 +24,17 @@ public class UserService {
 
     /**
      * 만약 유저가 있다면 그 User를 리턴하고, User가 없다면 새 User 객체를 만들어 리턴한다.
-     * @param kakaoId
-     * @param nickname
-     * @param profileImageUrl
+     * @param oAuthAttributes
      * @return
      */
-    public User saveOrGetUser(String kakaoId, String nickname, String profileImageUrl) {
-        return userRepository.findByProviderId((kakaoId))  // TODO: 로직 동작 확인
+    public User saveOrGetUser(OAuthAttributes oAuthAttributes) {
+        return userRepository.findByProviderAndProviderId(oAuthAttributes.getProvider(), oAuthAttributes.getProviderId())
                 .orElseGet(() -> { // Optional<User>이 비어있으면, 안에 있는 함수를 실행해서 값을 새로 만들어 리턴함
                     User newUser = User.builder()
-                            .providerId(kakaoId)  // TODO: 로직 동작 확인
-                            .nickname(nickname)
-                            .profileImageUrl(profileImageUrl)
+                            .providerId(oAuthAttributes.getProviderId())
+                            .nickname(oAuthAttributes.getNickname())
+                            .profileImageUrl(oAuthAttributes.getProfileImageUrl())
+                            .provider(oAuthAttributes.getProvider())
                             .build();
                     return userRepository.save(newUser);
                 });

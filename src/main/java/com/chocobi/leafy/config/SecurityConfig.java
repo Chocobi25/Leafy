@@ -1,44 +1,35 @@
 package com.chocobi.leafy.config;
 
-import com.chocobi.leafy.constants.Kakao;
-import com.chocobi.leafy.user.service.OAuth2UserService;
-import com.chocobi.leafy.user.util.JwtUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletResponse;
+import com.chocobi.leafy.auth.filter.JwtAuthenticationFilter;
+import com.chocobi.leafy.auth.handler.OAuth2SuccessHandler;
+import com.chocobi.leafy.auth.service.OAuth2UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.net.URLEncoder;
 import java.util.Arrays;
 
 @Configuration
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
-    private final OAuth2UserService oAuth2UserService;
-    private final JwtUtil jwtUtil;
-    private final ObjectMapper objectMapper;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter; // JwtAuthenticationFilter 주입
-    private final Kakao kakao;
 
-    // 생성자 수정
-    public SecurityConfig(OAuth2UserService oAuth2UserService, JwtUtil jwtUtil, ObjectMapper objectMapper, JwtAuthenticationFilter jwtAuthenticationFilter, Kakao kakao) {
-        this.oAuth2UserService = oAuth2UserService;
-        this.jwtUtil = jwtUtil;
-        this.objectMapper = objectMapper;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.kakao = kakao;
-    }
+    private final OAuth2UserService oAuth2UserService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter; // JwtAuthenticationFilter 주입
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+
+    @Value("${app.frontend.client-uri}")
+    private String clientUri;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
@@ -52,7 +43,8 @@ public class SecurityConfig {
 
         // OAuth2 로그인 설정
         http.oauth2Login(oauth2Configurer -> oauth2Configurer
-                .successHandler(successHandler()));
+                .userInfoEndpoint(endpoint -> endpoint.userService(oAuth2UserService))
+                .successHandler(oAuth2SuccessHandler));
 
         // API 경로에 대한 접근 권한 설정 (예시: /api/** 경로는 인증 필요)
         http.authorizeHttpRequests(config -> config
@@ -70,6 +62,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/posts").permitAll()
                 .requestMatchers("/api/posts/likes/me").permitAll()
 
+                // RefreshToken 재발급
+                .requestMatchers("/api/auth/refresh").permitAll()
+
                 // 나머지 /api/** 경로는 인증 필요
                 .requestMatchers("/api/**").authenticated()
 
@@ -84,67 +79,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationSuccessHandler successHandler() {
-        return ((request, response, authentication) -> {
-            try {
-
-                System.out.println("kakao.redirectUri: " + kakao.redirectUri);
-                System.out.println("redirectUrl: " + kakao.redirectUri);
-                // OAuth2 로그인 결과로 받은 사용자 정보
-                DefaultOAuth2User defaultOAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
-
-                // 카카오 ID를 PK로 사용하므로, attributes에서 "id"를 직접 추출
-                Long userId = (Long) defaultOAuth2User.getAttributes().get("id");
-
-                // 사용자의 권한 정보 (예: "ROLE_USER")
-                String role = defaultOAuth2User.getAuthorities().iterator().next().getAuthority();
-
-                // JWT 생성
-                String token = jwtUtil.createToken(userId, role);
-
-                // 프론트엔드 콜백 페이지로 리다이렉트
-                String redirectUrl = String.format("%s?token=%s&userId=%s",
-                        kakao.redirectUri, token, userId);
-
-                response.sendRedirect(redirectUrl);
-
-//                // 응답 설정
-//                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-//                response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-//
-//                // 응답 본문에 담을 데이터 생성
-//                Map<String, Object> responseBody = new HashMap<>();
-//                responseBody.put("message", "Login successful");
-//                responseBody.put("token", token);
-//                responseBody.put("userId", userId);
-//
-//                // JSON으로 변환하여 응답 본문에 쓰기
-//                PrintWriter writer = response.getWriter();
-//                writer.print(objectMapper.writeValueAsString(responseBody));
-//                writer.flush();
-            } catch (Exception e) {
-                // 예외 발생 시 에러와 함께 콜백 페이지로 리다이렉트
-                e.printStackTrace();
-
-                try {
-                    String errorMessage = URLEncoder.encode("로그인 처리 중 오류가 발생했습니다.", "UTF-8");
-                    String errorRedirectUrl = kakao.redirectUri + "?error=" + errorMessage;
-                    response.sendRedirect(errorRedirectUrl);
-                } catch (Exception redirectException) {
-                    redirectException.printStackTrace();
-                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                }
-            }
-        });
-    }
-
-    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 허용할 오리진 설정
         configuration.setAllowedOrigins(Arrays.asList(
-                kakao.clientUri
+                clientUri
         ));
 
         // 허용할 HTTP 메서드
