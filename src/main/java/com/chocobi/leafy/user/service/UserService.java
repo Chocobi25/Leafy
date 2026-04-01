@@ -120,6 +120,7 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+        User user = findById(id);
+        user.delete();
     }
 }

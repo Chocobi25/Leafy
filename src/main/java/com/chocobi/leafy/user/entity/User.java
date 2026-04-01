@@ -6,6 +6,9 @@ import com.chocobi.leafy.user.enums.Provider;
 import com.chocobi.leafy.user.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
 
 import static com.chocobi.leafy.user.util.LevelCalculator.calculateLevel;
 
@@ -17,6 +20,7 @@ import static com.chocobi.leafy.user.util.LevelCalculator.calculateLevel;
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"provider", "provider_id"})
 })
+@SQLRestriction("deleted_at IS NULL")
 public class User extends BaseEntity {
 
     @Column(name = "nickname", nullable = false, length = 12)
@@ -51,6 +55,9 @@ public class User extends BaseEntity {
     @Column(name = "provider_id", nullable = false)
     private String providerId;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
@@ -63,5 +70,13 @@ public class User extends BaseEntity {
     public void setTotalCarbonSaved(double totalCarbonSaved) {
         this.totalCarbonSaved = totalCarbonSaved;
         this.level = calculateLevel(totalCarbonSaved); // 레벨 자동 계산
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 }
