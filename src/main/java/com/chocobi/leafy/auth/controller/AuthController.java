@@ -2,6 +2,7 @@ package com.chocobi.leafy.auth.controller;
 
 import com.chocobi.leafy.auth.dto.TokenPair;
 import com.chocobi.leafy.auth.service.AuthService;
+import com.chocobi.leafy.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
@@ -23,9 +24,8 @@ public class AuthController {
     @Value("${cookie.secure}")
     private boolean cookieSecure;
 
-    // TODO: 커스텀 응답으로 변환
     @PostMapping("/refresh")
-    public ResponseEntity<String> refresh(
+    public ResponseEntity<ApiResponse<String>> refresh(
             @CookieValue(name = "refreshToken") String refreshToken
     ) {
         TokenPair tokenPair = authService.reissueAccessToken(refreshToken);
@@ -40,6 +40,25 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", cookie.toString())
-                .body(tokenPair.accessToken());
+                .body(ApiResponse.of(tokenPair.accessToken()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken
+    ) {
+        authService.logout(refreshToken);
+
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Strict")
+                .path("/api/auth")
+                .maxAge(Duration.ZERO)
+                .build();
+
+        return ResponseEntity.ok()
+                .header("Set-Cookie", deleteCookie.toString())
+                .build();
     }
 }

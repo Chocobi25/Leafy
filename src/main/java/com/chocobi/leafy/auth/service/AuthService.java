@@ -40,4 +40,11 @@ public class AuthService {
 
         return new TokenPair(newAccessToken, newRefreshToken);
     }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        if (refreshToken != null && !refreshToken.isEmpty()) {
+            refreshTokenService.deleteByToken(refreshToken);
+        }
+    }
 }
