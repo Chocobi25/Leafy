@@ -1,8 +1,6 @@
 package com.chocobi.leafy.user.service;
 
-import com.chocobi.leafy.auth.client.OAuthApiClientFactory;
 import com.chocobi.leafy.auth.dto.OAuthAttributes;
-import com.chocobi.leafy.auth.service.RefreshTokenService;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.dto.UserTripDto;

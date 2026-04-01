@@ -11,9 +11,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 @RequiredArgsConstructor
 public class KakaoApiClient implements OAuthApiClient{
 
-    @Value("${kakao.admin-key}")
-    private String adminKey;
-
     private final WebClient kakaoUnlinkWebClient;
 
     @Override

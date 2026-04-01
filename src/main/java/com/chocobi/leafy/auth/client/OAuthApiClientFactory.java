@@ -1,6 +1,5 @@
 package com.chocobi.leafy.auth.client;
 
-import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.user.enums.Provider;
 import org.springframework.stereotype.Component;
 
