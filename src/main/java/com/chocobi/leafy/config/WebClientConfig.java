@@ -66,6 +66,14 @@ public class WebClientConfig {
                 .build();
     }
 
+    @Bean
+    public WebClient kakaoUnlinkWebClient(@Value("${kakao.admin-key}") String adminKey) {
+        return WebClient.builder()
+                .baseUrl("https://kapi.kakao.com")
+                .defaultHeader("Authorization", "KakaoAK " + adminKey)
+                .build();
+    }
+
 
     private WebClient createWebClient(String baseUrl) {
         return WebClient.builder()

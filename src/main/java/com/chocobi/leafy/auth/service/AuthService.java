@@ -1,8 +1,11 @@
 package com.chocobi.leafy.auth.service;
 
+import com.chocobi.leafy.auth.client.OAuthApiClientFactory;
 import com.chocobi.leafy.auth.dto.TokenPair;
 import com.chocobi.leafy.auth.entity.RefreshToken;
 import com.chocobi.leafy.auth.util.JwtUtil;
+import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +17,8 @@ public class AuthService {
 
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final OAuthApiClientFactory oAuthApiClientFactory;
+    private final UserService userService;
 
     @Transactional
     public TokenPair reissueAccessToken(String refreshToken) {
@@ -46,5 +51,20 @@ public class AuthService {
         if (refreshToken != null && !refreshToken.isEmpty()) {
             refreshTokenService.deleteByToken(refreshToken);
         }
+    }
+
+    @Transactional
+    public void withdraw(Long userId) {
+        User user = userService.findById(userId);
+
+        // 소셜 연결 끊기
+        oAuthApiClientFactory.getClient(user.getProvider())
+                .unlinkUser(user.getProviderId());
+
+        // Refresh Token 삭제
+        refreshTokenService.deleteAllByUserId(userId);
+
+        // User 삭제
+        userService.deleteUser(userId);
     }
 }

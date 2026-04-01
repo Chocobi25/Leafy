@@ -1,6 +1,8 @@
 package com.chocobi.leafy.user.service;
 
+import com.chocobi.leafy.auth.client.OAuthApiClientFactory;
 import com.chocobi.leafy.auth.dto.OAuthAttributes;
+import com.chocobi.leafy.auth.service.RefreshTokenService;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.dto.UserTripDto;
@@ -116,5 +118,10 @@ public class UserService {
                         .totalPlaces(trip.getTripPlaces() != null ? trip.getTripPlaces().size() : 0)
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
     }
 }
