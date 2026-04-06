@@ -1,8 +1,6 @@
 package com.chocobi.leafy.post.dto;
 
-import com.chocobi.leafy.place.entity.Place;
-import com.chocobi.leafy.post.entity.Post;
-import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.post.infra.entity.PostEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -15,7 +13,7 @@ public class PostResponse {
     private String title;
     private String content;
     private UserInfo user;
-    private PlaceInfo place;
+    private Long placeId;
     private Integer rating;
     private Integer likes;
     private LocalDateTime createdAt;
@@ -29,16 +27,7 @@ public class PostResponse {
         private String profileImageUrl;
     }
 
-    @Data
-    @AllArgsConstructor
-    public static class PlaceInfo {
-        private Long id;
-        private String title;
-        private String category;
-        private String address;
-    }
-
-    public static PostResponse fromEntity(Post post) {
+    public static PostResponse fromEntity(PostEntity post) {
         UserInfo userInfo = null;
         if (post.getUser() != null) {
             userInfo = new UserInfo(
@@ -47,23 +36,13 @@ public class PostResponse {
                     post.getUser().getProfileImageUrl()
             );
         }
-
-        PlaceInfo placeInfo = null;
-        if (post.getPlace() != null) {
-            placeInfo = new PlaceInfo(
-                    post.getPlace().getId(),
-                    post.getPlace().getTitle(),
-                    post.getPlace().getCategory().name(),
-                    post.getPlace().getAddress()
-            );
-        }
   
         return new PostResponse(
                 post.getId(),
                 post.getTitle(),
                 post.getContent(),
                 userInfo,
-                placeInfo,
+                post.getPlaceId(),
                 post.getRating(),
                 post.getLikes(),
                 post.getCreatedAt(),
