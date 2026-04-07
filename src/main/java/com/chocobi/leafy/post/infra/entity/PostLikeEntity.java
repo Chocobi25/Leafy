@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
+@Table(name = "post_like", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "post_id"})
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "post_like")
 public class PostLikeEntity extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

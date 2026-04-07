@@ -49,20 +49,6 @@ CREATE TABLE image
     copyright   varchar(255)
 );
 
-DROP TABLE IF EXISTS post;
-CREATE TABLE post
-(
-    id          bigint PRIMARY KEY,
-    place_id    bigint,
-    user_id     bigint NOT NULL,
-    likes       int NOT NULL,
-    rating      int,
-    content     text,
-    title       varchar(255),
-    created_at  datetime(6) NOT NULL,
-    updated_at  datetime(6) NOT NULL
-);
-
 DROP TABLE IF EXISTS trip;
 CREATE TABLE trip
 (
@@ -120,13 +106,39 @@ CREATE TABLE user_place
     longitude   double NOT NULL
 );
 
-DROP TABLE IF EXISTS user_post_like;
-CREATE TABLE user_post_like
+CREATE TABLE post
+(
+    id          bigint PRIMARY KEY,
+    place_id    bigint,
+    user_id     bigint       NOT NULL,
+    likes       int          NOT NULL DEFAULT 0,
+    view_count  int          NOT NULL DEFAULT 0,
+    title       varchar(255),
+    content     text,
+    created_at  datetime(6)  NOT NULL,
+    updated_at  datetime(6)  NOT NULL
+);
+
+DROP TABLE IF EXISTS post_like;
+CREATE TABLE post_like
 (
     id          bigint PRIMARY KEY,
     post_id     bigint NOT NULL,
     user_id     bigint NOT NULL,
-    created_at  datetime(6) NOT NULL
+    created_at  datetime(6) NOT NULL,
+    updated_at  datetime(6) NOT NULL,
+);
+
+DROP TABLE IF EXISTS post_comment;
+CREATE TABLE post_comment
+(
+    id          bigint PRIMARY KEY,
+    post_id     bigint       NOT NULL,
+    user_id     bigint       NOT NULL,
+    parent_id   bigint,
+    content     varchar(255) NOT NULL,
+    created_at  datetime(6)  NOT NULL,
+    updated_at  datetime(6)  NOT NULL
 );
 
 DROP TABLE IF EXISTS area_code;

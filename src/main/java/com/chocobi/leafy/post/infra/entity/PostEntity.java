@@ -26,7 +26,7 @@ public class PostEntity extends BaseEntity {
     private Long placeId;
 
     @Column(nullable = false)
-    private Integer rating;
+    private Integer viewCount;
 
     @Column(nullable = false)
     private Integer likes = 0;
@@ -37,7 +37,7 @@ public class PostEntity extends BaseEntity {
         this.content = content;
         this.user = user;
         this.placeId = placeId;
-        this.rating = 0;
+        this.viewCount = 0;
         this.likes = 0;
     }
 

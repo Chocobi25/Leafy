@@ -17,15 +17,11 @@ import java.util.Optional;
 public class PostLikeFindService {
     private final PostLikeRepository postLikeRepository;
 
-    public boolean existsByUserAndPost(User user, PostEntity post) {
+    public boolean exists(User user, PostEntity post) {
         return postLikeRepository.existsByUserAndPost(user, post);
     }
 
-    public Optional<PostLikeEntity> findByUserAndPost(User user, PostEntity post) {
+    public Optional<PostLikeEntity> findPost(User user, PostEntity post) {
         return postLikeRepository.findByUserAndPost(user, post);
-    }
-
-    public List<Long> findPostIdsByUser(User user) {
-        return postLikeRepository.findPostIdsByUser(user);
     }
 }

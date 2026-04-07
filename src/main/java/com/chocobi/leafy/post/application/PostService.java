@@ -1,104 +1,102 @@
 package com.chocobi.leafy.post.application;
 
-import com.chocobi.leafy.place.service.PlaceService;
-import com.chocobi.leafy.post.dto.PostRequest;
-import com.chocobi.leafy.post.dto.PostResponse;
+import com.chocobi.leafy.global.response.PageResponse;
+import com.chocobi.leafy.post.dto.request.PostCreateRequest;
+import com.chocobi.leafy.post.dto.request.PostPageRequest;
+import com.chocobi.leafy.post.dto.request.PostUpdateRequest;
+import com.chocobi.leafy.post.dto.response.PostCommentResponse;
+import com.chocobi.leafy.post.dto.response.PostDetailResponse;
+import com.chocobi.leafy.post.dto.response.PostLikeResponse;
+import com.chocobi.leafy.post.dto.response.PostListResponse;
+import com.chocobi.leafy.post.infra.PostCommandService;
+import com.chocobi.leafy.post.infra.PostCommentFindService;
+import com.chocobi.leafy.post.infra.PostFindService;
+import com.chocobi.leafy.post.infra.PostLikeCommandService;
+import com.chocobi.leafy.post.infra.PostLikeFindService;
 import com.chocobi.leafy.post.infra.entity.PostEntity;
 import com.chocobi.leafy.post.infra.entity.PostLikeEntity;
-import com.chocobi.leafy.post.infra.repository.PostLikeRepository;
-import com.chocobi.leafy.post.infra.repository.PostRepository;
 import com.chocobi.leafy.user.entity.User;
 import com.chocobi.leafy.user.service.UserService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class PostService {
-    private final PostRepository postRepository;
-    private final PostLikeRepository userPostLikeRepository;
-    private final PlaceService placeService;
+    private final PostFindService postFindService;
+    private final PostCommandService postCommandService;
+    private final PostCommentFindService postCommentFindService;
+    private final PostLikeCommandService postLikeCommandService;
+    private final PostLikeFindService postLikeFindService;
     private final UserService userService;
 
+    @Transactional(readOnly = true)
+    public PageResponse<PostListResponse> getPosts(PostPageRequest request) {
+        Page<PostListResponse> page = postFindService.findPosts(request)
+                .map(PostListResponse::from);
+        return PageResponse.of(page);
+    }
+
+    @Transactional(readOnly = true)
+    public PostDetailResponse getPost(Long id) {
+        PostEntity post = postFindService.findPost(id);
+        List<PostCommentResponse> comments = postCommentFindService.findComments(post);
+
+        return PostDetailResponse.from(post, comments);
+    }
+
     @Transactional
-    public PostResponse createPost(PostRequest request) {
+    public PostDetailResponse createPost(PostCreateRequest request) {
         PostEntity post = PostEntity.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .user(userService.findById(request.getUserId()))  // TODO: 로직 동작 확인
-                .placeId(request.getPlaceId())
+                .title(request.title())
+                .content(request.content())
+                .user(userService.findById(request.userId()))
+                .placeId(request.placeId())
                 .build();
 
-        return PostResponse.fromEntity(postRepository.save(post));
+        postCommandService.save(post);
+        return PostDetailResponse.from(post, List.of());
     }
 
     @Transactional
-    public PostResponse updatePost(PostRequest request) {
-        PostEntity post = getPostById(request.getId());
+    public PostDetailResponse updatePost(PostUpdateRequest request) {
+        PostEntity post = postFindService.findPost(request.postId());
+        post.update(request.title(), request.content(), request.placeId());
 
-        post.update(request.getTitle(), request.getContent(), request.getPlaceId());
+        List<PostCommentResponse> comments = postCommentFindService.findComments(post);
 
-        return PostResponse.fromEntity(postRepository.save(post));
+        return PostDetailResponse.from(post, comments);
     }
 
-    public PostEntity getPostById(Long id) {
-        return postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("게시글이 없습니다."));
+
+    @Transactional
+    public void deletePost(Long postId) {
+        postCommandService.delete(postId);
     }
 
     @Transactional
-    public void delete(Long postId) {
-        postRepository.deleteById(postId);
-    }
+    public PostLikeResponse toggleLike(Long postId, Long userId) {
+        PostEntity post = postFindService.findPost(postId);
+        User user = userService.findById(userId);
 
-    public List<PostResponse> getAllPosts() {
-        return postRepository.findAll().stream()
-                .map(PostResponse::fromEntity)
-                .toList();
-    }
-
-    public List<PostResponse> getPostByUser(Long userId) {
-        return postRepository.findByUser(userService.findById(userId)).stream()  // TODO: 로직 동작 확인
-                .map(PostResponse::fromEntity)
-                .toList();
-    }
-
-    /*public List<PostResponse> getPostByPlace(Long placeId){
-        return postRepository.findByPlace(placeService.getPlaceById(placeId)).stream()
-                .map(PostResponse::fromEntity)
-                .toList();
-    }*/
-
-    @Transactional
-    public PostResponse toggleLike(Long postId, Long userId) {
-        PostEntity post = getPostById(postId);
-        User user = userService.findById(userId);  // TODO: 로직 동작 확인
-
-        boolean isCurrentlyLiked = userPostLikeRepository.existsByUserAndPost(user, post);
+        boolean isCurrentlyLiked = postLikeFindService.exists(user, post);
 
         if (isCurrentlyLiked) {
-            // 좋아요 취소
-            userPostLikeRepository.findByUserAndPost(user, post)
-                    .ifPresent(userPostLikeRepository::delete);
+            postLikeFindService.findPost(user, post)
+                    .ifPresent(postLikeCommandService::delete);
             post.decrementLikes();
         } else {
-            // 좋아요 추가
-            PostLikeEntity userPostLike = PostLikeEntity.builder()
+            postLikeCommandService.save(PostLikeEntity.builder()
                     .user(user)
                     .post(post)
-                    .build();
-            userPostLikeRepository.save(userPostLike);
+                    .build());
             post.incrementLikes();
         }
 
-        return PostResponse.fromEntity(postRepository.save(post));
-    }
-
-    public List<Long> getUserLikedPostIds(Long userId) {
-        User user = userService.findById(userId);  // TODO: 로직 동작 확인
-        return userPostLikeRepository.findPostIdsByUser(user);
+        return PostLikeResponse.of(post, !isCurrentlyLiked);
     }
 }

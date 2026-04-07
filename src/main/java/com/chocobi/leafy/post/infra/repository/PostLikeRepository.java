@@ -15,7 +15,4 @@ import java.util.Optional;
 public interface PostLikeRepository extends JpaRepository<PostLikeEntity, Long> {
     boolean existsByUserAndPost(User user, PostEntity post);
     Optional<PostLikeEntity> findByUserAndPost(User user, PostEntity post);
-    @Query("SELECT upl.post.id FROM PostLikeEntity upl WHERE upl.user = :user")
-    List<Long> findPostIdsByUser(@Param("user") User user);
-    long countByPost(PostEntity post);
 }
