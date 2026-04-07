@@ -4,8 +4,8 @@ import com.chocobi.leafy.auth.client.OAuthApiClientFactory;
 import com.chocobi.leafy.auth.dto.TokenPair;
 import com.chocobi.leafy.auth.entity.RefreshToken;
 import com.chocobi.leafy.auth.util.JwtUtil;
-import com.chocobi.leafy.user.entity.User;
-import com.chocobi.leafy.user.service.UserService;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
+import com.chocobi.leafy.user.infra.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,10 +37,10 @@ public class AuthService {
         }
 
         // 4. createAccessToken
-        String newAccessToken = jwtUtil.createAccessToken(rt.getUser().getId(), rt.getUser().getRole().getKey());
+        String newAccessToken = jwtUtil.createAccessToken(rt.getUserEntity().getId(), rt.getUserEntity().getRole().getKey());
 
         // 5. Token Rotation
-        String newRefreshToken = jwtUtil.createRefreshToken(rt.getUser().getId());
+        String newRefreshToken = jwtUtil.createRefreshToken(rt.getUserEntity().getId());
         rt.rotate(newRefreshToken, jwtUtil.getRefreshTokenExpiration());
 
         return new TokenPair(newAccessToken, newRefreshToken);
@@ -55,11 +55,11 @@ public class AuthService {
 
     @Transactional
     public void withdraw(Long userId) {
-        User user = userService.findById(userId);
+        UserEntity userEntity = userService.findById(userId);
 
         // 소셜 연결 끊기
-        oAuthApiClientFactory.getClient(user.getProvider())
-                .unlinkUser(user.getProviderId());
+        oAuthApiClientFactory.getClient(userEntity.getProvider())
+                .unlinkUser(userEntity.getProviderId());
 
         // Refresh Token 삭제
         refreshTokenService.deleteAllByUserId(userId);

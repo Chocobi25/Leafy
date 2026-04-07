@@ -1,7 +1,7 @@
 package com.chocobi.leafy.auth.entity;
 
 import com.chocobi.leafy.global.entity.BaseEntity;
-import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,7 +17,7 @@ public class RefreshToken extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity userEntity;
 
     @Column(name = "token", nullable = false, unique = true, length = 512)
     private String token;

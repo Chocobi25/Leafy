@@ -1,13 +1,14 @@
-package com.chocobi.leafy.user.entity;
+package com.chocobi.leafy.user.infra.entity;
 
 import com.chocobi.leafy.global.entity.BaseEntity;
-import com.chocobi.leafy.user.enums.Level;
-import com.chocobi.leafy.user.enums.Provider;
-import com.chocobi.leafy.user.enums.Role;
+import com.chocobi.leafy.user.infra.entity.enums.Level;
+import com.chocobi.leafy.user.infra.entity.enums.Provider;
+import com.chocobi.leafy.user.infra.entity.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static com.chocobi.leafy.user.util.LevelCalculator.calculateLevel;
@@ -21,7 +22,16 @@ import static com.chocobi.leafy.user.util.LevelCalculator.calculateLevel;
         @UniqueConstraint(columnNames = {"provider", "provider_id"})
 })
 @SQLRestriction("deleted_at IS NULL")
-public class User extends BaseEntity {
+public class UserEntity extends BaseEntity {
+
+    @Column(name = "name", length = 20)
+    private String name;
+
+    @Column(name = "birth")
+    private LocalDate birth;
+
+    @Column(name = "email")
+    private String email;
 
     @Column(name = "nickname", nullable = false, length = 12)
     private String nickname;

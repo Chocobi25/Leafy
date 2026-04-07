@@ -1,6 +1,6 @@
 package com.chocobi.leafy.user.util;
 
-import com.chocobi.leafy.user.enums.Level;
+import com.chocobi.leafy.user.infra.entity.enums.Level;
 
 public class LevelCalculator {
 

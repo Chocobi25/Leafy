@@ -2,8 +2,8 @@ package com.chocobi.leafy.auth.service;
 
 import com.chocobi.leafy.auth.entity.RefreshToken;
 import com.chocobi.leafy.auth.repository.RefreshTokenRepository;
-import com.chocobi.leafy.user.entity.User;
-import com.chocobi.leafy.user.repository.UserRepository;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
+import com.chocobi.leafy.user.infra.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +21,7 @@ public class RefreshTokenService {
     @Transactional
     public void saveRefreshToken(Long userId, String refreshToken, LocalDateTime expiresAt) {
         // TODO: 커스텀 에러로 전환
-        User user = userRepository.findById(userId)
+        UserEntity userEntity = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 userId입니다."));
 
         // TODO: 커스텀 에러로 전환
@@ -31,7 +31,7 @@ public class RefreshTokenService {
                 });
 
         RefreshToken rt = RefreshToken.builder()
-                .user(user)
+                .userEntity(userEntity)
                 .token(refreshToken)
                 .expiresAt(expiresAt)
                 .build();

@@ -1,6 +1,6 @@
 package com.chocobi.leafy.auth.client;
 
-import com.chocobi.leafy.user.enums.Provider;
+import com.chocobi.leafy.user.infra.entity.enums.Provider;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

@@ -1,13 +1,13 @@
-package com.chocobi.leafy.user.service;
+package com.chocobi.leafy.user.infra.service;
 
 import com.chocobi.leafy.auth.dto.OAuthAttributes;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.dto.UserTripDto;
-import com.chocobi.leafy.user.enums.Level;
-import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.user.infra.entity.enums.Level;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.chocobi.leafy.user.dto.UserProfileDto;
-import com.chocobi.leafy.user.repository.UserRepository;
+import com.chocobi.leafy.user.infra.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,22 +27,22 @@ public class UserService {
      * @param oAuthAttributes
      * @return
      */
-    public User saveOrGetUser(OAuthAttributes oAuthAttributes) {
+    public UserEntity saveOrGetUser(OAuthAttributes oAuthAttributes) {
         return userRepository.findByProviderAndProviderId(oAuthAttributes.getProvider(), oAuthAttributes.getProviderId())
                 .orElseGet(() -> { // Optional<User>이 비어있으면, 안에 있는 함수를 실행해서 값을 새로 만들어 리턴함
-                    User newUser = User.builder()
+                    UserEntity newUserEntity = UserEntity.builder()
                             .providerId(oAuthAttributes.getProviderId())
                             .nickname(oAuthAttributes.getNickname())
                             .profileImageUrl(oAuthAttributes.getProfileImageUrl())
                             .provider(oAuthAttributes.getProvider())
                             .build();
-                    return userRepository.save(newUser);
+                    return userRepository.save(newUserEntity);
                 });
     }
 
 
-    public void editUser(User user) {
-        userRepository.save(user);
+    public void editUser(UserEntity userEntity) {
+        userRepository.save(userEntity);
     }
 
     public void carbonSavedUpdate(Long kakaoId, double carbonSaved) {
@@ -50,33 +50,33 @@ public class UserService {
     }
 
     // TODO: 로직 동작 확인
-    public User findById(Long id) {
+    public UserEntity findById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
     }
 
     @Transactional(readOnly = true) // 읽기 전용
     public UserProfileDto getUserProfile(Long id) {
-        User user = userRepository.findById(id)  // TODO: 로직 동작 확인
+        UserEntity userEntity = userRepository.findById(id)  // TODO: 로직 동작 확인
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
         // User 엔티티를 UserProfileDto로 변환
         return UserProfileDto.builder()
-                .kakaoId(user.getProviderId())  // TODO: 로직 동작 확인
-                .nickname(user.getNickname())
-                .profileImageUrl(user.getProfileImageUrl())
-                .role(user.getRole().name())
-                .level(user.getLevel().name())
-                .selectedLevelIcon(user.getSelectedLevelIcon().name())
-                .totalCarbonSaved(user.getTotalCarbonSaved())
-                .createdAt(user.getCreatedAt().toString())
+                .kakaoId(userEntity.getProviderId())  // TODO: 로직 동작 확인
+                .nickname(userEntity.getNickname())
+                .profileImageUrl(userEntity.getProfileImageUrl())
+                .role(userEntity.getRole().name())
+                .level(userEntity.getLevel().name())
+                .selectedLevelIcon(userEntity.getSelectedLevelIcon().name())
+                .totalCarbonSaved(userEntity.getTotalCarbonSaved())
+                .createdAt(userEntity.getCreatedAt().toString())
                 .build();
     }
 
     @Transactional
     public void updateSelectedLevelIcon(Long id, String selectedLevelIcon) {
 
-        User user = findById(id);  // TODO: 로직 동작 확인
+        UserEntity userEntity = findById(id);  // TODO: 로직 동작 확인
 
         Level iconLevel;
         try {
@@ -86,11 +86,11 @@ public class UserService {
         }
 
         // 레벨 검증(사용자 레벨보다 높은 아이콘 선택 방지)
-        if (!isValidIconSelection(user.getLevel(), iconLevel)) {
+        if (!isValidIconSelection(userEntity.getLevel(), iconLevel)) {
             throw new IllegalArgumentException("선택할 수 없는 아이콘입니다.");
         }
 
-        user.updateSelectedLevelIcon(iconLevel);
+        userEntity.updateSelectedLevelIcon(iconLevel);
     }
 
     // 레벨 검증 메소드
@@ -120,7 +120,7 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
-        User user = findById(id);
-        user.delete();
+        UserEntity userEntity = findById(id);
+        userEntity.delete();
     }
 }

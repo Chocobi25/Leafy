@@ -1,10 +1,9 @@
 package com.chocobi.leafy.trip.service;
 
-import com.chocobi.leafy.fcm.service.FCMService;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.entity.TripStatus;
 import com.chocobi.leafy.trip.repository.TripRepository;
-import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +52,7 @@ public class TripScheduler {
         List<Trip> tripsStartingToday = tripRepository.findAllByStartDateAndStatus(today, TripStatus.IN_PROGRESS);
 
         for (Trip trip : tripsStartingToday) {
-            User participant = trip.getUser();
+            UserEntity participant = trip.getUserEntity();
             tripMessageService.notifyTripStart(participant, trip);
         }
     }
@@ -67,7 +66,7 @@ public class TripScheduler {
         List<Trip> tripsStartingToday = tripRepository.findAllByStartDateAndStatus(today, TripStatus.IN_PROGRESS);
 
         for (Trip trip : tripsStartingToday) {
-            User participant = trip.getUser();
+            UserEntity participant = trip.getUserEntity();
             tripMessageService.requestLocationCheck(participant, trip);
         }
     }
