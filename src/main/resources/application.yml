@@ -10,3 +10,7 @@ spring:
 
 kakao:
   admin-key: ${KAKAO_ADMIN_KEY}
+
+app:
+  user:
+    withdrawal-recovery-days: 30

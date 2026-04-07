@@ -89,4 +89,8 @@ public class UserEntity extends BaseEntity {
     public boolean isDeleted() {
         return deletedAt != null;
     }
+
+    public void restore() {
+        this.deletedAt = null;
+    }
 }

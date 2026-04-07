@@ -9,9 +9,11 @@ import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.chocobi.leafy.user.dto.UserProfileDto;
 import com.chocobi.leafy.user.infra.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,13 +24,27 @@ public class UserService {
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
 
+    @Value("${app.user.withdrawal-recovery-days}")
+    private int withdrawalRecoveryDays;
+
     /**
      * 만약 유저가 있다면 그 User를 리턴하고, User가 없다면 새 User 객체를 만들어 리턴한다.
      * @param oAuthAttributes
      * @return
      */
+    @Transactional
     public UserEntity saveOrGetUser(OAuthAttributes oAuthAttributes) {
-        return userRepository.findByProviderAndProviderId(oAuthAttributes.getProvider(), oAuthAttributes.getProviderId())
+        return userRepository.findByProviderAndProviderId(oAuthAttributes.getProvider().name(), oAuthAttributes.getProviderId())
+                .map(user -> {
+                    if (user.isDeleted()) {
+                        if (user.getDeletedAt().isAfter(LocalDateTime.now().minusDays(withdrawalRecoveryDays))) {
+                            user.restore();
+                            return user;
+                        }
+                        throw new IllegalArgumentException("탈퇴한지 30일이 지난 회원입니다."); // TODO: 커스텀 에러로 전환
+                    }
+                    return user;
+                })
                 .orElseGet(() -> { // Optional<User>이 비어있으면, 안에 있는 함수를 실행해서 값을 새로 만들어 리턴함
                     UserEntity newUserEntity = UserEntity.builder()
                             .providerId(oAuthAttributes.getProviderId())
