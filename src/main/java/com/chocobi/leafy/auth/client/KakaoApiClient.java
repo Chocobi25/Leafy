@@ -4,6 +4,8 @@ import com.chocobi.leafy.user.infra.entity.enums.Provider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
@@ -19,10 +21,15 @@ public class KakaoApiClient implements OAuthApiClient{
 
     @Override
     public void unlinkUser(String providerId) {
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("target_id_type", "user_id");
+        body.add("target_id", providerId);
+
         kakaoUnlinkWebClient.post()
                 .uri("/v1/user/unlink")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue("target_id_type=user_id&target_id=" + providerId)
+                .bodyValue(body)
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
