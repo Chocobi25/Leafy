@@ -25,7 +25,7 @@ public class FCMService {
     @Transactional
     public void sendNotification(UserEntity userEntity, String title, String body, Map<String, String> data) throws FirebaseMessagingException {
         // 1. 사용자 디바이스 토큰 가져오기 (단일)
-        Optional<UserDevice> deviceOpt = userDeviceRepository.findByUser(userEntity);
+        Optional<UserDevice> deviceOpt = userDeviceRepository.findByUserEntity(userEntity);
         if (deviceOpt.isEmpty()) {
             log.warn("❌ 사용자 {} 에 등록된 FCM 토큰이 없습니다.", userEntity.getId());  // TODO: 로직 동작 확인
             return;

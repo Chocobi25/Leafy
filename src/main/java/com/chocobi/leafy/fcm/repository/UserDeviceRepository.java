@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
     Optional<UserDevice> findByFcmToken(String fcmToken);
-    Optional<UserDevice> findByUserAndFcmToken(UserEntity userEntity, String fcmToken);
-    Optional<UserDevice> findByUser(UserEntity userEntity);
+    Optional<UserDevice> findByUserEntityAndFcmToken(UserEntity userEntity, String fcmToken);
+    Optional<UserDevice> findByUserEntity(UserEntity userEntity);
 }

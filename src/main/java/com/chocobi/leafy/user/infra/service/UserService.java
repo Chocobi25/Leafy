@@ -117,7 +117,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserTripDto> getUserTrips(Long id) {
-        List<Trip> trips = tripRepository.findByUserIdOrderByCreatedAtDesc(id);  // TODO: 로직 동작 확인
+        List<Trip> trips = tripRepository.findByUserEntityIdOrderByCreatedAtDesc(id);  // TODO: 로직 동작 확인
         
         return trips.stream()
                 .map(trip -> UserTripDto.builder()

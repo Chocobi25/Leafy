@@ -44,13 +44,13 @@ public class UserDeviceService {
 
     @Transactional
     public void unregisterToken(Long userId, String fcmToken) {
-        userDeviceRepository.findByUserAndFcmToken(userService.findById(userId), fcmToken)  // TODO: 로직 동작 확인
+        userDeviceRepository.findByUserEntityAndFcmToken(userService.findById(userId), fcmToken)  // TODO: 로직 동작 확인
                 .ifPresent(userDeviceRepository::delete);
         log.info("사용자 ID {}의 FCM 토큰 {}이 성공적으로 삭제되었습니다.", userId, fcmToken);
     }
 
     public String getFcmTokenByUserId(UserEntity userEntity) {
-        return userDeviceRepository.findByUser(userEntity)
+        return userDeviceRepository.findByUserEntity(userEntity)
                 .map(UserDevice::getFcmToken)
                 .orElse(null);
     }
