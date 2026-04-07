@@ -15,26 +15,26 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/post")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class PostController implements PostDocs {
     private final PostService postService;
 
-    @GetMapping
+    @GetMapping("/v1/posts")
     public ResponseEntity<SuccessResponse<PageResponse<PostListResponse>>> getPosts(
             @ModelAttribute PostPageRequest request
     ) {
         return ResponseEntity.ok(SuccessResponse.of(postService.getPosts(request)));
     }
 
-    @GetMapping("/{postId}")
+    @GetMapping("/v1/posts/{postId}")
     public ResponseEntity<SuccessResponse<PostDetailResponse>> getPost(
             @PathVariable Long postId
     ) {
         return ResponseEntity.ok(SuccessResponse.of(postService.getPost(postId)));
     }
 
-    @PostMapping
+    @PostMapping("/v1/posts")
     public ResponseEntity<SuccessResponse<PostDetailResponse>> createPost(
             @Valid @RequestBody PostCreateRequest request
     ) {
@@ -42,14 +42,14 @@ public class PostController implements PostDocs {
     }
 
 
-    @PutMapping
+    @PutMapping("/v1/posts")
     public ResponseEntity<SuccessResponse<PostDetailResponse>> updatePost(
             @Valid @RequestBody PostUpdateRequest request
     ) {
         return ResponseEntity.ok(SuccessResponse.of(postService.updatePost(request)));
     }
 
-    @DeleteMapping("/{postId}")
+    @DeleteMapping("/v1/posts/{postId}")
     public ResponseEntity<Void> deletePost(
             @PathVariable Long postId
     ) {
@@ -57,7 +57,7 @@ public class PostController implements PostDocs {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{postId}/likes/{userId}")
+    @PostMapping("/v1/posts/{postId}/likes/{userId}")
     public ResponseEntity<SuccessResponse<PostLikeResponse>> toggleLike(
             @PathVariable Long postId,
             @PathVariable Long userId
