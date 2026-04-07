@@ -25,5 +25,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
             nativeQuery = true)
     Optional<UserEntity> findByProviderAndProviderId(@Param("provider") String provider, @Param("providerId") String providerId);
 
-    void deleteAllByDeletedAtBefore(LocalDateTime deletedAtBefore);
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM users WHERE deleted_at < :threshold", nativeQuery = true)
+    void deleteAllByDeletedAtBefore(@Param("threshold") LocalDateTime threshold);
 }

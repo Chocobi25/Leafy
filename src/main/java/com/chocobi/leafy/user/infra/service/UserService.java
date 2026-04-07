@@ -24,7 +24,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
 
-    @Value("${app.user.withdrawal-recovery-days}")
+    @Value("${app.user.withdrawal-recovery-days:30}")
     private int withdrawalRecoveryDays;
 
     /**

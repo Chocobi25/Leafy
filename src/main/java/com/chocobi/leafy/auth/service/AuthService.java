@@ -57,14 +57,14 @@ public class AuthService {
     public void withdraw(Long userId) {
         UserEntity userEntity = userService.findById(userId);
 
-        // 소셜 연결 끊기
-        oAuthApiClientFactory.getClient(userEntity.getProvider())
-                .unlinkUser(userEntity.getProviderId());
-
         // Refresh Token 삭제
         refreshTokenService.deleteAllByUserId(userId);
 
         // User 삭제
         userService.deleteUser(userId);
+
+        // 소셜 연결 끊기
+        oAuthApiClientFactory.getClient(user.getProvider())
+                .unlinkUser(user.getProviderId());
     }
 }
