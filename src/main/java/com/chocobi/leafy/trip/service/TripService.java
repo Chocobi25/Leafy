@@ -29,7 +29,7 @@ public class TripService {
     @Transactional
     public Long createTrip(TripRequest tripRequest, Long kakaoId) {
         Trip trip = Trip.builder()
-                .userEntity(userService.findById(kakaoId))  // TODO: 로직 동작 확인
+                .user(userService.findById(kakaoId))  // TODO: 로직 동작 확인
                 .title(tripRequest.getTitle())
                 .startDate(tripRequest.getStart_date())
                 .endDate(tripRequest.getEnd_date())

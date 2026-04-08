@@ -17,7 +17,7 @@ public class RefreshToken extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity userEntity;
+    private UserEntity user;
 
     @Column(name = "token", nullable = false, unique = true, length = 512)
     private String token;

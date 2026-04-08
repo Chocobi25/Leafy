@@ -52,7 +52,7 @@ public class TripScheduler {
         List<Trip> tripsStartingToday = tripRepository.findAllByStartDateAndStatus(today, TripStatus.IN_PROGRESS);
 
         for (Trip trip : tripsStartingToday) {
-            UserEntity participant = trip.getUserEntity();
+            UserEntity participant = trip.getUser();
             tripMessageService.notifyTripStart(participant, trip);
         }
     }
@@ -66,7 +66,7 @@ public class TripScheduler {
         List<Trip> tripsStartingToday = tripRepository.findAllByStartDateAndStatus(today, TripStatus.IN_PROGRESS);
 
         for (Trip trip : tripsStartingToday) {
-            UserEntity participant = trip.getUserEntity();
+            UserEntity participant = trip.getUser();
             tripMessageService.requestLocationCheck(participant, trip);
         }
     }

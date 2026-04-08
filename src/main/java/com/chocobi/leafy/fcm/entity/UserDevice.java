@@ -20,7 +20,7 @@ public class UserDevice {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity userEntity;
+    private UserEntity user;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -28,9 +28,9 @@ public class UserDevice {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public UserDevice(String fcmToken, UserEntity userEntity) {
+    public UserDevice(String fcmToken, UserEntity user) {
         this.fcmToken = fcmToken;
-        this.userEntity = userEntity;
+        this.user = user;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -46,8 +46,8 @@ public class UserDevice {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateUser(UserEntity userEntity) {
-        this.userEntity = userEntity;
+    public void updateUser(UserEntity user) {
+        this.user = user;
         onUpdate(); // updatedAt도 갱신
     }
 }

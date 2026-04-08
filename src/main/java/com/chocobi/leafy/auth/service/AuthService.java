@@ -37,10 +37,10 @@ public class AuthService {
         }
 
         // 4. createAccessToken
-        String newAccessToken = jwtUtil.createAccessToken(rt.getUserEntity().getId(), rt.getUserEntity().getRole().getKey());
+        String newAccessToken = jwtUtil.createAccessToken(rt.getUser().getId(), rt.getUser().getRole().getKey());
 
         // 5. Token Rotation
-        String newRefreshToken = jwtUtil.createRefreshToken(rt.getUserEntity().getId());
+        String newRefreshToken = jwtUtil.createRefreshToken(rt.getUser().getId());
         rt.rotate(newRefreshToken, jwtUtil.getRefreshTokenExpiration());
 
         return new TokenPair(newAccessToken, newRefreshToken);

@@ -48,12 +48,12 @@ public class UserController {
         Long kakaoId = Long.parseLong(authentication.getName());
 
         // 기존 사용자 정보 조회
-        UserEntity userEntity = userService.findById(kakaoId);  // TODO: 로직 동작 확인
+        UserEntity user = userService.findById(kakaoId);  // TODO: 로직 동작 확인
 
         // 닉네임 수정
-        userEntity.updateNickname(nicknameUpdateDto.getNickname());
+        user.updateNickname(nicknameUpdateDto.getNickname());
 
-        userService.editUser(userEntity);
+        userService.editUser(user);
 
         return ResponseEntity.ok("닉네임이 성공적으로 수정되었습니다.");
     }
@@ -69,12 +69,12 @@ public class UserController {
     @PutMapping("/test/level")
     public ResponseEntity<String> updateTestLevel(@RequestBody Map<String, String> request, Authentication authentication) {
         Long kakaoId = Long.parseLong(authentication.getName());
-        UserEntity userEntity = userService.findById(kakaoId);  // TODO: 로직 동작 확인
+        UserEntity user = userService.findById(kakaoId);  // TODO: 로직 동작 확인
 
         try {
             Level newLevel = Level.valueOf(request.get("level"));
-            userEntity.setLevel(newLevel);
-            userService.editUser(userEntity);
+            user.setLevel(newLevel);
+            userService.editUser(user);
 
             return ResponseEntity.ok("레벨이 " + newLevel + "로 변경되었습니다.");
         } catch (Exception e) {
@@ -86,12 +86,12 @@ public class UserController {
     @PutMapping("/test/carbon")
     public ResponseEntity<String> updateTestCarbon(@RequestBody Map<String, Double> request, Authentication authentication) {
         Long kakaoId = Long.parseLong(authentication.getName());
-        UserEntity userEntity = userService.findById(kakaoId);  // TODO: 로직 동작 확인
+        UserEntity user = userService.findById(kakaoId);  // TODO: 로직 동작 확인
 
         try {
             Double carbonAmount = request.get("totalCarbonSaved");
-            userEntity.setTotalCarbonSaved(carbonAmount);
-            userService.editUser(userEntity);
+            user.setTotalCarbonSaved(carbonAmount);
+            userService.editUser(user);
 
             return ResponseEntity.ok("탄소 절감량이 " + carbonAmount + "kg으로 변경되었습니다.");
         } catch (Exception e) {

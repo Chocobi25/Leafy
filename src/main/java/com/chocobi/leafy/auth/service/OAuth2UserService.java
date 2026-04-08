@@ -36,13 +36,13 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
 
         OAuthAttributes oAuthAttributes = OAuthAttributes.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
 
-        UserEntity userEntity = userService.saveOrGetUser(oAuthAttributes);
+        UserEntity user = userService.saveOrGetUser(oAuthAttributes);
 
         Map<String, Object> attributes = new HashMap<>(oAuthAttributes.getAttributes());
-        attributes.put("userId", userEntity.getId());
+        attributes.put("userId", user.getId());
 
         return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority(userEntity.getRole().getKey())),
+                Collections.singleton(new SimpleGrantedAuthority(user.getRole().getKey())),
                 attributes,
                 oAuthAttributes.getUserNameAttributeName()
         );

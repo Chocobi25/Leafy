@@ -23,11 +23,11 @@ public class FCMService {
      * 특정 사용자에게 단일 알림 전송
      */
     @Transactional
-    public void sendNotification(UserEntity userEntity, String title, String body, Map<String, String> data) throws FirebaseMessagingException {
+    public void sendNotification(UserEntity user, String title, String body, Map<String, String> data) throws FirebaseMessagingException {
         // 1. 사용자 디바이스 토큰 가져오기 (단일)
-        Optional<UserDevice> deviceOpt = userDeviceRepository.findByUserEntity(userEntity);
+        Optional<UserDevice> deviceOpt = userDeviceRepository.findByUser(user);
         if (deviceOpt.isEmpty()) {
-            log.warn("❌ 사용자 {} 에 등록된 FCM 토큰이 없습니다.", userEntity.getId());  // TODO: 로직 동작 확인
+            log.warn("❌ 사용자 {} 에 등록된 FCM 토큰이 없습니다.", user.getId());  // TODO: 로직 동작 확인
             return;
         }
 
@@ -50,9 +50,9 @@ public class FCMService {
         // 3. 발송
         try {
             String response = FirebaseMessaging.getInstance().send(message);
-            log.info("✅ FCM 알림 전송 완료 - user={}, token={}, response={}", userEntity.getId(), fcmToken, response);  // TODO: 로직 동작 확인
+            log.info("✅ FCM 알림 전송 완료 - user={}, token={}, response={}", user.getId(), fcmToken, response);  // TODO: 로직 동작 확인
         } catch (FirebaseMessagingException e) {
-            log.error("❌ FCM 전송 실패 - user={}, token={}, reason={}", userEntity.getId(), fcmToken, e.getMessagingErrorCode(), e);  // TODO: 로직 동작 확인
+            log.error("❌ FCM 전송 실패 - user={}, token={}, reason={}", user.getId(), fcmToken, e.getMessagingErrorCode(), e);  // TODO: 로직 동작 확인
             // 실패 토큰 삭제
             userDeviceRepository.findByFcmToken(fcmToken)
                     .ifPresent(userDeviceRepository::delete);

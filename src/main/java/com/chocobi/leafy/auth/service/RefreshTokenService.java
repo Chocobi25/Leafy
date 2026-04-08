@@ -21,7 +21,7 @@ public class RefreshTokenService {
     @Transactional
     public void saveRefreshToken(Long userId, String refreshToken, LocalDateTime expiresAt) {
         // TODO: 커스텀 에러로 전환
-        UserEntity userEntity = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 userId입니다."));
 
         // TODO: 커스텀 에러로 전환
@@ -31,7 +31,7 @@ public class RefreshTokenService {
                 });
 
         RefreshToken rt = RefreshToken.builder()
-                .userEntity(userEntity)
+                .user(user)
                 .token(refreshToken)
                 .expiresAt(expiresAt)
                 .build();
@@ -50,7 +50,7 @@ public class RefreshTokenService {
 
     @Transactional
     public void deleteAllByUserId(Long userId) {
-        refreshTokenRepository.deleteAllByUserEntityId(userId);
+        refreshTokenRepository.deleteAllByUserId(userId);
     }
 
     @Transactional

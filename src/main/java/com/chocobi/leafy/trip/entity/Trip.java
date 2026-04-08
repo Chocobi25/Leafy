@@ -30,7 +30,7 @@ public class Trip implements Serializable {
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private UserEntity userEntity;
+    private UserEntity user;
 
     private LocalDate startDate;
     private LocalDate endDate;

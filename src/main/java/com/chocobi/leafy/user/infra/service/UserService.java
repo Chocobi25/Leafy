@@ -46,19 +46,19 @@ public class UserService {
                     return user;
                 })
                 .orElseGet(() -> { // Optional<User>이 비어있으면, 안에 있는 함수를 실행해서 값을 새로 만들어 리턴함
-                    UserEntity newUserEntity = UserEntity.builder()
+                    UserEntity newUser = UserEntity.builder()
                             .providerId(oAuthAttributes.getProviderId())
                             .nickname(oAuthAttributes.getNickname())
                             .profileImageUrl(oAuthAttributes.getProfileImageUrl())
                             .provider(oAuthAttributes.getProvider())
                             .build();
-                    return userRepository.save(newUserEntity);
+                    return userRepository.save(newUser);
                 });
     }
 
 
-    public void editUser(UserEntity userEntity) {
-        userRepository.save(userEntity);
+    public void editUser(UserEntity user) {
+        userRepository.save(user);
     }
 
     public void carbonSavedUpdate(Long kakaoId, double carbonSaved) {
@@ -73,26 +73,26 @@ public class UserService {
 
     @Transactional(readOnly = true) // 읽기 전용
     public UserProfileDto getUserProfile(Long id) {
-        UserEntity userEntity = userRepository.findById(id)  // TODO: 로직 동작 확인
+        UserEntity user = userRepository.findById(id)  // TODO: 로직 동작 확인
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
         // User 엔티티를 UserProfileDto로 변환
         return UserProfileDto.builder()
-                .kakaoId(userEntity.getProviderId())  // TODO: 로직 동작 확인
-                .nickname(userEntity.getNickname())
-                .profileImageUrl(userEntity.getProfileImageUrl())
-                .role(userEntity.getRole().name())
-                .level(userEntity.getLevel().name())
-                .selectedLevelIcon(userEntity.getSelectedLevelIcon().name())
-                .totalCarbonSaved(userEntity.getTotalCarbonSaved())
-                .createdAt(userEntity.getCreatedAt().toString())
+                .kakaoId(user.getProviderId())  // TODO: 로직 동작 확인
+                .nickname(user.getNickname())
+                .profileImageUrl(user.getProfileImageUrl())
+                .role(user.getRole().name())
+                .level(user.getLevel().name())
+                .selectedLevelIcon(user.getSelectedLevelIcon().name())
+                .totalCarbonSaved(user.getTotalCarbonSaved())
+                .createdAt(user.getCreatedAt().toString())
                 .build();
     }
 
     @Transactional
     public void updateSelectedLevelIcon(Long id, String selectedLevelIcon) {
 
-        UserEntity userEntity = findById(id);  // TODO: 로직 동작 확인
+        UserEntity user = findById(id);  // TODO: 로직 동작 확인
 
         Level iconLevel;
         try {
@@ -102,11 +102,11 @@ public class UserService {
         }
 
         // 레벨 검증(사용자 레벨보다 높은 아이콘 선택 방지)
-        if (!isValidIconSelection(userEntity.getLevel(), iconLevel)) {
+        if (!isValidIconSelection(user.getLevel(), iconLevel)) {
             throw new IllegalArgumentException("선택할 수 없는 아이콘입니다.");
         }
 
-        userEntity.updateSelectedLevelIcon(iconLevel);
+        user.updateSelectedLevelIcon(iconLevel);
     }
 
     // 레벨 검증 메소드
@@ -117,7 +117,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserTripDto> getUserTrips(Long id) {
-        List<Trip> trips = tripRepository.findByUserEntityIdOrderByCreatedAtDesc(id);  // TODO: 로직 동작 확인
+        List<Trip> trips = tripRepository.findByUserIdOrderByCreatedAtDesc(id);  // TODO: 로직 동작 확인
         
         return trips.stream()
                 .map(trip -> UserTripDto.builder()
@@ -136,7 +136,7 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
-        UserEntity userEntity = findById(id);
-        userEntity.delete();
+        UserEntity user = findById(id);
+        user.delete();
     }
 }
