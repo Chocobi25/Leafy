@@ -3,7 +3,7 @@ package com.chocobi.leafy.auth.controller;
 import com.chocobi.leafy.auth.dto.TokenPair;
 import com.chocobi.leafy.auth.service.AuthService;
 import com.chocobi.leafy.auth.util.CookieUtil;
-import com.chocobi.leafy.global.response.ApiResponse;
+import com.chocobi.leafy.global.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +21,7 @@ public class AuthController {
     private final CookieUtil cookieUtil;
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<String>> refresh(
+    public ResponseEntity<SuccessResponse<String>> refresh(
             @CookieValue(name = "refreshToken") String refreshToken
     ) {
         TokenPair tokenPair = authService.reissueAccessToken(refreshToken);
@@ -30,7 +30,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", cookie.toString())
-                .body(ApiResponse.of(tokenPair.accessToken()));
+                .body(SuccessResponse.of(tokenPair.accessToken()));
     }
 
     @PostMapping("/logout")

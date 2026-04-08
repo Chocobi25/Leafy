@@ -1,7 +1,7 @@
 package com.chocobi.leafy.post.infra.entity;
 
 import com.chocobi.leafy.global.entity.BaseEntity;
-import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -23,7 +23,7 @@ public class PostCommentEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
@@ -34,7 +34,7 @@ public class PostCommentEntity extends BaseEntity {
     private PostCommentEntity parent;
 
     @Builder
-    public PostCommentEntity(String content, User user, PostEntity post, PostCommentEntity parent) {
+    public PostCommentEntity(String content, UserEntity user, PostEntity post, PostCommentEntity parent) {
         this.content = content;
         this.user = user;
         this.post = post;

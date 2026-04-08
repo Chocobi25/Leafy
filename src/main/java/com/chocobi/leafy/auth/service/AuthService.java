@@ -55,7 +55,7 @@ public class AuthService {
 
     @Transactional
     public void withdraw(Long userId) {
-        UserEntity userEntity = userService.findById(userId);
+        UserEntity user = userService.findById(userId);
 
         // Refresh Token 삭제
         refreshTokenService.deleteAllByUserId(userId);

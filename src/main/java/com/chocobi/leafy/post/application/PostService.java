@@ -81,7 +81,7 @@ public class PostService {
     @Transactional
     public PostLikeResponse toggleLike(Long postId, Long userId) {
         PostEntity post = postFindService.findPost(postId);
-        User user = userService.findById(userId);
+        UserEntity user = userService.findById(userId);
 
         boolean isCurrentlyLiked = postLikeFindService.exists(user, post);
 
