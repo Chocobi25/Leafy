@@ -58,6 +58,9 @@ dependencies {
     // fcm
     implementation 'com.google.firebase:firebase-admin:9.5.0'
 
+    // swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
+
     // monitoring
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
@@ -73,30 +76,4 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
-}
-
-tasks.named('jar') {
-	enabled = false
-}
-
-tasks.register('buildZip', Zip) {
-	dependsOn build
-	archiveFileName = "leafy-deployment.zip"
-	destinationDirectory = file("$buildDir/distributions")
-
-	from("$buildDir/libs") {
-		include '*.jar'
-	}
-
-	from('.') {
-		include '.ebextensions/**'
-	}
-
-	from('.') {
-		include 'Procfile'
-	}
-}
-
-tasks.named('build') {
-	finalizedBy(buildZip)
 }

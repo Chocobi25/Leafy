@@ -16,7 +16,7 @@ public class PostCommandService {
         postRepository.save(postEntity);
     }
 
-    public void delete(PostEntity postEntity) {
-        postRepository.delete(postEntity);
+    public void delete(Long postId) {
+        postRepository.deleteById(postId);
     }
 }
