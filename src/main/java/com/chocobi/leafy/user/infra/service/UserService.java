@@ -1,17 +1,19 @@
-package com.chocobi.leafy.user.service;
+package com.chocobi.leafy.user.infra.service;
 
 import com.chocobi.leafy.auth.dto.OAuthAttributes;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.repository.TripRepository;
 import com.chocobi.leafy.user.dto.UserTripDto;
-import com.chocobi.leafy.user.enums.Level;
-import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.user.infra.entity.enums.Level;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.chocobi.leafy.user.dto.UserProfileDto;
-import com.chocobi.leafy.user.repository.UserRepository;
+import com.chocobi.leafy.user.infra.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,15 +24,29 @@ public class UserService {
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
 
+    @Value("${app.user.withdrawal-recovery-days:30}")
+    private int withdrawalRecoveryDays;
+
     /**
      * 만약 유저가 있다면 그 User를 리턴하고, User가 없다면 새 User 객체를 만들어 리턴한다.
      * @param oAuthAttributes
      * @return
      */
-    public User saveOrGetUser(OAuthAttributes oAuthAttributes) {
-        return userRepository.findByProviderAndProviderId(oAuthAttributes.getProvider(), oAuthAttributes.getProviderId())
+    @Transactional
+    public UserEntity saveOrGetUser(OAuthAttributes oAuthAttributes) {
+        return userRepository.findByProviderAndProviderId(oAuthAttributes.getProvider().name(), oAuthAttributes.getProviderId())
+                .map(user -> {
+                    if (user.isDeleted()) {
+                        if (user.getDeletedAt().isAfter(LocalDateTime.now().minusDays(withdrawalRecoveryDays))) {
+                            user.restore();
+                            return user;
+                        }
+                        throw new IllegalArgumentException("탈퇴한지 30일이 지난 회원입니다."); // TODO: 커스텀 에러로 전환
+                    }
+                    return user;
+                })
                 .orElseGet(() -> { // Optional<User>이 비어있으면, 안에 있는 함수를 실행해서 값을 새로 만들어 리턴함
-                    User newUser = User.builder()
+                    UserEntity newUser = UserEntity.builder()
                             .providerId(oAuthAttributes.getProviderId())
                             .nickname(oAuthAttributes.getNickname())
                             .profileImageUrl(oAuthAttributes.getProfileImageUrl())
@@ -41,7 +57,7 @@ public class UserService {
     }
 
 
-    public void editUser(User user) {
+    public void editUser(UserEntity user) {
         userRepository.save(user);
     }
 
@@ -50,14 +66,14 @@ public class UserService {
     }
 
     // TODO: 로직 동작 확인
-    public User findById(Long id) {
+    public UserEntity findById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
     }
 
     @Transactional(readOnly = true) // 읽기 전용
     public UserProfileDto getUserProfile(Long id) {
-        User user = userRepository.findById(id)  // TODO: 로직 동작 확인
+        UserEntity user = userRepository.findById(id)  // TODO: 로직 동작 확인
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
         // User 엔티티를 UserProfileDto로 변환
@@ -76,7 +92,7 @@ public class UserService {
     @Transactional
     public void updateSelectedLevelIcon(Long id, String selectedLevelIcon) {
 
-        User user = findById(id);  // TODO: 로직 동작 확인
+        UserEntity user = findById(id);  // TODO: 로직 동작 확인
 
         Level iconLevel;
         try {
@@ -116,5 +132,11 @@ public class UserService {
                         .totalPlaces(trip.getTripPlaces() != null ? trip.getTripPlaces().size() : 0)
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        UserEntity user = findById(id);
+        user.delete();
     }
 }

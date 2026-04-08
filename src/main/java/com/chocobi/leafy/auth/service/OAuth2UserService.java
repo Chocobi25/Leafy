@@ -1,8 +1,8 @@
 package com.chocobi.leafy.auth.service;
 
 import com.chocobi.leafy.auth.dto.OAuthAttributes;
-import com.chocobi.leafy.user.entity.User;
-import com.chocobi.leafy.user.service.UserService;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
+import com.chocobi.leafy.user.infra.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -36,7 +36,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
 
         OAuthAttributes oAuthAttributes = OAuthAttributes.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
 
-        User user = userService.saveOrGetUser(oAuthAttributes);
+        UserEntity user = userService.saveOrGetUser(oAuthAttributes);
 
         Map<String, Object> attributes = new HashMap<>(oAuthAttributes.getAttributes());
         attributes.put("userId", user.getId());

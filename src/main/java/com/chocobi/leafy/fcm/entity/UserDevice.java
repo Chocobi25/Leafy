@@ -1,6 +1,6 @@
 package com.chocobi.leafy.fcm.entity;
 
-import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +20,7 @@ public class UserDevice {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity user;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -28,7 +28,7 @@ public class UserDevice {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public UserDevice(String fcmToken, User user) {
+    public UserDevice(String fcmToken, UserEntity user) {
         this.fcmToken = fcmToken;
         this.user = user;
         this.createdAt = LocalDateTime.now();
@@ -46,7 +46,7 @@ public class UserDevice {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateUser(User user) {
+    public void updateUser(UserEntity user) {
         this.user = user;
         onUpdate(); // updatedAt도 갱신
     }

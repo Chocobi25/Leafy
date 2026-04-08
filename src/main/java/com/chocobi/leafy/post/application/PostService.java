@@ -15,8 +15,8 @@ import com.chocobi.leafy.post.infra.PostLikeCommandService;
 import com.chocobi.leafy.post.infra.PostLikeFindService;
 import com.chocobi.leafy.post.infra.entity.PostEntity;
 import com.chocobi.leafy.post.infra.entity.PostLikeEntity;
-import com.chocobi.leafy.user.entity.User;
-import com.chocobi.leafy.user.service.UserService;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
+import com.chocobi.leafy.user.infra.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -81,7 +81,7 @@ public class PostService {
     @Transactional
     public PostLikeResponse toggleLike(Long postId, Long userId) {
         PostEntity post = postFindService.findPost(postId);
-        User user = userService.findById(userId);
+        UserEntity user = userService.findById(userId);
 
         boolean isCurrentlyLiked = postLikeFindService.exists(user, post);
 

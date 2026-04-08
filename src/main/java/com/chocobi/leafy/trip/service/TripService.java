@@ -8,13 +8,12 @@ import com.chocobi.leafy.trip.dto.*;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.entity.TripStatus;
 import com.chocobi.leafy.trip.repository.TripRepository;
-import com.chocobi.leafy.user.service.UserService;
+import com.chocobi.leafy.user.infra.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 

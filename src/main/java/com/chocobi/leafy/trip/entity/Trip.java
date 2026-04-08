@@ -1,7 +1,7 @@
 package com.chocobi.leafy.trip.entity;
 
 import com.chocobi.leafy.place.entity.RegionGroup;
-import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,7 +30,7 @@ public class Trip implements Serializable {
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private User user;
+    private UserEntity user;
 
     private LocalDate startDate;
     private LocalDate endDate;

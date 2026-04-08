@@ -2,8 +2,6 @@ package com.chocobi.leafy.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
@@ -63,6 +61,14 @@ public class WebClientConfig {
                 .defaultHeader("X-Naver-Client-Id", clientId)
                 .defaultHeader("X-Naver-Client-Secret", clientSecret)
                 .uriBuilderFactory(createUriBuilderFactory(naverBaseUrl))
+                .build();
+    }
+
+    @Bean
+    public WebClient kakaoUnlinkWebClient(@Value("${kakao.admin-key}") String adminKey) {
+        return WebClient.builder()
+                .baseUrl("https://kapi.kakao.com")
+                .defaultHeader("Authorization", "KakaoAK " + adminKey)
                 .build();
     }
 

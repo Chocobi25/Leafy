@@ -1,6 +1,7 @@
 package com.chocobi.leafy.auth.handler;
 
 import com.chocobi.leafy.auth.service.RefreshTokenService;
+import com.chocobi.leafy.auth.util.CookieUtil;
 import com.chocobi.leafy.auth.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,12 +22,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final CookieUtil cookieUtil;
 
     @Value("${app.frontend.redirect-uri}")
     private String redirectUri;
-
-    @Value("${cookie.secure}")
-    private boolean cookieSecure;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -42,13 +41,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // 기존 Refresh Token 삭제 & 새로 발급한 Refresh Token 등록
         refreshTokenService.rotateRefreshToken(userId, refreshToken, jwtUtil.getRefreshTokenExpiration());
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite("Strict")
-                .path("/api/auth")
-                .maxAge(Duration.ofDays(14))
-                .build();
+        ResponseCookie cookie = cookieUtil.createRefreshTokenCookie(refreshToken, Duration.ofDays(14));
 
         response.setHeader("Set-Cookie", cookie.toString());
 

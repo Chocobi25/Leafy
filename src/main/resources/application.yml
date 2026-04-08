@@ -7,3 +7,10 @@ spring:
 
   codec:
     max-in-memory-size: 5MB
+
+kakao:
+  admin-key: ${KAKAO_ADMIN_KEY}
+
+app:
+  user:
+    withdrawal-recovery-days: 30

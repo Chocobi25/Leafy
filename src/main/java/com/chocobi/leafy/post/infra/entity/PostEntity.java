@@ -1,8 +1,7 @@
 package com.chocobi.leafy.post.infra.entity;
 
 import com.chocobi.leafy.global.entity.BaseEntity;
-import com.chocobi.leafy.place.entity.Place;
-import com.chocobi.leafy.user.entity.User;
+import com.chocobi.leafy.user.infra.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -21,7 +20,7 @@ public class PostEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity user;
 
     private Long placeId;
 
@@ -32,7 +31,7 @@ public class PostEntity extends BaseEntity {
     private Integer likes = 0;
 
     @Builder
-    public PostEntity(String title, String content, User user, Long placeId) {
+    public PostEntity(String title, String content, UserEntity user, Long placeId) {
         this.title = title;
         this.content = content;
         this.user = user;
