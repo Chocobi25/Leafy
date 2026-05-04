@@ -1,6 +1,6 @@
 package com.chocobi.leafy.trip.dto;
 
-import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.trip.entity.Trip;
 import com.chocobi.leafy.trip.entity.TripSegment;
 import lombok.AllArgsConstructor;
@@ -32,8 +32,8 @@ public class TripSegmentRedisDto implements Serializable {
     public TripSegment toEntity() {
         return TripSegment.builder()
                 .tripId(Trip.builder().id(this.tripId).build())
-                .startPlaceId(Place.builder().id(this.startPlaceId).build())
-                .endPlaceId(Place.builder().id(this.endPlaceId).build())
+                //.startPlaceId(ExternalPlaceEntity.builder().id(this.startPlaceId).build())
+                //.endPlaceId(ExternalPlaceEntity.builder().id(this.endPlaceId).build())
                 .transport(this.transport)
                 .distance(this.distance)
                 .duration(this.duration)

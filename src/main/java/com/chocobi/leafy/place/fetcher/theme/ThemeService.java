@@ -1,6 +1,6 @@
 package com.chocobi.leafy.place.fetcher.theme;
 
-import com.chocobi.leafy.place.entity.PlaceStaging;
+import com.chocobi.leafy.place.infra.entity.PlaceStaging;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

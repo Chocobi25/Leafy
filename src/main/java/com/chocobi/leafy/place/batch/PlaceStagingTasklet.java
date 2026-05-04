@@ -1,6 +1,6 @@
 package com.chocobi.leafy.place.batch;
 
-import com.chocobi.leafy.place.entity.PlaceStaging;
+import com.chocobi.leafy.place.infra.entity.PlaceStaging;
 import com.chocobi.leafy.place.fetcher.eco.EcoService;
 import com.chocobi.leafy.place.fetcher.farm.FarmService;
 import com.chocobi.leafy.place.fetcher.rural.RuralService;

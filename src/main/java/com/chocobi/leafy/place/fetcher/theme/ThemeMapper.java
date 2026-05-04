@@ -1,7 +1,7 @@
 package com.chocobi.leafy.place.fetcher.theme;
 
-import com.chocobi.leafy.place.entity.Category;
-import com.chocobi.leafy.place.entity.PlaceStaging;
+import com.chocobi.leafy.place.infra.entity.Category;
+import com.chocobi.leafy.place.infra.entity.PlaceStaging;
 import com.chocobi.leafy.place.fetcher.theme.dto.ThemeItem;
 import org.springframework.stereotype.Component;
 

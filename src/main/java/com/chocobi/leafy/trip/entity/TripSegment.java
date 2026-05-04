@@ -1,6 +1,7 @@
 package com.chocobi.leafy.trip.entity;
 
-import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
+import com.chocobi.leafy.place.infra.entity.PlaceEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,11 +29,11 @@ public class TripSegment implements Serializable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "start_place_id")
-    private Place startPlaceId;
+    private PlaceEntity startPlaceId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "end_place_id")
-    private Place endPlaceId;
+    private PlaceEntity endPlaceId;
 
     private String transport;
 

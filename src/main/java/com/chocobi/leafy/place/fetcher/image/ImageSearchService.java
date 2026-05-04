@@ -1,10 +1,9 @@
 package com.chocobi.leafy.place.fetcher.image;
 
-import com.chocobi.leafy.place.entity.Image;
-import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.infra.entity.Image;
+import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.fetcher.image.dto.ImageItem;
 import com.chocobi.leafy.place.fetcher.image.dto.SearchResponse;
-import com.chocobi.leafy.place.fetcher.image.dto.TourImageApiResponse;
 import com.chocobi.leafy.place.fetcher.image.dto.TourImageItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,7 @@ public class ImageSearchService {
     private final TourImageClient tourImageClient;
     private final NaverImageClient naverImageClient;
 
-    public Mono<List<Image>> findImagesForPlace(Place place) {
+    public Mono<List<Image>> findImagesForPlace(ExternalPlaceEntity place) {
         return tourImageClient.fetchTourImages(place.getTitle())
                 .flatMap(apiResponse -> {
                     if (apiResponse != null && apiResponse.getResponse() != null) {
@@ -44,11 +43,11 @@ public class ImageSearchService {
                 });
     }
 
-    private Mono<List<Image>> searchNaverImages(Place place) {
+    private Mono<List<Image>> searchNaverImages(ExternalPlaceEntity place) {
         log.info("➡️ 네이버 API로 이미지 검색을 시작합니다. 장소: {}", place.getTitle());
         List<String> queries = List.of(
-                String.format("%s %s", place.getRegionGroup(), place.getTitle()),
-                String.format("%s %s 사진", place.getRegionGroup(), place.getTitle()),
+                //String.format("%s %s", place.getRegionGroup(), place.getTitle()),
+                //String.format("%s %s 사진", place.getRegionGroup(), place.getTitle()),
                 String.format("%s 내부", place.getTitle()),
                 String.format("%s 외관", place.getTitle())
         );
@@ -87,7 +86,7 @@ public class ImageSearchService {
                 });
     }
 
-    private List<Image> mapTourApiItemsToImages(List<TourImageItem> tourItems, Place place) {
+    private List<Image> mapTourApiItemsToImages(List<TourImageItem> tourItems, ExternalPlaceEntity place) {
         return tourItems.stream()
                 .map(item -> {
                     Image image = new Image();
@@ -99,7 +98,7 @@ public class ImageSearchService {
                 .collect(Collectors.toList());
     }
 
-    private List<Image> mapNaverApiItemsToImages(List<ImageItem> naverItems, Place place) {
+    private List<Image> mapNaverApiItemsToImages(List<ImageItem> naverItems, ExternalPlaceEntity place) {
         return naverItems.stream()
                 .map(item -> {
                     Image image = new Image();

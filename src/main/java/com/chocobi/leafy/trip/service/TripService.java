@@ -1,6 +1,6 @@
 package com.chocobi.leafy.trip.service;
 
-import com.chocobi.leafy.place.entity.RegionGroup;
+import com.chocobi.leafy.place.infra.entity.RegionGroup;
 import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.client.TransCoordResponse;
 import com.chocobi.leafy.trip.client.TranscodeClient;

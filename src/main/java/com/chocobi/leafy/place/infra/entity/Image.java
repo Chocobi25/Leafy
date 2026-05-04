@@ -1,4 +1,4 @@
-package com.chocobi.leafy.place.entity;
+package com.chocobi.leafy.place.infra.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -21,5 +21,5 @@ public class Image {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id")
-    private Place place;
+    private ExternalPlaceEntity place;
 }

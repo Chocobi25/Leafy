@@ -8,7 +8,7 @@ import com.chocobi.leafy.distance.service.CarDistanceService;
 import com.chocobi.leafy.distance.service.DistanceUtils;
 import com.chocobi.leafy.distance.service.TransDistanceService;
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
-import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.service.PlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceRequest;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
@@ -141,8 +141,8 @@ public class TripSegmentService {
 
             TripSegment tripSegment = TripSegment.builder()
                     .tripId(Trip.builder().id(tripId).build())
-                    .startPlaceId(Place.builder().id(startPlace.getPlace().getId()).build())
-                    .endPlaceId(Place.builder().id(endPlace.getPlace().getId()).build())
+                    //.startPlaceId(ExternalPlaceEntity.builder().id(startPlace.getPlace().getId()).build())
+                    //.endPlaceId(ExternalPlaceEntity.builder().id(endPlace.getPlace().getId()).build())
                     .transport(transport == null ? null : transport.toLowerCase())
                     .distance(distance)
                     .duration(durationInMinutes)

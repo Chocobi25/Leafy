@@ -1,4 +1,4 @@
-package com.chocobi.leafy.place.entity;
+package com.chocobi.leafy.place.infra.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

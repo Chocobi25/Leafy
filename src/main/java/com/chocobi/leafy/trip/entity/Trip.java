@@ -1,6 +1,6 @@
 package com.chocobi.leafy.trip.entity;
 
-import com.chocobi.leafy.place.entity.RegionGroup;
+import com.chocobi.leafy.place.infra.entity.RegionGroup;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;

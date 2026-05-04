@@ -1,6 +1,7 @@
 package com.chocobi.leafy.trip.entity;
 
-import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
+import com.chocobi.leafy.place.infra.entity.PlaceEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +23,7 @@ public class TripPlace {
     private Trip trip;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private Place place;
+    private PlaceEntity place;
 
     @Builder.Default
     private int dayIndex = 0;
