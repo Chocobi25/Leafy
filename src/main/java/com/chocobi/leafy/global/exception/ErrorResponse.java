@@ -16,7 +16,7 @@ public class ErrorResponse {
     public static ErrorResponse of(ErrorCode errorCode) {
         return ErrorResponse.builder()
                 .status(errorCode.getStatus().value())
-                .code(errorCode.name())
+                .code(errorCode.getCode())
                 .message(errorCode.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();

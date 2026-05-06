@@ -22,22 +22,43 @@ CREATE TABLE user_device
     updated_at          datetime(6) NOT NULL
 );
 
+DROP TABLE IF EXISTS region;
+CREATE TABLE region
+(
+    id        bigint PRIMARY KEY,
+    name      varchar(100) NOT NULL,
+    parent_id bigint,
+    level     varchar(20)  NOT NULL
+);
+
 DROP TABLE IF EXISTS place;
 CREATE TABLE place
 (
-    id              bigint PRIMARY KEY,
-    latitude        double NOT NULL,
-    longitude       double NOT NULL,
-    url             varchar(2000),
-    address         varchar(255) NOT NULL,
-    copyright       varchar(255),
-    region_detail   varchar(255),
-    tel             varchar(255),
-    title           varchar(255) NOT NULL,
-    category        enum('CULTURE','ETC','EXPERIENCE','FOOD','NATURE'),
-    description     TEXT,
-    region_group    enum('BUSAN','CHUNGBUK','CHUNGNAM','DAEGU','DAEJEON','GANGWON','GWANGJU','GYEONGBUK','GYEONGGI','GYEONGNAM','INCHEON','JEJU','JEONBUK','JEONNAM','SEJONG','SEOUL','ULSAN'),
-    source_type     enum('API','USER')
+    id          bigint PRIMARY KEY,
+    place_type  varchar(31) NOT NULL,
+    title       varchar(255) NOT NULL,
+    address     varchar(255) NOT NULL,
+    latitude    double       NOT NULL,
+    longitude   double       NOT NULL,
+    copyright   varchar(255),
+    created_at  datetime(6),
+    updated_at  datetime(6)
+);
+
+DROP TABLE IF EXISTS external_place;
+CREATE TABLE external_place
+(
+    id          bigint PRIMARY KEY,
+    description TEXT,
+    tel         varchar(255),
+    url         varchar(2000),
+    region_id   bigint
+);
+
+DROP TABLE IF EXISTS custom_place;
+CREATE TABLE custom_place
+(
+    id      bigint PRIMARY KEY
 );
 
 DROP TABLE IF EXISTS image;
@@ -126,7 +147,7 @@ CREATE TABLE post_like
     post_id     bigint NOT NULL,
     user_id     bigint NOT NULL,
     created_at  datetime(6) NOT NULL,
-    updated_at  datetime(6) NOT NULL,
+    updated_at  datetime(6) NOT NULL
 );
 
 DROP TABLE IF EXISTS post_comment;
@@ -139,11 +160,4 @@ CREATE TABLE post_comment
     content     varchar(255) NOT NULL,
     created_at  datetime(6)  NOT NULL,
     updated_at  datetime(6)  NOT NULL
-);
-
-DROP TABLE IF EXISTS area_code;
-CREATE TABLE area_code
-(
-    code     int PRIMARY KEY,
-    name     varchar(255)
 );
