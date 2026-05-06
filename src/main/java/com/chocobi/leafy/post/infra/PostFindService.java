@@ -1,7 +1,7 @@
 package com.chocobi.leafy.post.infra;
 
 import com.chocobi.leafy.global.exception.CustomException;
-import com.chocobi.leafy.global.exception.ErrorCode;
+import com.chocobi.leafy.post.vo.PostError;
 import com.chocobi.leafy.post.dto.request.PostPageRequest;
 import com.chocobi.leafy.post.infra.entity.PostEntity;
 import com.chocobi.leafy.post.infra.repository.PostRepository;
@@ -22,7 +22,7 @@ public class PostFindService {
 
     public PostEntity findPost(Long id) {
         return postRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.ENTITY_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(PostError.POST_NOT_FOUND));
     }
 
     public List<PostEntity> findPosts() {

@@ -27,14 +27,14 @@ public class GlobalExceptionHandler {
         String message = bindingResult.getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .findFirst()
-                .orElse(ErrorCode.INVALID_INPUT_VALUE.getMessage());
+                .orElse(GlobalError.INVALID_INPUT_VALUE.getMessage());
 
         log.error("입력값 유효성 검사 실패: {}", message);
         return ResponseEntity
-                .status(ErrorCode.INVALID_INPUT_VALUE.getStatus())
+                .status(GlobalError.INVALID_INPUT_VALUE.getStatus())
                 .body(ErrorResponse.builder()
-                        .status(ErrorCode.INVALID_INPUT_VALUE.getStatus().value())
-                        .code(ErrorCode.INVALID_INPUT_VALUE.name())
+                        .status(GlobalError.INVALID_INPUT_VALUE.getStatus().value())
+                        .code(GlobalError.INVALID_INPUT_VALUE.getCode())
                         .message(message)
                         .timestamp(LocalDateTime.now())
                         .build());
@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
         log.error("서버 내부 오류 발생: {}", e.getMessage(), e);
         return ResponseEntity
-                .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
-                .body(ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR));
+                .status(GlobalError.INTERNAL_SERVER_ERROR.getStatus())
+                .body(ErrorResponse.of(GlobalError.INTERNAL_SERVER_ERROR));
     }
 }
