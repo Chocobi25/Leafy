@@ -1,9 +1,9 @@
 package com.chocobi.leafy.place.batch;
 
-import com.chocobi.leafy.place.entity.Image;
-import com.chocobi.leafy.place.entity.Place;
+import com.chocobi.leafy.place.infra.entity.Image;
+import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.fetcher.image.ImageSearchService;
-import com.chocobi.leafy.place.repository.ImageRepository;
+import com.chocobi.leafy.place.infra.repository.ImageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
@@ -14,12 +14,12 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PlaceImageProcessor implements ItemProcessor<Place, List<Image>> {
+public class PlaceImageProcessor implements ItemProcessor<ExternalPlaceEntity, List<Image>> {
     private final ImageSearchService imageSearchService;
     private final ImageRepository imageRepository;
 
     @Override
-    public List<Image> process(Place place) throws Exception {
+    public List<Image> process(ExternalPlaceEntity place) throws Exception {
         // DB에 이미지가 존재하면 스킵
         if (imageRepository.existsByPlace(place)) {
             log.info("이미 사진이 존재하는 장소입니다. 스킵: {}", place.getTitle());

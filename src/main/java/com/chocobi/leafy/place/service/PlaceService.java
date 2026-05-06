@@ -2,12 +2,12 @@ package com.chocobi.leafy.place.service;
 
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.common.dto.UserPlaceDTO;
-import com.chocobi.leafy.place.entity.Category;
-import com.chocobi.leafy.place.entity.Place;
-import com.chocobi.leafy.place.entity.PlaceSourceType;
-import com.chocobi.leafy.place.entity.RegionGroup;
-import com.chocobi.leafy.place.repository.ImageRepository;
-import com.chocobi.leafy.place.repository.PlaceRepository;
+import com.chocobi.leafy.place.infra.entity.CustomPlaceEntity;
+import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
+import com.chocobi.leafy.place.infra.entity.PlaceEntity;
+import com.chocobi.leafy.place.infra.entity.RegionGroup;
+import com.chocobi.leafy.place.infra.repository.ImageRepository;
+import com.chocobi.leafy.place.infra.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,28 +21,22 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final ImageRepository imageRepository;
 
-    public List<PlaceDTO> getPlacesByArrival(String arrival) {
+    /*public List<PlaceDTO> getPlacesByArrival(String arrival) {
         RegionGroup group = RegionGroup.fromRegionName(arrival);
-        List<Place> places = placeRepository.findByRegionGroupAndSourceType(group, PlaceSourceType.API);
+        List<ExternalPlaceEntity> places = placeRepository.findByRegionGroupAndSourceType(group, PlaceSourceType.API);
         return places.stream()
                 .map(PlaceDTO::fromEntity)
                 .toList();
-    }
+    }*/
 
-    public Place getPlaceById(Long id) {
+    public PlaceEntity getPlaceById(Long id) {
         if (id == null) {
             return null;
         }
-        Optional<Place> place = placeRepository.findById(id);
+        Optional<PlaceEntity> place = placeRepository.findById(id);
         return place.orElse(null);
     }
 
-    public List<PlaceDTO> getPlaceBySourceType(PlaceSourceType sourceType) {
-        List<Place> places = placeRepository.findBySourceType(sourceType);
-        return places.stream()
-                .map(PlaceDTO::fromEntity)
-                .toList();
-    }
 
     public Long saveUserPlace(UserPlaceDTO userPlaceDTO) {
         if(placeRepository.existsByAddressAndTitle(userPlaceDTO.getAddress(), userPlaceDTO.getTitle())) {
@@ -53,18 +47,12 @@ public class PlaceService {
         RegionGroup group = RegionGroup.fromRegionName(parts[0]);
         String regionDetail = parts[1];
 
-        return placeRepository.save(Place.builder()
+        return placeRepository.save(CustomPlaceEntity.builder()
                 .title(userPlaceDTO.getTitle())
                 .address(userPlaceDTO.getAddress())
-                .regionGroup(group)
-                .regionDetail(regionDetail)
                 .longitude(userPlaceDTO.getLongitude())
                 .latitude(userPlaceDTO.getLatitude())
-                .tel(userPlaceDTO.getTel())
-                .url(userPlaceDTO.getUrl())
-                .sourceType(PlaceSourceType.USER)
                 .copyright("카카오지도")
-                .category(Category.ETC)
                 .build()).getId();
     }
 
@@ -72,7 +60,7 @@ public class PlaceService {
 
     @Transactional
     public void deletePlace(Long placeId) {
-        Place place = placeRepository.findById(placeId)
+        PlaceEntity place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new IllegalArgumentException("장소를 찾을 수 없습니다: " + placeId));
         placeRepository.delete(place);
     }
@@ -85,7 +73,7 @@ public class PlaceService {
     }
 
     public List<PlaceDTO> getAllPlaces() {
-        List<Place> places = placeRepository.findAll();
+        List<PlaceEntity> places = placeRepository.findAll();
         return places.stream()
                 .map(PlaceDTO::fromEntity)
                 .toList();

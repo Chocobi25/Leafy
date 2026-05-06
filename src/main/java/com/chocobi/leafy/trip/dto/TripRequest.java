@@ -1,6 +1,5 @@
 package com.chocobi.leafy.trip.dto;
 
-import com.chocobi.leafy.place.entity.RegionGroup;
 import lombok.Data;
 
 import java.time.LocalDate;

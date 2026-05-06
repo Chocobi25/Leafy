@@ -3,9 +3,7 @@ package com.chocobi.leafy.distance.service;
 import com.chocobi.leafy.distance.domain.Point;
 import com.chocobi.leafy.distance.domain.Port;
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
-import com.chocobi.leafy.place.entity.Place;
-import com.chocobi.leafy.place.entity.RegionGroup;
-import com.chocobi.leafy.place.service.PlaceService;
+import com.chocobi.leafy.place.infra.entity.RegionGroup;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 
 import java.util.ArrayList;

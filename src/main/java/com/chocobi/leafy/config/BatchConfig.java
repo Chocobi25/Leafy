@@ -1,12 +1,11 @@
 package com.chocobi.leafy.config;
 
 import com.chocobi.leafy.place.batch.*;
-import com.chocobi.leafy.place.entity.Image;
-import com.chocobi.leafy.place.entity.Place;
-import com.chocobi.leafy.place.entity.PlaceStaging;
+import com.chocobi.leafy.place.infra.entity.Image;
+import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
+import com.chocobi.leafy.place.infra.entity.PlaceStaging;
 import com.chocobi.leafy.place.fetcher.image.ImageSearchService;
-import com.chocobi.leafy.place.fetcher.image.NaverImageClient;
-import com.chocobi.leafy.place.repository.ImageRepository;
+import com.chocobi.leafy.place.infra.repository.ImageRepository;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
@@ -73,8 +72,8 @@ public class BatchConfig {
     }
 
     @Bean(name = "placeReader")
-    public ItemReader<Place> placeReader() {
-        return new JpaPagingItemReaderBuilder<Place>()
+    public ItemReader<ExternalPlaceEntity> placeReader() {
+        return new JpaPagingItemReaderBuilder<ExternalPlaceEntity>()
                 .name("placeReader")
                 .entityManagerFactory(entityManagerFactory)
                 .pageSize(100)
@@ -87,7 +86,7 @@ public class BatchConfig {
                                  @Qualifier("placeGeocodeProcessor") PlaceGeocodeProcessor placeGeocodeProcessor,
                                  @Qualifier("placeWriter") PlaceWriter placeWriter) {
         return new StepBuilder("placeProcessStep", jobRepository)
-                .<PlaceStaging, Place>chunk(100, transactionManager)
+                .<PlaceStaging, ExternalPlaceEntity>chunk(100, transactionManager)
                 .reader(placeStagingReader)
                 .processor(placeGeocodeProcessor)
                 .writer(placeWriter)
@@ -101,12 +100,12 @@ public class BatchConfig {
     }
 
     @Bean(name = "imageStep")
-    public Step imageStep(@Qualifier("placeReader") ItemReader<Place> placeReader,
+    public Step imageStep(@Qualifier("placeReader") ItemReader<ExternalPlaceEntity> placeReader,
                           @Qualifier("placeImageProcessor") PlaceImageProcessor placeImageProcessor,
                           @Qualifier("imageWriter") ImageWriter imageWriter,
                           @Qualifier("taskExecutor") TaskExecutor taskExecutor) {
         return new StepBuilder("imageStep", jobRepository)
-                .<Place, List<Image>>chunk(100, transactionManager)
+                .<ExternalPlaceEntity, List<Image>>chunk(100, transactionManager)
                 .reader(placeReader)
                 .processor(placeImageProcessor)
                 .writer(imageWriter)

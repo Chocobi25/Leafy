@@ -1,7 +1,6 @@
 package com.chocobi.leafy.trip.dto;
 
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
-import com.chocobi.leafy.place.entity.Place;
 import com.chocobi.leafy.trip.entity.TripPlace;
 import lombok.Builder;
 import lombok.Data;

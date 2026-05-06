@@ -1,7 +1,7 @@
 package com.chocobi.leafy.place.fetcher.farm;
 
-import com.chocobi.leafy.place.entity.Category;
-import com.chocobi.leafy.place.entity.PlaceStaging;
+import com.chocobi.leafy.place.infra.entity.Category;
+import com.chocobi.leafy.place.infra.entity.PlaceStaging;
 import com.chocobi.leafy.place.fetcher.farm.dto.FarmDetailItem;
 import org.springframework.stereotype.Component;
 

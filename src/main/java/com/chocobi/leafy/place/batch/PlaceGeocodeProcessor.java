@@ -1,9 +1,7 @@
 package com.chocobi.leafy.place.batch;
 
-import com.chocobi.leafy.place.entity.Place;
-import com.chocobi.leafy.place.entity.PlaceSourceType;
-import com.chocobi.leafy.place.entity.PlaceStaging;
-import com.chocobi.leafy.place.entity.RegionGroup;
+import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
+import com.chocobi.leafy.place.infra.entity.PlaceStaging;
 import com.chocobi.leafy.place.fetcher.kakao.GeocodeService;
 import com.chocobi.leafy.place.fetcher.kakao.dto.GeocodeResult;
 import lombok.RequiredArgsConstructor;
@@ -14,11 +12,11 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PlaceGeocodeProcessor implements ItemProcessor<PlaceStaging, Place> {
+public class PlaceGeocodeProcessor implements ItemProcessor<PlaceStaging, ExternalPlaceEntity> {
     private final GeocodeService geocodeService;
 
     @Override
-    public Place process(PlaceStaging item) throws Exception {
+    public ExternalPlaceEntity process(PlaceStaging item) throws Exception {
         GeocodeResult geocodeResult = geocodeService.getCoordinatesFromAddress(item.getAddress());
 
         if (geocodeResult.getAddress() == null) {
@@ -26,19 +24,16 @@ public class PlaceGeocodeProcessor implements ItemProcessor<PlaceStaging, Place>
             return null;
         }
 
-        return Place.builder()
+        return ExternalPlaceEntity.builder()
                 .title(item.getTitle())
-                .description(item.getDescription())
-                .category(item.getCategory())
                 .address(geocodeResult.getAddress().getAddress_name())
-                .regionGroup(RegionGroup.fromRegionName(geocodeResult.getAddress().getRegion_1depth_name()))
-                .regionDetail(geocodeResult.getAddress().getRegion_2depth_name())
                 .latitude(geocodeResult.getLatitude())
                 .longitude(geocodeResult.getLongitude())
+                .copyright(item.getCopyright())
+                .description(item.getDescription())
+                .category(item.getCategory())
                 .tel(item.getTel())
                 .url(item.getUrl())
-                .copyright(item.getCopyright())
-                .sourceType(PlaceSourceType.API)
                 .build();
     }
 }

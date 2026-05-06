@@ -1,7 +1,7 @@
 package com.chocobi.leafy.place.batch;
 
-import com.chocobi.leafy.place.entity.Image;
-import com.chocobi.leafy.place.repository.ImageRepository;
+import com.chocobi.leafy.place.infra.entity.Image;
+import com.chocobi.leafy.place.infra.repository.ImageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.Chunk;

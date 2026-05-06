@@ -1,6 +1,6 @@
 package com.chocobi.leafy.place.common.dto;
 
-import com.chocobi.leafy.place.entity.Image;
+import com.chocobi.leafy.place.infra.entity.Image;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
