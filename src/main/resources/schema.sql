@@ -35,6 +35,7 @@ DROP TABLE IF EXISTS place;
 CREATE TABLE place
 (
     id          bigint PRIMARY KEY,
+    place_type  varchar(31) NOT NULL,
     title       varchar(255) NOT NULL,
     address     varchar(255) NOT NULL,
     latitude    double       NOT NULL,
@@ -51,7 +52,7 @@ CREATE TABLE external_place
     description TEXT,
     tel         varchar(255),
     url         varchar(2000),
-    region      bigint
+    region_id   bigint
 );
 
 DROP TABLE IF EXISTS custom_place;
