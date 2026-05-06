@@ -29,7 +29,7 @@ public class ExternalPlaceEntity extends PlaceEntity{
     private String url;
 
     @Builder
-    public ExternalPlaceEntity(String title, String address, Double latitude, Double longitude,
+    public ExternalPlaceEntity(String title, String address, double latitude, double longitude,
                                String copyright, RegionEntity region, String description,
                                Category category, String tel, String url) {
         super(title, address, latitude, longitude, copyright);

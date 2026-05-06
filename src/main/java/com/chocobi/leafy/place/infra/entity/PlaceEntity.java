@@ -41,7 +41,7 @@ public abstract class PlaceEntity extends BaseEntity {
         this.copyright = copyright;
     }
 
-    public void update(String title, String address, double latitude, double longitude, String copyright) {
+    protected void update(String title, String address, double latitude, double longitude, String copyright) {
         this.title = title;
         this.address = address;
         this.latitude = latitude;
