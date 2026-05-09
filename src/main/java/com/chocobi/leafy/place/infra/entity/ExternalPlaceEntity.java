@@ -16,9 +16,8 @@ public class ExternalPlaceEntity extends PlaceEntity{
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 100)
-    private Category category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private CategoryEntity category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private RegionEntity region;
@@ -31,7 +30,7 @@ public class ExternalPlaceEntity extends PlaceEntity{
     @Builder
     public ExternalPlaceEntity(String title, String address, double latitude, double longitude,
                                String copyright, RegionEntity region, String description,
-                               Category category, String tel, String url) {
+                               CategoryEntity category, String tel, String url) {
         super(title, address, latitude, longitude, copyright);
         this.description = description;
         this.category = category;
