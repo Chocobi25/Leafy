@@ -6,7 +6,7 @@ import com.chocobi.leafy.constants.TmapPathTypeConst;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.dto.*;
-import com.chocobi.leafy.place.service.PlaceService;
+import com.chocobi.leafy.place.application.PlaceService;
 import com.chocobi.leafy.trip.service.TripPlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import lombok.RequiredArgsConstructor;

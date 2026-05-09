@@ -1,6 +1,6 @@
 package com.chocobi.leafy.trip.service;
 
-import com.chocobi.leafy.place.service.PlaceService;
+import com.chocobi.leafy.place.application.PlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceRequest;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
@@ -25,7 +25,7 @@ public class TripPlaceService {
         List<TripPlace> tripPlaces = request.getPlaces().stream()
                 .map(placeReq -> TripPlace.builder()
                         .trip(trip)
-                        .place(placeService.getPlaceById(placeReq.getPlaceId()))
+                        .place(placeService.getPlace(placeReq.getPlaceId()))
                         .memo(placeReq.getMemo())
                         .build())
                 .toList();
@@ -42,7 +42,7 @@ public class TripPlaceService {
         List<TripPlace> tripPlaces = request.stream()
                 .map(placeReq -> TripPlace.builder()
                         .trip(trip)
-                        .place(placeService.getPlaceById(placeReq.getPlaceId()))
+                        .place(placeService.getPlace(placeReq.getPlaceId()))
                         .memo(placeReq.getMemo())
                         .dayIndex(placeReq.getDayIndex())
                         .visitOrder(placeReq.getVisitOrder())
