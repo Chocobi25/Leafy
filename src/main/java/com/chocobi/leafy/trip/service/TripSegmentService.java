@@ -8,8 +8,7 @@ import com.chocobi.leafy.distance.service.CarDistanceService;
 import com.chocobi.leafy.distance.service.DistanceUtils;
 import com.chocobi.leafy.distance.service.TransDistanceService;
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
-import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
-import com.chocobi.leafy.place.service.PlaceService;
+import com.chocobi.leafy.place.application.PlaceService;
 import com.chocobi.leafy.trip.dto.TripPlaceRequest;
 import com.chocobi.leafy.trip.dto.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
@@ -322,7 +321,7 @@ public class TripSegmentService {
         List<TripPlaceResponse> tripPlaces = tripPlaceRequests.stream()
                 .map(req -> TripPlaceResponse.builder()
                         .tripId(trip.getId())
-                        .place(PlaceDTO.fromEntity(placeService.getPlaceById(req.getPlaceId())))
+                        .place(PlaceDTO.fromEntity(placeService.getPlace(req.getPlaceId())))
                         .day_index(req.getDayIndex())
                         .visitOrder(req.getVisitOrder())
                         .memo(req.getMemo())
