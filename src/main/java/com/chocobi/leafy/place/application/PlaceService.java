@@ -54,7 +54,7 @@ public class PlaceService {
     }
 
     @Transactional
-    public Long CreateCustomPlace(CreatePlaceRequest request) {
+    public Long createCustomPlace(CreatePlaceRequest request) {
         CustomPlaceEntity place = CustomPlaceEntity.builder()
                 .title(request.title())
                 .address(request.address())

@@ -20,16 +20,16 @@ public class ExternalPlaceListResponse {
     @Schema(description = "주소")
     private String address;
 
-    @Schema(description = "지역명")
+    @Schema(description = "지역")
     private String region;
 
     public static ExternalPlaceListResponse from(ExternalPlaceEntity place) {
         return ExternalPlaceListResponse.builder()
                 .id(place.getId())
                 .title(place.getTitle())
-                .category(place.getCategory().getName())
+                .category(place.getCategory() != null ? place.getCategory().getName() : null)
                 .address(place.getAddress())
-                .region(place.getRegion().getName())
+                .region(place.getRegion() != null ? place.getRegion().getName() : null)
                 .build();
     }
 }
