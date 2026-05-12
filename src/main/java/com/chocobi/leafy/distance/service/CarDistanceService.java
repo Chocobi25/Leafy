@@ -8,7 +8,7 @@ import com.chocobi.leafy.distance.domain.Point;
 import com.chocobi.leafy.distance.domain.Port;
 import com.chocobi.leafy.distance.dto.*;
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
-import com.chocobi.leafy.trip.dto.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.util.CarbonCalculator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,8 +1,9 @@
 package com.chocobi.leafy.trip.dto;
 
 import com.chocobi.leafy.place.infra.entity.RegionGroup;
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripStatus;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

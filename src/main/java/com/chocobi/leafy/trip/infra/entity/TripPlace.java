@@ -1,6 +1,5 @@
-package com.chocobi.leafy.trip.entity;
+package com.chocobi.leafy.trip.infra.entity;
 
-import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

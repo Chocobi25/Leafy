@@ -1,6 +1,6 @@
 package com.chocobi.leafy.trip.dto;
 
-import com.chocobi.leafy.trip.entity.TripSegment;
+import com.chocobi.leafy.trip.infra.entity.TripSegment;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

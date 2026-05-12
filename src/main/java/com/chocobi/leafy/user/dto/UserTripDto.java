@@ -1,6 +1,6 @@
 package com.chocobi.leafy.user.dto;
 
-import com.chocobi.leafy.trip.entity.TripStatus;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import lombok.Builder;
 import lombok.Getter;
 

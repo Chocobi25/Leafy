@@ -1,8 +1,8 @@
 package com.chocobi.leafy.user.infra.service;
 
 import com.chocobi.leafy.auth.dto.OAuthAttributes;
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.repository.TripRepository;
+import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.repository.TripRepository;
 import com.chocobi.leafy.user.dto.UserTripDto;
 import com.chocobi.leafy.user.infra.entity.enums.Level;
 import com.chocobi.leafy.user.infra.entity.UserEntity;

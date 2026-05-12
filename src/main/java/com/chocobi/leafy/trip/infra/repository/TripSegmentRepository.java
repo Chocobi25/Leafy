@@ -1,7 +1,7 @@
-package com.chocobi.leafy.trip.repository;
+package com.chocobi.leafy.trip.infra.repository;
 
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripSegment;
+import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripSegment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

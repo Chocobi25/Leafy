@@ -1,12 +1,12 @@
-package com.chocobi.leafy.trip.dto;
+package com.chocobi.leafy.trip.dto.request;
 
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class TripPlacesListRequest {
+public class RecalculateRoutesRequest {
     private Long tripId;
+    private String transport;
     private List<TripPlaceRequest> places;
-    String transport;
 }

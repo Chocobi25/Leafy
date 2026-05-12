@@ -1,4 +1,4 @@
-package com.chocobi.leafy.trip.controller;
+package com.chocobi.leafy.trip.presentation;
 
 import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
@@ -6,16 +6,16 @@ import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.dto.RouteCalculationResult;
 import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.dto.TripDetailsDTO;
-import com.chocobi.leafy.trip.dto.TripPlaceResponse;
-import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
-import com.chocobi.leafy.trip.dto.TripRequest;
-import com.chocobi.leafy.trip.dto.RecalculateRoutesRequest; // ⭐️ 추가
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripStatus;
-import com.chocobi.leafy.trip.service.TripMessageService;
-import com.chocobi.leafy.trip.service.TripPlaceService;
-import com.chocobi.leafy.trip.service.TripSegmentService;
-import com.chocobi.leafy.trip.service.TripService;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.request.TripPlacesListRequest;
+import com.chocobi.leafy.trip.dto.request.TripRequest;
+import com.chocobi.leafy.trip.dto.request.RecalculateRoutesRequest; // ⭐️ 추가
+import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
+import com.chocobi.leafy.trip.application.TripMessageService;
+import com.chocobi.leafy.trip.application.TripPlaceService;
+import com.chocobi.leafy.trip.application.TripSegmentService;
+import com.chocobi.leafy.trip.application.TripService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

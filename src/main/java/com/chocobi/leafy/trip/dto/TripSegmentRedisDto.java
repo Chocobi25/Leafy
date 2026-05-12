@@ -1,8 +1,7 @@
 package com.chocobi.leafy.trip.dto;
 
-import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripSegment;
+import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripSegment;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

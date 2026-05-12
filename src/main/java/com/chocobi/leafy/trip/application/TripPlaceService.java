@@ -1,12 +1,12 @@
-package com.chocobi.leafy.trip.service;
+package com.chocobi.leafy.trip.application;
 
 import com.chocobi.leafy.place.application.PlaceService;
-import com.chocobi.leafy.trip.dto.TripPlaceRequest;
-import com.chocobi.leafy.trip.dto.TripPlaceResponse;
-import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripPlace;
-import com.chocobi.leafy.trip.repository.TripPlaceRepository;
+import com.chocobi.leafy.trip.dto.request.TripPlaceRequest;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.request.TripPlacesListRequest;
+import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripPlace;
+import com.chocobi.leafy.trip.infra.repository.TripPlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

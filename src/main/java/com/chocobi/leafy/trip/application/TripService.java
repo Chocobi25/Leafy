@@ -1,13 +1,15 @@
-package com.chocobi.leafy.trip.service;
+package com.chocobi.leafy.trip.application;
 
 import com.chocobi.leafy.place.infra.entity.RegionGroup;
 import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.client.TransCoordResponse;
 import com.chocobi.leafy.trip.client.TranscodeClient;
 import com.chocobi.leafy.trip.dto.*;
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripStatus;
-import com.chocobi.leafy.trip.repository.TripRepository;
+import com.chocobi.leafy.trip.dto.request.TripRequest;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
+import com.chocobi.leafy.trip.infra.repository.TripRepository;
 import com.chocobi.leafy.user.infra.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;

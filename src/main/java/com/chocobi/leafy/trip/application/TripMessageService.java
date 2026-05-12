@@ -1,7 +1,7 @@
-package com.chocobi.leafy.trip.service;
+package com.chocobi.leafy.trip.application;
 
 import com.chocobi.leafy.fcm.service.FCMService;
-import com.chocobi.leafy.trip.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.Trip;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.chocobi.leafy.user.infra.service.UserService;
 import com.google.firebase.messaging.FirebaseMessagingException;

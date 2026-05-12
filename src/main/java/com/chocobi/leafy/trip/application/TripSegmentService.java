@@ -1,4 +1,4 @@
-package com.chocobi.leafy.trip.service;
+package com.chocobi.leafy.trip.application;
 
 import com.chocobi.leafy.distance.domain.*;
 import com.chocobi.leafy.distance.dto.CarDistanceResponse;
@@ -9,13 +9,13 @@ import com.chocobi.leafy.distance.service.DistanceUtils;
 import com.chocobi.leafy.distance.service.TransDistanceService;
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.application.PlaceService;
-import com.chocobi.leafy.trip.dto.TripPlaceRequest;
-import com.chocobi.leafy.trip.dto.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.request.TripPlaceRequest;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripSegment;
-import com.chocobi.leafy.trip.repository.TripSegmentRepository;
+import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripSegment;
+import com.chocobi.leafy.trip.infra.repository.TripSegmentRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;

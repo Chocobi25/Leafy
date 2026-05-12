@@ -1,8 +1,8 @@
-package com.chocobi.leafy.trip.service;
+package com.chocobi.leafy.trip.application;
 
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripStatus;
-import com.chocobi.leafy.trip.repository.TripRepository;
+import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
+import com.chocobi.leafy.trip.infra.repository.TripRepository;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import jakarta.transaction.Transactional;
