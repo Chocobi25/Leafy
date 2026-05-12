@@ -45,7 +45,7 @@ public class AdminPlaceService {
         PageRequest pageRequest = PageRequest.of(
                 request.page() - 1,
                 request.size(),
-                Sort.by(Sort.Direction.DESC, "id")
+                Sort.by(Sort.Direction.DESC)
         );
 
         Page<AdminPlaceListResponse> places = placeFindService.findPagePlaces(request, pageRequest)
