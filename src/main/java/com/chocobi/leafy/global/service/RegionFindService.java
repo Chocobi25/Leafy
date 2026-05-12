@@ -2,6 +2,7 @@ package com.chocobi.leafy.global.service;
 
 import com.chocobi.leafy.global.entity.RegionEntity;
 import com.chocobi.leafy.global.entity.RegionRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,5 +15,13 @@ public class RegionFindService {
 
     public RegionEntity findRegion(String name) {
         return regionRepository.findByName(name).orElse(null);
+    }
+
+    public RegionEntity findRegion(Long id) {
+        return regionRepository.findById(id).orElse(null);
+    }
+
+    public List<RegionEntity> findRegions() {
+        return regionRepository.findAll();
     }
 }

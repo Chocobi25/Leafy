@@ -1,7 +1,6 @@
 package com.chocobi.leafy.place.infra.repository;
 
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
-import com.chocobi.leafy.place.infra.entity.RegionGroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

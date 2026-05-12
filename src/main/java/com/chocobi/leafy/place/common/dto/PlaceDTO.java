@@ -2,11 +2,8 @@ package com.chocobi.leafy.place.common.dto;
 
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
-import com.chocobi.leafy.place.infra.entity.RegionGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -32,7 +29,7 @@ public class PlaceDTO {
         if (place instanceof ExternalPlaceEntity external) {
             return new PlaceDTO(
                     id, title,
-                    external.getCategory().name(),
+                    external.getCategory() != null ? external.getCategory().getName() : null,
                     address, lat, lng,
                     external.getDescription(),
                     external.getTel(),

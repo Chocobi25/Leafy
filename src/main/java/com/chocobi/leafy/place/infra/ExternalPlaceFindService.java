@@ -16,16 +16,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExternalPlaceFindService {
     private final ExternalPlaceRepository externalPlaceRepository;
 
-    public ExternalPlaceEntity findById(Long id) {
+    public ExternalPlaceEntity findExternalPlace(Long id) {
         return externalPlaceRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PlaceError.PLACE_NOT_FOUND));
     }
 
-    public List<ExternalPlaceEntity> findAll() {
+    public List<ExternalPlaceEntity> findExternalPlaces() {
         return externalPlaceRepository.findAll();
     }
 
-    public List<ExternalPlaceEntity> findAll(RegionEntity region) {
+    public List<ExternalPlaceEntity> findExternalPlaces(RegionEntity region) {
         return externalPlaceRepository.findAllByRegion(region);
     }
 }
