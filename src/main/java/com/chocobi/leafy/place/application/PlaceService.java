@@ -33,12 +33,12 @@ public class PlaceService {
 
     @Transactional(readOnly = true)
     public ExternalPlaceDetailResponse getExternalPlace(Long id) {
-        return ExternalPlaceDetailResponse.from(externalPlaceFindService.findById(id));
+        return ExternalPlaceDetailResponse.from(externalPlaceFindService.findExternalPlace(id));
     }
 
     @Transactional(readOnly = true)
     public List<ExternalPlaceListResponse> getExternalPlaces() {
-        List<ExternalPlaceEntity> places = externalPlaceFindService.findAll();
+        List<ExternalPlaceEntity> places = externalPlaceFindService.findExternalPlaces();
         return places.stream()
                 .map(ExternalPlaceListResponse::from)
                 .toList();
@@ -47,7 +47,7 @@ public class PlaceService {
     @Transactional(readOnly = true)
     public List<ExternalPlaceListResponse> getExternalPlaces(String arrival) {
         RegionEntity region = regionFindService.findRegion(arrival);
-        List<ExternalPlaceEntity> places = externalPlaceFindService.findAll(region);
+        List<ExternalPlaceEntity> places = externalPlaceFindService.findExternalPlaces(region);
         return places.stream()
                 .map(ExternalPlaceListResponse::from)
                 .toList();

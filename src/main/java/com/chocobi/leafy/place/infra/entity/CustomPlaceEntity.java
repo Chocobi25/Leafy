@@ -20,10 +20,6 @@ public class CustomPlaceEntity extends PlaceEntity {
     }
 
     public void update(String title, String address, double latitude, double longitude, String copyright) {
-        super.update(title,
-                address,
-                latitude,
-                longitude,
-                copyright);
+        super.update(title, address, latitude, longitude, copyright);
     }
 }

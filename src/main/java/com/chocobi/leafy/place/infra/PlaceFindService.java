@@ -4,6 +4,7 @@ import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
 import com.chocobi.leafy.place.infra.repository.PlaceRepository;
 import com.chocobi.leafy.place.vo.PlaceError;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,5 +18,9 @@ public class PlaceFindService {
     public PlaceEntity findPlace(Long id) {
         return placeRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PlaceError.PLACE_NOT_FOUND));
+    }
+
+    public List<PlaceEntity> findAll() {
+        return placeRepository.findAll();
     }
 }
