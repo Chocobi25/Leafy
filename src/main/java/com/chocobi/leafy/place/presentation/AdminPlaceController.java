@@ -1,13 +1,14 @@
 package com.chocobi.leafy.place.presentation;
 
+import com.chocobi.leafy.global.response.PageResponse;
 import com.chocobi.leafy.place.application.AdminPlaceService;
 import com.chocobi.leafy.place.dto.request.AdminCreatePlaceRequest;
+import com.chocobi.leafy.place.dto.request.AdminPlacePageRequest;
 import com.chocobi.leafy.place.dto.request.AdminUpdateCustomPlaceRequest;
 import com.chocobi.leafy.place.dto.request.AdminUpdateExternalPlaceRequest;
 import com.chocobi.leafy.place.dto.response.AdminPlaceDetailResponse;
 import com.chocobi.leafy.place.dto.response.AdminPlaceListResponse;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 @RestController
 @RequestMapping("/admin/v1/places")
@@ -27,9 +29,10 @@ public class AdminPlaceController implements AdminPlaceDocs {
 
     @GetMapping
     @Override
-    public ResponseEntity<List<AdminPlaceListResponse>> getPlaces() {
-        List<AdminPlaceListResponse> places = adminPlaceService.getPlaces();
-        return ResponseEntity.ok(places);
+    public ResponseEntity<PageResponse<AdminPlaceListResponse>> getPlaces(
+            @Valid @ModelAttribute AdminPlacePageRequest request
+    ) {
+        return ResponseEntity.ok(adminPlaceService.getPlaces(request));
     }
 
     @GetMapping("/{placeId}")

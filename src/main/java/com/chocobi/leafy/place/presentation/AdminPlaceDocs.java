@@ -1,7 +1,9 @@
 package com.chocobi.leafy.place.presentation;
 
 import com.chocobi.leafy.global.exception.ErrorResponse;
+import com.chocobi.leafy.global.response.PageResponse;
 import com.chocobi.leafy.place.dto.request.AdminCreatePlaceRequest;
+import com.chocobi.leafy.place.dto.request.AdminPlacePageRequest;
 import com.chocobi.leafy.place.dto.request.AdminUpdateCustomPlaceRequest;
 import com.chocobi.leafy.place.dto.request.AdminUpdateExternalPlaceRequest;
 import com.chocobi.leafy.place.dto.response.AdminPlaceDetailResponse;
@@ -15,42 +17,51 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "어드민 장소 API", description = "어드민 장소 조회, 생성, 수정, 삭제 API")
 public interface AdminPlaceDocs {
 
-    @Operation(summary = "장소 목록 조회")
+    @Operation(summary = "장소 목록 조회",
+            description = "page는 1부터 시작합니다. 최신순으로 정렬되며, placeType은 EXTERNAL 또는 CUSTOM을 사용할 수 있습니다.")
     @ApiResponse(responseCode = "200",
             content = @Content(
-                    array = @ArraySchema(schema = @Schema(implementation = AdminPlaceListResponse.class)),
+                    schema = @Schema(implementation = PageResponse.class),
                     examples = @ExampleObject(value = """
-                            [
-                                {
-                                    "id": 1,
-                                    "title": "남산서울타워",
-                                    "placeType": "EXTERNAL",
-                                    "category": "자연",
-                                    "region": "서울",
-                                    "createdAt": "2026-01-01T00:00:00",
-                                    "updatedAt": "2026-01-01T00:00:00"
-                                },
-                                {
-                                    "id": 2,
-                                    "title": "내가 추가한 장소",
-                                    "placeType": "CUSTOM",
-                                    "category": null,
-                                    "region": null,
-                                    "createdAt": "2026-01-01T00:00:00",
-                                    "updatedAt": "2026-01-01T00:00:00"
-                                }
-                            ]
+                            {
+                                "content": [
+                                    {
+                                        "id": 1,
+                                        "title": "남산서울타워",
+                                        "placeType": "EXTERNAL",
+                                        "category": "자연",
+                                        "region": "서울",
+                                        "createdAt": "2026-01-01T00:00:00",
+                                        "updatedAt": "2026-01-01T00:00:00"
+                                    },
+                                    {
+                                        "id": 2,
+                                        "title": "내가 추가한 장소",
+                                        "placeType": "CUSTOM",
+                                        "category": null,
+                                        "region": null,
+                                        "createdAt": "2026-01-01T00:00:00",
+                                        "updatedAt": "2026-01-01T00:00:00"
+                                    }
+                                ],
+                                "page": 1,
+                                "size": 10,
+                                "totalElements": 2,
+                                "totalPages": 1
+                            }
                             """)
             ))
-    ResponseEntity<List<AdminPlaceListResponse>> getPlaces();
+    ResponseEntity<PageResponse<AdminPlaceListResponse>> getPlaces(
+            @Valid @ModelAttribute AdminPlacePageRequest request
+    );
 
     @Operation(summary = "장소 상세 조회")
     @ApiResponses({

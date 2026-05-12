@@ -1,7 +1,9 @@
 package com.chocobi.leafy.place.application;
 
+import com.chocobi.leafy.global.response.PageResponse;
 import com.chocobi.leafy.global.service.RegionFindService;
 import com.chocobi.leafy.place.dto.request.AdminCreatePlaceRequest;
+import com.chocobi.leafy.place.dto.request.AdminPlacePageRequest;
 import com.chocobi.leafy.place.dto.request.AdminUpdateCustomPlaceRequest;
 import com.chocobi.leafy.place.dto.request.AdminUpdateExternalPlaceRequest;
 import com.chocobi.leafy.place.dto.response.AdminPlaceDetailResponse;
@@ -15,8 +17,10 @@ import com.chocobi.leafy.place.infra.PlaceFindService;
 import com.chocobi.leafy.place.infra.entity.CustomPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,11 +41,23 @@ public class AdminPlaceService {
     }
 
     @Transactional(readOnly = true)
-    public List<AdminPlaceListResponse> getPlaces(){
-        List<PlaceEntity> places = placeFindService.findAll();
-        return places.stream()
-                .map(AdminPlaceListResponse::from)
-                .toList();
+    public PageResponse<AdminPlaceListResponse> getPlaces(AdminPlacePageRequest request){
+        PageRequest pageRequest = PageRequest.of(
+                request.page() - 1,
+                request.size(),
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+
+        Page<AdminPlaceListResponse> places = placeFindService.findPagePlaces(request, pageRequest)
+                .map(AdminPlaceListResponse::from);
+
+        return PageResponse.<AdminPlaceListResponse>builder()
+                .content(places.getContent())
+                .page(request.page())
+                .size(places.getSize())
+                .totalElements(places.getTotalElements())
+                .totalPages(places.getTotalPages())
+                .build();
     }
 
     @Transactional

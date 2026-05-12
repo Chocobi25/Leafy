@@ -19,7 +19,7 @@ public class AdminPlaceListResponse {
     @Schema(description = "장소 타입")
     private String placeType;
 
-    @Schema(description = "카테고리명")
+    @Schema(description = "카테고리")
     private String category;
 
     @Schema(description = "지역명")
