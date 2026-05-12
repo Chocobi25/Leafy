@@ -10,7 +10,7 @@ import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.request.TripPlacesListRequest;
 import com.chocobi.leafy.trip.dto.request.TripRequest;
 import com.chocobi.leafy.trip.dto.request.RecalculateRoutesRequest; // ⭐️ 추가
-import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import com.chocobi.leafy.trip.application.TripMessageService;
 import com.chocobi.leafy.trip.application.TripPlaceService;
@@ -45,7 +45,7 @@ public class TripController {
 
     @PostMapping("/places")
     public ResponseEntity<Map<String, String>> saveTripPlaces(@RequestBody TripPlacesListRequest tripPlaceListRequest) {
-        Trip trip = tripService.getTripById(tripPlaceListRequest.getTripId());
+        TripEntity trip = tripService.getTripById(tripPlaceListRequest.getTripId());
 
         tripPlaceService.saveInitialTripPlaces(trip, tripPlaceListRequest);
 
@@ -56,7 +56,7 @@ public class TripController {
 
     @PatchMapping("/places")
     public ResponseEntity<Map<String, String>> updateTripPlaceDetails(@RequestBody TripPlacesListRequest tripPlaceListRequest) {
-        Trip trip = tripService.getTripById(tripPlaceListRequest.getTripId());
+        TripEntity trip = tripService.getTripById(tripPlaceListRequest.getTripId());
         tripPlaceService.editTripPlaceDetails(trip, tripPlaceListRequest.getPlaces());
         Map<String, String> response = new HashMap<>();
         response.put("message", "여행지 정보가 성공적으로 업데이트되었습니다.");
@@ -65,7 +65,7 @@ public class TripController {
 
     @PatchMapping("/edit")
     public ResponseEntity<Map<String, String>> editTripPlaceDetails(@RequestBody RecalculateRoutesRequest request) {
-        Trip trip = tripService.getTripById(request.getTripId());
+        TripEntity trip = tripService.getTripById(request.getTripId());
 
         // 1. TripPlace 업데이트
         tripPlaceService.editTripPlaceDetails(trip, request.getPlaces());
@@ -199,7 +199,7 @@ public class TripController {
     @PatchMapping("/{tripId}")
     public ResponseEntity<Map<String, String>> updateTrip(@PathVariable Long tripId,
                                                           @RequestBody Map<String, String> request) {
-        Trip trip = tripService.getTripById(tripId);
+        TripEntity trip = tripService.getTripById(tripId);
 
         String newTitle = request.get("title");
         LocalDate startDate = request.containsKey("startDate") ? LocalDate.parse(request.get("startDate")) : trip.getStartDate();

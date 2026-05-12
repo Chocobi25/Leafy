@@ -1,7 +1,8 @@
 package com.chocobi.leafy.trip.dto;
 
-import com.chocobi.leafy.trip.infra.entity.Trip;
-import com.chocobi.leafy.trip.infra.entity.TripSegment;
+import com.chocobi.leafy.trip.infra.entity.TripEntity;
+import com.chocobi.leafy.trip.infra.entity.TripSegmentEntity;
+import com.chocobi.leafy.place.infra.entity.PlaceEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,11 +29,11 @@ public class TripSegmentRedisDto implements Serializable {
     private double carbonEmitted;
     private double maxCarbonEmission;
 
-    public TripSegment toEntity() {
-        return TripSegment.builder()
-                .tripId(Trip.builder().id(this.tripId).build())
-                //.startPlaceId(ExternalPlaceEntity.builder().id(this.startPlaceId).build())
-                //.endPlaceId(ExternalPlaceEntity.builder().id(this.endPlaceId).build())
+    public TripSegmentEntity toEntity(TripEntity trip, PlaceEntity startPlace, PlaceEntity endPlace) {
+        return TripSegmentEntity.builder()
+                .trip(trip)
+                .startPlace(startPlace)
+                .endPlace(endPlace)
                 .transport(this.transport)
                 .distance(this.distance)
                 .duration(this.duration)

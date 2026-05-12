@@ -1,70 +1,58 @@
 package com.chocobi.leafy.trip.infra.entity;
 
+import com.chocobi.leafy.global.entity.BaseEntity;
 import com.chocobi.leafy.place.infra.entity.RegionGroup;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @Getter
-public class Trip implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Table(name = "trip")
+public class TripEntity extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    @Column(name = "title", length = 50, nullable = false)
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
+
+    @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
+    @Column(name = "departure", nullable = false)
     @Enumerated(EnumType.STRING)
     private RegionGroup departure;
 
+    @Column(name = "arrival", nullable = false)
     @Enumerated(EnumType.STRING)
     private RegionGroup arrival;
 
+    @Column(name = "carbon_saved")
     @Builder.Default
     private double carbonSaved = 0.0;
 
+    @Column(name = "carbon_emission")
     @Builder.Default
     private double carbonEmission = 0.0;
 
+    @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(length = 50)
     @Builder.Default
     private TripStatus status = TripStatus.CREATING;
 
+    @Column(name = "certification_at")
     private LocalDateTime certificationAt;
-
-    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<TripPlace> tripPlaces = new ArrayList<>();
-
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
 
     public void update(String title, LocalDate startDate, LocalDate endDate) {
         this.title = title;

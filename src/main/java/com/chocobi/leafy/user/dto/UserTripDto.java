@@ -18,5 +18,4 @@ public class UserTripDto {
     private double carbonEmission;
     private TripStatus status;
     private LocalDateTime createdAt;
-    private int totalPlaces; // 여행지 개수
 }

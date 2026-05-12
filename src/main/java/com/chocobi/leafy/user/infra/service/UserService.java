@@ -1,7 +1,7 @@
 package com.chocobi.leafy.user.infra.service;
 
 import com.chocobi.leafy.auth.dto.OAuthAttributes;
-import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.repository.TripRepository;
 import com.chocobi.leafy.user.dto.UserTripDto;
 import com.chocobi.leafy.user.infra.entity.enums.Level;
@@ -115,9 +115,10 @@ public class UserService {
         return selectedLevelIcon.ordinal() <= userLevel.ordinal();
     }
 
+    // TODO: TripFindService로 옮기기
     @Transactional(readOnly = true)
     public List<UserTripDto> getUserTrips(Long id) {
-        List<Trip> trips = tripRepository.findByUserIdOrderByCreatedAtDesc(id);  // TODO: 로직 동작 확인
+        List<TripEntity> trips = tripRepository.findByUserIdOrderByCreatedAtDesc(id);  // TODO: 로직 동작 확인
         
         return trips.stream()
                 .map(trip -> UserTripDto.builder()
@@ -129,7 +130,6 @@ public class UserService {
                         .carbonEmission(trip.getCarbonEmission())
                         .status(trip.getStatus())
                         .createdAt(trip.getCreatedAt())
-                        .totalPlaces(trip.getTripPlaces() != null ? trip.getTripPlaces().size() : 0)
                         .build())
                 .collect(Collectors.toList());
     }

@@ -1,6 +1,6 @@
 package com.chocobi.leafy.trip.dto;
 
-import com.chocobi.leafy.trip.infra.entity.TripSegment;
+import com.chocobi.leafy.trip.infra.entity.TripSegmentEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -17,12 +17,12 @@ public class TripSegmentDTO {
     private double carbonEmitted;
     private double maxCarbonEmission;
 
-    public static TripSegmentDTO fromEntity(TripSegment tripSegment) {
+    public static TripSegmentDTO fromEntity(TripSegmentEntity tripSegment) {
         return new TripSegmentDTO(
                 tripSegment.getId(),
-                tripSegment.getTripId().getId(),
-                tripSegment.getStartPlaceId().getId(),
-                tripSegment.getEndPlaceId().getId(),
+                tripSegment.getTrip().getId(),
+                tripSegment.getStartPlace().getId(),
+                tripSegment.getEndPlace().getId(),
                 tripSegment.getTransport(),
                 tripSegment.getDistance(),
                 tripSegment.getDuration(),

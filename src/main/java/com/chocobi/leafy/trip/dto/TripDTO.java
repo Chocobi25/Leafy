@@ -2,7 +2,7 @@ package com.chocobi.leafy.trip.dto;
 
 import com.chocobi.leafy.place.infra.entity.RegionGroup;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
-import com.chocobi.leafy.trip.infra.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,9 +26,8 @@ public class TripDTO {
     private TripStatus status;
     private LocalDateTime certificationAt;
     private Long userId;
-    private List<TripPlaceResponse> tripPlaces;
 
-    public static TripDTO fromEntity(Trip trip) {
+    public static TripDTO fromEntity(TripEntity trip) {
         return new TripDTO(
                 trip.getId(),
                 trip.getTitle(),
@@ -40,11 +39,7 @@ public class TripDTO {
                 trip.getCarbonEmission(),
                 trip.getStatus(),
                 trip.getCertificationAt(),
-                trip.getUser().getId(),  // TODO: 로직 동작 확인
-                trip.getTripPlaces().stream()
-                        .map(TripPlaceResponse::toDTO)
-                        .sorted(Comparator.comparingInt(TripPlaceResponse::getVisitOrder))
-                        .toList()
+                trip.getUser().getId()  // TODO: 로직 동작 확인
         );
     }
 }
