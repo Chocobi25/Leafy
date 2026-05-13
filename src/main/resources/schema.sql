@@ -1,15 +1,22 @@
 DROP TABLE IF EXISTS users;
 CREATE TABLE users
 (
-    kakao_id            bigint PRIMARY KEY,
+    id                  bigint PRIMARY KEY,
+    name                varchar(20),
+    birth               date,
+    email               varchar(255),
     nickname            varchar(12) NOT NULL,
-    profile_image_url   varchar(255),
-    selected_level_icon tinyint,
-    total_carbon_saved  double,
+    profile_image_url   varchar(255) NOT NULL,
+    selected_level_icon varchar(20) NOT NULL,
+    total_carbon_saved  double NOT NULL,
     level               enum('LV1','LV2','LV3','LV4','LV5') NOT NULL,
     role                enum('ADMIN','USER') NOT NULL,
+    provider            enum('KAKAO','NAVER') NOT NULL,
+    provider_id         varchar(255) NOT NULL,
+    deleted_at          datetime(6),
     created_at          datetime(6),
-    updated_at          datetime(6)
+    updated_at          datetime(6),
+    unique (provider, provider_id)
 );
 
 DROP TABLE IF EXISTS user_device;
@@ -45,6 +52,15 @@ CREATE TABLE place
     updated_at  datetime(6)
 );
 
+DROP TABLE IF EXISTS category_entity;
+CREATE TABLE category_entity
+(
+    id       bigint PRIMARY KEY,
+    code     varchar(255) NOT NULL UNIQUE,
+    name     varchar(255) NOT NULL UNIQUE,
+    icon_url varchar(255)
+);
+
 DROP TABLE IF EXISTS external_place;
 CREATE TABLE external_place
 (
@@ -52,6 +68,7 @@ CREATE TABLE external_place
     description TEXT,
     tel         varchar(255),
     url         varchar(2000),
+    category_id bigint,
     region_id   bigint
 );
 
@@ -74,15 +91,15 @@ DROP TABLE IF EXISTS trip;
 CREATE TABLE trip
 (
     id                bigint PRIMARY KEY,
-    user_kakao_id     bigint,
-    title       varchar(255),
+    user_id           bigint NOT NULL,
+    title       varchar(50) NOT NULL,
     status      enum('COMPLETED','CREATING','DRAFT','IN_PROGRESS','READY'),
-    arrival     enum('BUSAN','CHUNGBUK','CHUNGNAM','DAEGU','DAEJEON','GANGWON','GWANGJU','GYEONGBUK','GYEONGGI','GYEONGNAM','INCHEON','JEJU','JEONBUK','JEONNAM','SEJONG','SEOUL','ULSAN'),
-    departure   enum('BUSAN','CHUNGBUK','CHUNGNAM','DAEGU','DAEJEON','GANGWON','GWANGJU','GYEONGBUK','GYEONGGI','GYEONGNAM','INCHEON','JEJU','JEONBUK','JEONNAM','SEJONG','SEOUL','ULSAN'),
+    arrival_region_id bigint NOT NULL,
+    departure_region_id bigint NOT NULL,
     carbon_emission double NOT NULL,
     carbon_saved double NOT NULL,
-    start_date date,
-    end_date date,
+    start_date date NOT NULL,
+    end_date date NOT NULL,
     certification_at    datetime(6),
     created_at  datetime(6) NOT NULL,
     updated_at  datetime(6) NOT NULL
@@ -104,8 +121,8 @@ CREATE TABLE trip_segment
 (
     id              bigint PRIMARY KEY,
     trip_id         bigint,
-    start_place_id  bigint,
-    end_place_id    bigint,
+    start_trip_place_id  bigint,
+    end_trip_place_id    bigint,
     distance        double NOT NULL,
     duration        int NOT NULL,
     carbon_emitted  double,
