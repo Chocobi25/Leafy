@@ -21,8 +21,8 @@ public class TripSegmentDTO {
         return new TripSegmentDTO(
                 tripSegment.getId(),
                 tripSegment.getTrip().getId(),
-                tripSegment.getStartPlace().getId(),
-                tripSegment.getEndPlace().getId(),
+                tripSegment.getStartTripPlace().getPlace().getId(),
+                tripSegment.getEndTripPlace().getPlace().getId(),
                 tripSegment.getTransport(),
                 tripSegment.getDistance(),
                 tripSegment.getDuration(),

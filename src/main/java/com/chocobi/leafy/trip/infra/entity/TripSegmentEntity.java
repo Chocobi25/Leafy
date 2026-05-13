@@ -1,7 +1,6 @@
 package com.chocobi.leafy.trip.infra.entity;
 
 import com.chocobi.leafy.global.entity.BaseEntity;
-import com.chocobi.leafy.place.infra.entity.PlaceEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,15 +16,13 @@ public class TripSegmentEntity extends BaseEntity {
     @JoinColumn(name = "trip_id", nullable = false)
     private TripEntity trip;
 
-    // TODO: TripPlace 연결 고려
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "start_place_id", nullable = false)
-    private PlaceEntity startPlace;
+    @JoinColumn(name = "start_trip_place_id", nullable = false)
+    private TripPlaceEntity startTripPlace;
 
-    // TODO: TripPlace 연결 고려
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "end_place_id", nullable = false)
-    private PlaceEntity endPlace;
+    @JoinColumn(name = "end_trip_place_id", nullable = false)
+    private TripPlaceEntity endTripPlace;
 
     @Column(name = "transport", nullable = false, length = 50)
     private String transport;

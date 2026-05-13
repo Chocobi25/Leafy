@@ -9,6 +9,7 @@ import lombok.Data;
 @Data
 @Builder
 public class TripPlaceResponse {
+    private Long tripPlaceId;
     private Long tripId;
     private PlaceDTO place;
     private int visitOrder;
@@ -17,6 +18,7 @@ public class TripPlaceResponse {
 
     public static TripPlaceResponse toDTO(TripPlaceEntity tripPlace) {
         return TripPlaceResponse.builder()
+                .tripPlaceId(tripPlace.getId())
                 .tripId(tripPlace.getTrip().getId())
                 .place(PlaceDTO.fromEntity(tripPlace.getPlace()))
                 .visitOrder(tripPlace.getVisitOrder())

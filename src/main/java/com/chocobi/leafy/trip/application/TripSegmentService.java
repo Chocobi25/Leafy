@@ -14,6 +14,7 @@ import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
+import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import com.chocobi.leafy.trip.infra.entity.TripSegmentEntity;
 import com.chocobi.leafy.trip.infra.repository.TripRepository;
 import com.chocobi.leafy.trip.infra.repository.TripSegmentRepository;
@@ -81,8 +82,8 @@ public class TripSegmentService {
 
             TripSegmentRedisDto dto = TripSegmentRedisDto.builder()
                     .tripId(tripId)
-                    .startPlaceId(startPlace.getPlace().getId())
-                    .endPlaceId(endPlace.getPlace().getId())
+                    .startTripPlaceId(requireTripPlaceId(startPlace))
+                    .endTripPlaceId(requireTripPlaceId(endPlace))
                     .transport(transport == null ? null : transport.toLowerCase())
                     .distance(distance)
                     .duration(durationInMinutes)
@@ -145,8 +146,8 @@ public class TripSegmentService {
 
             TripSegmentEntity tripSegment = TripSegmentEntity.builder()
                     .trip(trip)
-                    .startPlace(placeService.getPlace(startPlace.getPlace().getId()))
-                    .endPlace(placeService.getPlace(endPlace.getPlace().getId()))
+                    .startTripPlace(tripPlaceService.getTripPlaceById(requireTripPlaceId(startPlace)))
+                    .endTripPlace(tripPlaceService.getTripPlaceById(requireTripPlaceId(endPlace)))
                     .transport(transport == null ? null : transport.toLowerCase())
                     .distance(distance)
                     .duration(durationInMinutes)
@@ -177,10 +178,6 @@ public class TripSegmentService {
             // 다른 교통수단이 없을 수 있음 — 무시
         }
 
-        // 최종 선택된 교통수단으로 transport 값 업데이트 및 maxCarbonEmission 설정
-        TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다.")); // TODO: 커스텀 에러로 전환
-
         List<TripSegmentEntity> tripSegments = new ArrayList<>();
         for (int i = 0; i < tripSegmentDtos.size(); i++) {
             TripSegmentRedisDto dto = tripSegmentDtos.get(i);
@@ -194,11 +191,9 @@ public class TripSegmentService {
             }
             dto.setMaxCarbonEmission(maxCarbon);
 
-            tripSegments.add(dto.toEntity(
-                    trip,
-                    placeService.getPlace(dto.getStartPlaceId()),
-                    placeService.getPlace(dto.getEndPlaceId())
-            ));
+            TripPlaceEntity startTripPlace = tripPlaceService.getTripPlaceById(dto.getStartTripPlaceId());
+            TripPlaceEntity endTripPlace = tripPlaceService.getTripPlaceById(dto.getEndTripPlaceId());
+            tripSegments.add(dto.toEntity(startTripPlace, endTripPlace));
         }
 
         saveTripSegments(tripSegments); // DB에 저장
@@ -259,6 +254,13 @@ public class TripSegmentService {
     public void saveTripSegments(List<TripSegmentEntity> tripSegments) {
         if (tripSegments == null || tripSegments.isEmpty()) return;
         tripSegmentRepository.saveAll(tripSegments);
+    }
+
+    private Long requireTripPlaceId(TripPlaceResponse tripPlace) {
+        if (tripPlace.getTripPlaceId() == null) {
+            throw new IllegalArgumentException("TripPlace ID가 필요합니다.");
+        }
+        return tripPlace.getTripPlaceId();
     }
 
     /**
