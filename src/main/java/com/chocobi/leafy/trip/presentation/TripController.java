@@ -9,7 +9,7 @@ import com.chocobi.leafy.trip.dto.TripDetailsDTO;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.request.TripPlacesListRequest;
 import com.chocobi.leafy.trip.dto.request.TripRequest;
-import com.chocobi.leafy.trip.dto.request.RecalculateRoutesRequest; // ⭐️ 추가
+import com.chocobi.leafy.trip.dto.request.RecalculateRoutesRequest;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import com.chocobi.leafy.trip.application.TripMessageService;
