@@ -28,16 +28,4 @@ public class TripFindService {
     public List<TripEntity> findTripsByUserId(Long userId) {
         return tripRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
-
-    public List<TripEntity> findTripsByUser(UserEntity user) {
-        return tripRepository.findAllByUser(user);
-    }
-
-    public List<TripEntity> findTripsByStartDateAndStatus(LocalDate startDate, TripStatus status) {
-        return tripRepository.findAllByStartDateAndStatus(startDate, status);
-    }
-
-    public List<TripEntity> findTripsByStatusAndCreatedAtBefore(TripStatus status, LocalDateTime createdAt) {
-        return tripRepository.findByStatusAndCreatedAtBefore(status, createdAt);
-    }
 }
