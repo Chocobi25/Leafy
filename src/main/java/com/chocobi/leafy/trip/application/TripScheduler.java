@@ -1,8 +1,8 @@
-package com.chocobi.leafy.trip.service;
+package com.chocobi.leafy.trip.application;
 
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripStatus;
-import com.chocobi.leafy.trip.repository.TripRepository;
+import com.chocobi.leafy.trip.infra.entity.TripEntity;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
+import com.chocobi.leafy.trip.infra.repository.TripRepository;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import jakarta.transaction.Transactional;
@@ -31,7 +31,7 @@ public class TripScheduler {
         LocalDateTime threshold = LocalDateTime.now().minusDays(7);
 
         // 1. 오래된 Creating Trip 삭제
-        List<Trip> oldTrips = tripRepository.findByStatusAndCreatedAtBefore(TripStatus.CREATING, threshold);
+        List<TripEntity> oldTrips = tripRepository.findByStatusAndCreatedAtBefore(TripStatus.CREATING, threshold);
         if (!oldTrips.isEmpty()) {
             tripRepository.deleteAll(oldTrips);
             log.info("Deleted {} old creating trips.", oldTrips.size());
@@ -39,9 +39,9 @@ public class TripScheduler {
 
         // 2. 오늘 출발 Ready Trip -> InProgress로 상태 변경
         LocalDate today = LocalDate.now();
-        List<Trip> readyTrips = tripRepository.findAllByStartDateAndStatus(today, TripStatus.READY);
+        List<TripEntity> readyTrips = tripRepository.findAllByStartDateAndStatus(today, TripStatus.READY);
 
-        for (Trip trip : readyTrips) {
+        for (TripEntity trip : readyTrips) {
             tripService.changeTripStatus(trip.getId(), TripStatus.IN_PROGRESS);
         }
     }
@@ -49,9 +49,9 @@ public class TripScheduler {
     @Scheduled(cron = "0 0 10 * * *") // 매일 10시 실행
     public void sendTripStartNotification() throws FirebaseMessagingException {
         LocalDate today = LocalDate.now();
-        List<Trip> tripsStartingToday = tripRepository.findAllByStartDateAndStatus(today, TripStatus.IN_PROGRESS);
+        List<TripEntity> tripsStartingToday = tripRepository.findAllByStartDateAndStatus(today, TripStatus.IN_PROGRESS);
 
-        for (Trip trip : tripsStartingToday) {
+        for (TripEntity trip : tripsStartingToday) {
             UserEntity participant = trip.getUser();
             tripMessageService.notifyTripStart(participant, trip);
         }
@@ -63,9 +63,9 @@ public class TripScheduler {
     @Scheduled(cron = "0 0 17 * * *", zone = "Asia/Seoul")
     public void sendCertifyNotification() throws FirebaseMessagingException {
         LocalDate today = LocalDate.now();
-        List<Trip> tripsStartingToday = tripRepository.findAllByStartDateAndStatus(today, TripStatus.IN_PROGRESS);
+        List<TripEntity> tripsStartingToday = tripRepository.findAllByStartDateAndStatus(today, TripStatus.IN_PROGRESS);
 
-        for (Trip trip : tripsStartingToday) {
+        for (TripEntity trip : tripsStartingToday) {
             UserEntity participant = trip.getUser();
             tripMessageService.requestLocationCheck(participant, trip);
         }

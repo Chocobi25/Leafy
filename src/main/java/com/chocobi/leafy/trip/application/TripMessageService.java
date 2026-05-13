@@ -1,7 +1,7 @@
-package com.chocobi.leafy.trip.service;
+package com.chocobi.leafy.trip.application;
 
 import com.chocobi.leafy.fcm.service.FCMService;
-import com.chocobi.leafy.trip.entity.Trip;
+import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.chocobi.leafy.user.infra.service.UserService;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -25,7 +25,7 @@ public class TripMessageService {
     @Transactional
     public void notifyTripCreated(Long userId, Long tripId) throws FirebaseMessagingException {
         UserEntity user = userService.findById(userId);  // TODO: 로직 동작 확인
-        Trip trip = tripService.getTripById(tripId);
+        TripEntity trip = tripService.getTripById(tripId);
 
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
@@ -44,7 +44,7 @@ public class TripMessageService {
      * 여행 출발 알림 ✈️
      */
     @Transactional
-    public void notifyTripStart(UserEntity user, Trip trip) throws FirebaseMessagingException {
+    public void notifyTripStart(UserEntity user, TripEntity trip) throws FirebaseMessagingException {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
                 "url", "/trip/" + trip.getId()
@@ -62,7 +62,7 @@ public class TripMessageService {
      * 위치 인증 요청 📍
      */
     @Transactional
-    public void requestLocationCheck(UserEntity user, Trip trip) throws FirebaseMessagingException {
+    public void requestLocationCheck(UserEntity user, TripEntity trip) throws FirebaseMessagingException {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
                 "url", "/trip/" + trip.getId() + "/certify"
@@ -80,7 +80,7 @@ public class TripMessageService {
      * 여행 인증 완료 🎉
      */
     @Transactional
-    public void certifyTrip(UserEntity user, Trip trip) throws FirebaseMessagingException {
+    public void certifyTrip(UserEntity user, TripEntity trip) throws FirebaseMessagingException {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
                 "url", "/trip/" + trip.getId()

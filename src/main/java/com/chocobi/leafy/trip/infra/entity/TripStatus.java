@@ -1,4 +1,4 @@
-package com.chocobi.leafy.trip.entity;
+package com.chocobi.leafy.trip.infra.entity;
 
 public enum TripStatus {
     DRAFT,      // 임시저장 상태 (기존 데이터 호환용)

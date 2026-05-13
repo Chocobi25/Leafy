@@ -1,6 +1,6 @@
 package com.chocobi.leafy.user.dto;
 
-import com.chocobi.leafy.trip.entity.TripStatus;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -18,5 +18,4 @@ public class UserTripDto {
     private double carbonEmission;
     private TripStatus status;
     private LocalDateTime createdAt;
-    private int totalPlaces; // 여행지 개수
 }

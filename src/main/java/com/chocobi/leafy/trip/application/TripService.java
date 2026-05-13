@@ -1,13 +1,15 @@
-package com.chocobi.leafy.trip.service;
+package com.chocobi.leafy.trip.application;
 
 import com.chocobi.leafy.place.infra.entity.RegionGroup;
 import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.client.TransCoordResponse;
 import com.chocobi.leafy.trip.client.TranscodeClient;
 import com.chocobi.leafy.trip.dto.*;
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripStatus;
-import com.chocobi.leafy.trip.repository.TripRepository;
+import com.chocobi.leafy.trip.dto.request.TripRequest;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.infra.entity.TripEntity;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
+import com.chocobi.leafy.trip.infra.repository.TripRepository;
 import com.chocobi.leafy.user.infra.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -28,7 +30,7 @@ public class TripService {
 
     @Transactional
     public Long createTrip(TripRequest tripRequest, Long kakaoId) {
-        Trip trip = Trip.builder()
+        TripEntity trip = TripEntity.builder()
                 .user(userService.findById(kakaoId))  // TODO: 로직 동작 확인
                 .title(tripRequest.getTitle())
                 .startDate(tripRequest.getStart_date())
@@ -42,30 +44,30 @@ public class TripService {
 
     @Transactional
     public void deleteTrip(Long tripId) {
-        Trip trip = getTripById(tripId);
+        TripEntity trip = getTripById(tripId);
         tripPlaceService.deleteTripPlaces(trip);
         tripSegmentService.deleteTripSegments(trip);
         tripRepository.deleteById(tripId);
     }
 
-    public Trip getTripById(Long tripId) {
+    public TripEntity getTripById(Long tripId) {
         return tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
     }
 
     public void changeTripStatus(Long tripId, TripStatus tripStatus) {
-        Trip trip = getTripById(tripId);
+        TripEntity trip = getTripById(tripId);
         trip.editStatus(tripStatus);
         tripRepository.save(trip);
     }
 
-    public void saveTrip(Trip trip){
+    public void saveTrip(TripEntity trip){
         tripRepository.save(trip);
     }
 
     @Transactional
     public TripDetailsDTO getTripDetails(Long tripId) {
-        Trip trip = getTripById(tripId);
+        TripEntity trip = getTripById(tripId);
 
         List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(tripId);
         List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
@@ -76,7 +78,7 @@ public class TripService {
 
     @Transactional
     public void certifyTrip(TransCoordDTO transCoordDTO) {
-        Trip trip = getTripById(transCoordDTO.getTripId());
+        TripEntity trip = getTripById(transCoordDTO.getTripId());
 
         // 1. 여행 상태가 IN_PROGRESS인지 확인
         if (trip.getStatus() != TripStatus.IN_PROGRESS) {
@@ -107,7 +109,7 @@ public class TripService {
     }
 
 
-    public void updateTripInfo(Trip trip, String title, LocalDate startDate, LocalDate endDate) {
+    public void updateTripInfo(TripEntity trip, String title, LocalDate startDate, LocalDate endDate) {
         trip.update(title, startDate, endDate); // 엔티티에 이미 있는 update 메서드 활용
         tripRepository.save(trip);
     }

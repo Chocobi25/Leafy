@@ -1,12 +1,12 @@
-package com.chocobi.leafy.trip.service;
+package com.chocobi.leafy.trip.application;
 
 import com.chocobi.leafy.place.application.PlaceService;
-import com.chocobi.leafy.trip.dto.TripPlaceRequest;
-import com.chocobi.leafy.trip.dto.TripPlaceResponse;
-import com.chocobi.leafy.trip.dto.TripPlacesListRequest;
-import com.chocobi.leafy.trip.entity.Trip;
-import com.chocobi.leafy.trip.entity.TripPlace;
-import com.chocobi.leafy.trip.repository.TripPlaceRepository;
+import com.chocobi.leafy.trip.dto.request.TripPlaceRequest;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.request.TripPlacesListRequest;
+import com.chocobi.leafy.trip.infra.entity.TripEntity;
+import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
+import com.chocobi.leafy.trip.infra.repository.TripPlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +21,9 @@ public class TripPlaceService {
     private final TripPlaceRepository tripPlaceRepository;
     private final PlaceService placeService;
 
-    public void saveInitialTripPlaces(Trip trip, TripPlacesListRequest request) {
-        List<TripPlace> tripPlaces = request.getPlaces().stream()
-                .map(placeReq -> TripPlace.builder()
+    public void saveInitialTripPlaces(TripEntity trip, TripPlacesListRequest request) {
+        List<TripPlaceEntity> tripPlaces = request.getPlaces().stream()
+                .map(placeReq -> TripPlaceEntity.builder()
                         .trip(trip)
                         .place(placeService.getPlace(placeReq.getPlaceId()))
                         .memo(placeReq.getMemo())
@@ -34,13 +34,13 @@ public class TripPlaceService {
     }
 
     @Transactional
-    public void editTripPlaceDetails(Trip trip, List<TripPlaceRequest> request) {
+    public void editTripPlaceDetails(TripEntity trip, List<TripPlaceRequest> request) {
         // 기존 TripPlace 삭제
         deleteTripPlaces(trip);
 
         // 새로운 TripPlace 저장
-        List<TripPlace> tripPlaces = request.stream()
-                .map(placeReq -> TripPlace.builder()
+        List<TripPlaceEntity> tripPlaces = request.stream()
+                .map(placeReq -> TripPlaceEntity.builder()
                         .trip(trip)
                         .place(placeService.getPlace(placeReq.getPlaceId()))
                         .memo(placeReq.getMemo())
@@ -54,7 +54,7 @@ public class TripPlaceService {
 
     @Transactional(readOnly = true)
     public List<TripPlaceResponse> getTripPlaces(Long tripId) {
-        List<TripPlace> places = tripPlaceRepository.findByTripId(tripId);
+        List<TripPlaceEntity> places = tripPlaceRepository.findByTrip_Id(tripId);
 
         return places.stream()
                 .filter(tripPlace -> tripPlace.getPlace() != null) // null 체크 추가
@@ -67,11 +67,11 @@ public class TripPlaceService {
     }
 
     @Transactional
-    public void deleteTripPlaces(Trip trip) {
+    public void deleteTripPlaces(TripEntity trip) {
         tripPlaceRepository.deleteAllByTrip(trip);
     }
 
-    public TripPlace getTripPlaceById(Long tripPlaceId) {
+    public TripPlaceEntity getTripPlaceById(Long tripPlaceId) {
         return tripPlaceRepository.findById(tripPlaceId).orElse(null);
     }
 

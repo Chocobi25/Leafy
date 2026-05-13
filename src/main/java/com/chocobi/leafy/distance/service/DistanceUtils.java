@@ -4,7 +4,7 @@ import com.chocobi.leafy.distance.domain.Point;
 import com.chocobi.leafy.distance.domain.Port;
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.infra.entity.RegionGroup;
-import com.chocobi.leafy.trip.dto.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 
 import java.util.ArrayList;
 import java.util.Comparator;

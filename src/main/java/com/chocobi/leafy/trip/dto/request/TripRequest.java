@@ -1,4 +1,4 @@
-package com.chocobi.leafy.trip.dto;
+package com.chocobi.leafy.trip.dto.request;
 
 import lombok.Data;
 
