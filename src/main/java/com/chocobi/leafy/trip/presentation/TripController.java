@@ -2,7 +2,7 @@ package com.chocobi.leafy.trip.presentation;
 
 import com.chocobi.leafy.global.response.SuccessResponse;
 import com.chocobi.leafy.trip.client.TransCoordDTO;
-import com.chocobi.leafy.trip.dto.request.TripRequest;
+import com.chocobi.leafy.trip.dto.request.CreateTripRequest;
 import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
 import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
 import com.chocobi.leafy.trip.dto.response.TripListResponse;
@@ -36,11 +36,11 @@ public class TripController implements TripDocs {
 
     @PostMapping
     public ResponseEntity<SuccessResponse<TripSaveResponse>> createTrip(
-            @Valid @RequestBody TripRequest tripRequest,
+            @Valid @RequestBody CreateTripRequest createTripRequest,
             Authentication authentication
     ) {
         Long userId = (Long) authentication.getPrincipal();
-        return ResponseEntity.ok(SuccessResponse.of(tripService.createTrip(tripRequest, userId)));
+        return ResponseEntity.ok(SuccessResponse.of(tripService.createTrip(createTripRequest, userId)));
     }
 
     @GetMapping

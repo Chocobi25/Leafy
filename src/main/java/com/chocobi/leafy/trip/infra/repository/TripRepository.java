@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface TripRepository extends JpaRepository<TripEntity, Long> {
     @EntityGraph(attributePaths = {"departure", "arrival", "user"})
-    Optional<TripEntity> findDetailById(Long id);
+    Optional<TripEntity> findTripById(Long id);
 
     List<TripEntity> findByStatusAndCreatedAtBefore(TripStatus status, LocalDateTime createdAt);
     List<TripEntity> findByUserIdOrderByCreatedAtDesc(Long id);  // TODO: 로직 동작 확인

@@ -2,16 +2,12 @@ package com.chocobi.leafy.trip.infra;
 
 import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
-import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import com.chocobi.leafy.trip.infra.repository.TripRepository;
 import com.chocobi.leafy.trip.vo.TripError;
-import com.chocobi.leafy.user.infra.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -26,7 +22,7 @@ public class TripFindService {
     }
 
     public TripEntity findTripDetail(Long tripId) {
-        return tripRepository.findDetailById(tripId)
+        return tripRepository.findTripById(tripId)
                 .orElseThrow(() -> new CustomException(TripError.TRIP_NOT_FOUND));
     }
 

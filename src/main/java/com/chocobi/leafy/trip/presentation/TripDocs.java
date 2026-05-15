@@ -2,7 +2,7 @@ package com.chocobi.leafy.trip.presentation;
 
 import com.chocobi.leafy.global.exception.ErrorResponse;
 import com.chocobi.leafy.global.response.SuccessResponse;
-import com.chocobi.leafy.trip.dto.request.TripRequest;
+import com.chocobi.leafy.trip.dto.request.CreateTripRequest;
 import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
 import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
 import com.chocobi.leafy.trip.dto.response.TripListResponse;
@@ -58,7 +58,7 @@ public interface TripDocs {
                     ))
     })
     ResponseEntity<SuccessResponse<TripSaveResponse>> createTrip(
-            @Valid @RequestBody TripRequest tripRequest,
+            @Valid @RequestBody CreateTripRequest createTripRequest,
             Authentication authentication
     );
 

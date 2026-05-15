@@ -8,7 +8,7 @@ import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.client.TransCoordResponse;
 import com.chocobi.leafy.trip.client.TranscodeClient;
 import com.chocobi.leafy.trip.dto.*;
-import com.chocobi.leafy.trip.dto.request.TripRequest;
+import com.chocobi.leafy.trip.dto.request.CreateTripRequest;
 import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
 import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
 import com.chocobi.leafy.trip.dto.response.TripListResponse;
@@ -39,16 +39,16 @@ public class TripService {
     private final RegionFindService regionFindService;
 
     @Transactional
-    public TripSaveResponse createTrip(TripRequest tripRequest, Long userId) {
+    public TripSaveResponse createTrip(CreateTripRequest createTripRequest, Long userId) {
 
-        RegionEntity departure = regionFindService.findRegion(tripRequest.departure());
-        RegionEntity arrival = regionFindService.findRegion(tripRequest.arrival());
+        RegionEntity departure = regionFindService.findRegion(createTripRequest.departure());
+        RegionEntity arrival = regionFindService.findRegion(createTripRequest.arrival());
 
         TripEntity trip = TripEntity.builder()
                 .user(userService.findById(userId))
-                .title(tripRequest.title())
-                .startDate(tripRequest.startDate())
-                .endDate(tripRequest.endDate())
+                .title(createTripRequest.title())
+                .startDate(createTripRequest.startDate())
+                .endDate(createTripRequest.endDate())
                 .departure(departure)
                 .arrival(arrival)
                 .build();

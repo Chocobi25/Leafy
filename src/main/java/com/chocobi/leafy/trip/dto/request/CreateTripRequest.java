@@ -5,11 +5,10 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 
 import java.time.LocalDate;
 
-public record TripRequest(
+public record CreateTripRequest(
         @Schema(name = "여행 제목")
         @NotBlank @Size(max = 50)
         String title,
