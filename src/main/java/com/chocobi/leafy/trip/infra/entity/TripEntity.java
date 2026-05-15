@@ -1,7 +1,7 @@
 package com.chocobi.leafy.trip.infra.entity;
 
 import com.chocobi.leafy.global.entity.BaseEntity;
-import com.chocobi.leafy.place.infra.entity.RegionGroup;
+import com.chocobi.leafy.global.entity.RegionEntity;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,13 +30,13 @@ public class TripEntity extends BaseEntity {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @Column(name = "departure", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private RegionGroup departure;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "departure_region_id", nullable = false)
+    private RegionEntity departure;
 
-    @Column(name = "arrival", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private RegionGroup arrival;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "arrival_region_id", nullable = false)
+    private RegionEntity arrival;
 
     @Column(name = "carbon_saved")
     @Builder.Default

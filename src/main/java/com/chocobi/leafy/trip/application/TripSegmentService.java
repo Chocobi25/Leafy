@@ -13,15 +13,16 @@ import com.chocobi.leafy.trip.dto.request.TripPlaceRequest;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
+import com.chocobi.leafy.trip.infra.TripFindService;
+import com.chocobi.leafy.trip.infra.TripSegmentCommandService;
+import com.chocobi.leafy.trip.infra.TripSegmentFindService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import com.chocobi.leafy.trip.infra.entity.TripSegmentEntity;
-import com.chocobi.leafy.trip.infra.repository.TripRepository;
-import com.chocobi.leafy.trip.infra.repository.TripSegmentRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -36,13 +37,14 @@ import static com.chocobi.leafy.distance.service.DistanceUtils.regionToPoint;
 @Service
 @RequiredArgsConstructor
 public class TripSegmentService {
-    private final TripSegmentRepository tripSegmentRepository;
+    private final TripSegmentFindService tripSegmentFindService;
+    private final TripSegmentCommandService tripSegmentCommandService;
+    private final TripFindService tripFindService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final CarDistanceService carDistanceService;
     private final TransDistanceService transDistanceService;
     private final TripPlaceService tripPlaceService;
     private final PlaceService placeService;
-    private final TripRepository tripRepository;
 
     /**
      * TripSegmentRedisDto를 만들고 Redis에 임시 저장하는 편의 통합 메서드
@@ -82,8 +84,8 @@ public class TripSegmentService {
 
             TripSegmentRedisDto dto = TripSegmentRedisDto.builder()
                     .tripId(tripId)
-                    .startTripPlaceId(requireTripPlaceId(startPlace))
-                    .endTripPlaceId(requireTripPlaceId(endPlace))
+                    .startTripPlaceId(startPlace.getTripPlaceId())
+                    .endTripPlaceId(endPlace.getTripPlaceId())
                     .transport(transport == null ? null : transport.toLowerCase())
                     .distance(distance)
                     .duration(durationInMinutes)
@@ -128,8 +130,7 @@ public class TripSegmentService {
 
         if (tripPlaces == null || tripPlaces.size() < 2) return tripSegments;
 
-        TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다.")); // TODO: 커스텀 에러로 전환
+        TripEntity trip = tripFindService.findTrip(tripId);
 
         List<TripPlaceResponse> mutableTripPlaces = new ArrayList<>(tripPlaces);
         mutableTripPlaces.sort(Comparator.comparing(TripPlaceResponse::getVisitOrder));
@@ -143,11 +144,13 @@ public class TripSegmentService {
             int durationInMinutes = Math.max(1, sections.get(i).getDuration() / 60);
             double carbonEmission = sections.get(i).getCarbonEmission();
             double maxCarbonEmission = sections.get(i).getMaxCarbonEmission();
+            TripPlaceEntity startTripPlace = tripPlaceService.getTripPlaceById(startPlace.getTripPlaceId());
+            TripPlaceEntity endTripPlace = tripPlaceService.getTripPlaceById(endPlace.getTripPlaceId());
 
             TripSegmentEntity tripSegment = TripSegmentEntity.builder()
                     .trip(trip)
-                    .startTripPlace(tripPlaceService.getTripPlaceById(requireTripPlaceId(startPlace)))
-                    .endTripPlace(tripPlaceService.getTripPlaceById(requireTripPlaceId(endPlace)))
+                    .startTripPlace(startTripPlace)
+                    .endTripPlace(endTripPlace)
                     .transport(transport == null ? null : transport.toLowerCase())
                     .distance(distance)
                     .duration(durationInMinutes)
@@ -178,6 +181,7 @@ public class TripSegmentService {
             // 다른 교통수단이 없을 수 있음 — 무시
         }
 
+        // 최종 선택된 교통수단으로 transport 값 업데이트 및 maxCarbonEmission 설정
         List<TripSegmentEntity> tripSegments = new ArrayList<>();
         for (int i = 0; i < tripSegmentDtos.size(); i++) {
             TripSegmentRedisDto dto = tripSegmentDtos.get(i);
@@ -191,9 +195,10 @@ public class TripSegmentService {
             }
             dto.setMaxCarbonEmission(maxCarbon);
 
-            TripPlaceEntity startTripPlace = tripPlaceService.getTripPlaceById(dto.getStartTripPlaceId());
-            TripPlaceEntity endTripPlace = tripPlaceService.getTripPlaceById(dto.getEndTripPlaceId());
-            tripSegments.add(dto.toEntity(startTripPlace, endTripPlace));
+            tripSegments.add(dto.toEntity(
+                    tripPlaceService.getTripPlaceById(dto.getStartTripPlaceId()),
+                    tripPlaceService.getTripPlaceById(dto.getEndTripPlaceId())
+            ));
         }
 
         saveTripSegments(tripSegments); // DB에 저장
@@ -253,14 +258,7 @@ public class TripSegmentService {
      */
     public void saveTripSegments(List<TripSegmentEntity> tripSegments) {
         if (tripSegments == null || tripSegments.isEmpty()) return;
-        tripSegmentRepository.saveAll(tripSegments);
-    }
-
-    private Long requireTripPlaceId(TripPlaceResponse tripPlace) {
-        if (tripPlace.getTripPlaceId() == null) {
-            throw new IllegalArgumentException("TripPlace ID가 필요합니다.");
-        }
-        return tripPlace.getTripPlaceId();
+        tripSegmentCommandService.saveAll(tripSegments);
     }
 
     /**
@@ -316,14 +314,14 @@ public class TripSegmentService {
 
     @Transactional
     public List<TripSegmentDTO> getTripSegments(Long tripId) {
-        return tripSegmentRepository.findByTrip_Id(tripId).stream()
+        return tripSegmentFindService.findTripSegmentsByTripId(tripId).stream()
                 .map(TripSegmentDTO::fromEntity)
                 .toList();
     }
 
     @Transactional
     public void deleteTripSegments(TripEntity trip) {
-        tripSegmentRepository.deleteAllByTrip(trip);
+        tripSegmentCommandService.deleteAllByTrip(trip);
     }
 
     /**
@@ -349,8 +347,14 @@ public class TripSegmentService {
             // build car request and call calculateAndSaveCarRoute which stores to redis
             CarDistanceRequest carRequest = new CarDistanceRequest();
             carRequest.setTripId(trip.getId());
-            carRequest.setOrigin(regionToPoint(trip.getDeparture()));
-            carRequest.setDestination(regionToPoint(trip.getArrival()));
+
+            if (!tripPlaces.isEmpty()) {
+                PlaceDTO firstPlace = tripPlaces.get(0).getPlace();
+                PlaceDTO lastPlace = tripPlaces.get(tripPlaces.size() - 1).getPlace();
+
+                carRequest.setOrigin(placeToPoint(firstPlace));
+                carRequest.setDestination(placeToPoint(lastPlace));
+            }
 
             if (tripPlaces.size() > 2) {
                 carRequest.setWaypoints(

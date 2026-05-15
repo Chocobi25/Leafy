@@ -1,116 +1,155 @@
 package com.chocobi.leafy.trip.application;
 
-import com.chocobi.leafy.place.infra.entity.RegionGroup;
+import com.chocobi.leafy.global.entity.RegionEntity;
+import com.chocobi.leafy.global.exception.CustomException;
+import com.chocobi.leafy.global.service.RegionFindService;
+import com.chocobi.leafy.place.fetcher.kakao.dto.Address;
 import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.client.TransCoordResponse;
 import com.chocobi.leafy.trip.client.TranscodeClient;
 import com.chocobi.leafy.trip.dto.*;
-import com.chocobi.leafy.trip.dto.request.TripRequest;
-import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.request.CreateTripRequest;
+import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
+import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
+import com.chocobi.leafy.trip.dto.response.TripListResponse;
+import com.chocobi.leafy.trip.dto.response.TripSaveResponse;
+import com.chocobi.leafy.trip.infra.TripCommandService;
+import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
-import com.chocobi.leafy.trip.infra.repository.TripRepository;
+import com.chocobi.leafy.trip.vo.TripError;
 import com.chocobi.leafy.user.infra.service.UserService;
-import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class TripService {
-    private final TripRepository tripRepository;
+    private final TripFindService tripFindService;
+    private final TripCommandService tripCommandService;
     private final UserService userService;
     private final TripPlaceService tripPlaceService;
     private final TripSegmentService tripSegmentService;
     private final TranscodeClient transcodeClient;
+    private final RegionFindService regionFindService;
 
     @Transactional
-    public Long createTrip(TripRequest tripRequest, Long kakaoId) {
+    public TripSaveResponse createTrip(CreateTripRequest createTripRequest, Long userId) {
+
+        RegionEntity departure = regionFindService.findRegion(createTripRequest.departure());
+        RegionEntity arrival = regionFindService.findRegion(createTripRequest.arrival());
+
         TripEntity trip = TripEntity.builder()
-                .user(userService.findById(kakaoId))  // TODO: 로직 동작 확인
-                .title(tripRequest.getTitle())
-                .startDate(tripRequest.getStart_date())
-                .endDate(tripRequest.getEnd_date())
-                .departure(RegionGroup.fromRegionName(tripRequest.getDeparture()))
-                .arrival(RegionGroup.fromRegionName(tripRequest.getArrival()))
+                .user(userService.findById(userId))
+                .title(createTripRequest.title())
+                .startDate(createTripRequest.startDate())
+                .endDate(createTripRequest.endDate())
+                .departure(departure)
+                .arrival(arrival)
                 .build();
-        tripRepository.save(trip);
-        return trip.getId();
+
+        return TripSaveResponse.from(tripCommandService.save(trip));
     }
 
-    @Transactional
-    public void deleteTrip(Long tripId) {
-        TripEntity trip = getTripById(tripId);
-        tripPlaceService.deleteTripPlaces(trip);
-        tripSegmentService.deleteTripSegments(trip);
-        tripRepository.deleteById(tripId);
+    @Transactional(readOnly = true)
+    public List<TripListResponse> getTrips(Long userId) {
+        return tripFindService.findTripsByUserId(userId).stream()
+                .map(TripListResponse::from)
+                .toList();
     }
 
-    public TripEntity getTripById(Long tripId) {
-        return tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 여행입니다."));
-    }
+    @Transactional(readOnly = true)
+    public TripDetailResponse getTripDetails(Long tripId, Long userId) {
+        TripEntity trip = tripFindService.findOwnedTripDetail(tripId, userId);
 
-    public void changeTripStatus(Long tripId, TripStatus tripStatus) {
-        TripEntity trip = getTripById(tripId);
-        trip.editStatus(tripStatus);
-        tripRepository.save(trip);
-    }
-
-    public void saveTrip(TripEntity trip){
-        tripRepository.save(trip);
-    }
-
-    @Transactional
-    public TripDetailsDTO getTripDetails(Long tripId) {
-        TripEntity trip = getTripById(tripId);
-
-        List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(tripId);
         List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
-        TripDTO tripDTO = TripDTO.fromEntity(trip);
-
-        return new TripDetailsDTO(tripDTO, tripSegments);
+        return TripDetailResponse.from(trip, tripSegments);
     }
 
     @Transactional
-    public void certifyTrip(TransCoordDTO transCoordDTO) {
-        TripEntity trip = getTripById(transCoordDTO.getTripId());
+    public void deleteTrip(Long tripId, Long userId) {
 
-        // 1. 여행 상태가 IN_PROGRESS인지 확인
-        if (trip.getStatus() != TripStatus.IN_PROGRESS) {
-            throw new IllegalStateException("진행 중인 여행만 인증할 수 있습니다.");
-        }
+        TripEntity trip = findOwnedTrip(tripId, userId);
 
-        // 2. 카카오 API를 호출하여 현재 좌표의 주소 정보 가져오기
-        TransCoordResponse addressResponse = transcodeClient.requestGeocode(transCoordDTO);
-
-        if (addressResponse == null || addressResponse.getDocuments().isEmpty()) {
-            throw new IllegalStateException("현재 위치의 주소 정보를 가져올 수 없습니다. 다시 시도해주세요.");
-        }
-
-        String currentRegionStr = addressResponse.getDocuments().get(0).getAddress().getRegion_1depth_name();
-        RegionGroup currentRegion = RegionGroup.fromRegionName(currentRegionStr);
-
-        // 3. 여행의 도착 도시와 현재 도시가 같은지 비교
-        if (!trip.getArrival().equals(currentRegion)) {
-            // 도시가 다르면 예외 발생
-            throw new IllegalArgumentException("현재 위치가 여행 도착 지역(" + trip.getArrival() + ")과 다릅니다. 위치를 다시 확인해주세요.");
-        }
-
-        // 4. 모든 조건 충족 시, 인증 시간 기록 및 상태 변경
-        trip.certify();
-
-        // 변경사항 저장
-        tripRepository.save(trip);
+        tripSegmentService.deleteTripSegments(trip);
+        tripPlaceService.deleteTripPlaces(trip);
+        tripCommandService.delete(trip);
     }
 
+    @Transactional
+    public TripDetailResponse updateTripInfo(Long tripId, TripUpdateRequest request, Long userId) {
 
-    public void updateTripInfo(TripEntity trip, String title, LocalDate startDate, LocalDate endDate) {
-        trip.update(title, startDate, endDate); // 엔티티에 이미 있는 update 메서드 활용
-        tripRepository.save(trip);
+        TripEntity trip = tripFindService.findOwnedTripDetail(tripId, userId);
+
+        trip.update(request.title(), request.startDate(), request.endDate());
+        List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
+
+        return TripDetailResponse.from(trip, tripSegments);
+    }
+
+    @Transactional(readOnly = true)
+    public TripEntity findOwnedTrip(Long tripId, Long userId) {
+        return tripFindService.findOwnedTrip(tripId, userId);
+    }
+
+    @Transactional
+    public void certifyTrip(Long tripId, TransCoordDTO transCoordDTO, Long userId) {
+        TripEntity trip = findOwnedTrip(tripId, userId);
+
+        if (trip.getStatus() != TripStatus.IN_PROGRESS) {
+            throw new CustomException(TripError.TRIP_NOT_IN_PROGRESS);
+        }
+
+        if (trip.getCertificationAt() != null) {
+            throw new CustomException(TripError.TRIP_ALREADY_CERTIFIED);
+        }
+
+        TransCoordResponse addressResponse = transcodeClient.requestGeocode(transCoordDTO);
+        String currentRegionName = extractRegionName(addressResponse);
+        RegionEntity currentRegion = regionFindService.findRegion(currentRegionName);
+
+        if (!trip.getArrival().getId().equals(currentRegion.getId())) {
+            throw new CustomException(TripError.TRIP_LOCATION_MISMATCH);
+        }
+
+        try {
+            trip.certify();
+        } catch (IllegalStateException e) {
+            throw new CustomException(TripError.TRIP_ALREADY_CERTIFIED);
+        }
+
+        tripCommandService.save(trip);
+    }
+
+    @Transactional
+    public void changeTripStatusForScheduler(Long tripId, TripStatus tripStatus) {
+        TripEntity trip = tripFindService.findTrip(tripId);
+        trip.editStatus(tripStatus);
+    }
+
+    @Transactional
+    public void changeOwnedTripStatus(Long tripId, TripStatus tripStatus, Long userId) {
+        TripEntity trip = findOwnedTrip(tripId, userId);
+        trip.editStatus(tripStatus);
+    }
+
+    private String extractRegionName(TransCoordResponse addressResponse) {
+        if (addressResponse == null
+                || addressResponse.getDocuments() == null
+                || addressResponse.getDocuments().isEmpty()
+                || addressResponse.getDocuments().getFirst() == null) {
+            throw new CustomException(TripError.TRIP_LOCATION_UNAVAILABLE);
+        }
+
+        Address address = addressResponse.getDocuments().getFirst().getAddress();
+        if (address == null || address.getRegion_1depth_name() == null || address.getRegion_1depth_name().isBlank()) {
+            throw new CustomException(TripError.TRIP_LOCATION_UNAVAILABLE);
+        }
+
+        return address.getRegion_1depth_name();
     }
 }

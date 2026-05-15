@@ -42,7 +42,7 @@ public class TripScheduler {
         List<TripEntity> readyTrips = tripRepository.findAllByStartDateAndStatus(today, TripStatus.READY);
 
         for (TripEntity trip : readyTrips) {
-            tripService.changeTripStatus(trip.getId(), TripStatus.IN_PROGRESS);
+            tripService.changeTripStatusForScheduler(trip.getId(), TripStatus.IN_PROGRESS);
         }
     }
 

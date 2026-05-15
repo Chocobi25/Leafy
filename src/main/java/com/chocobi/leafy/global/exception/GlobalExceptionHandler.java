@@ -1,5 +1,6 @@
 package com.chocobi.leafy.global.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,24 @@ public class GlobalExceptionHandler {
                 .orElse(GlobalError.INVALID_INPUT_VALUE.getMessage());
 
         log.error("입력값 유효성 검사 실패: {}", message);
+        return ResponseEntity
+                .status(GlobalError.INVALID_INPUT_VALUE.getStatus())
+                .body(ErrorResponse.builder()
+                        .status(GlobalError.INVALID_INPUT_VALUE.getStatus().value())
+                        .code(GlobalError.INVALID_INPUT_VALUE.getCode())
+                        .message(message)
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException e) {
+        String message = e.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .findFirst()
+                .orElse(GlobalError.INVALID_INPUT_VALUE.getMessage());
+
+        log.error("요청 파라미터 유효성 검사 실패: {}", message);
         return ResponseEntity
                 .status(GlobalError.INVALID_INPUT_VALUE.getStatus())
                 .body(ErrorResponse.builder()

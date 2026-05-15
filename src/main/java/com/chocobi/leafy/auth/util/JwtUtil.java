@@ -53,8 +53,8 @@ public class JwtUtil {
 
     /**
      * userId, role, expiration으로 token을 만들어서 반환
-     * @param userId the ID of the user for whom the token is being created
-     * @param role the role of the user to be included in the token (can be null)
+     * @param userId the ID from the user for whom the token is being created
+     * @param role the role from the user to be included in the token (can be null)
      * @param expiration the expiration time for the token in milliseconds
      * @return a compact JWT token as a String
      */
