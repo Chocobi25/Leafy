@@ -65,7 +65,7 @@ public class TripService {
 
     @Transactional(readOnly = true)
     public TripDetailResponse getTripDetails(Long tripId, Long userId) {
-        TripEntity trip = findOwnedTrip(tripId, userId);
+        TripEntity trip = tripFindService.findOwnedTripDetail(tripId, userId);
 
         List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
         return TripDetailResponse.from(trip, tripSegments);
