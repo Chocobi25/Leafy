@@ -49,7 +49,7 @@ public interface TripDocs {
                             examples = @ExampleObject(value = """
                                     {
                                         "status": 400,
-                                        "code": "INVALID_TRIP_DATE",
+                                        "code": "INVALID_INPUT_VALUE",
                                         "message": "여행 날짜가 올바르지 않습니다.",
                                         "timestamp": "2026-05-14T10:00:00"
                                     }
