@@ -90,15 +90,14 @@ public class TripService {
         return TripUpdateResponse.from(trip);
     }
 
-    // TODO: 추후 리팩토링 시 삭제 고려
     @Transactional(readOnly = true)
     public TripEntity findOwnedTrip(Long tripId, Long userId) {
         return tripFindService.findOwnedTrip(tripId, userId);
     }
 
     @Transactional
-    public void certifyTrip(TransCoordDTO transCoordDTO) {
-        TripEntity trip = tripFindService.findTrip(transCoordDTO.getTripId());
+    public void certifyTrip(Long tripId, TransCoordDTO transCoordDTO, Long userId) {
+        TripEntity trip = findOwnedTrip(tripId, userId);
 
         if (trip.getStatus() != TripStatus.IN_PROGRESS) {
             throw new CustomException(TripError.TRIP_NOT_IN_PROGRESS);
@@ -126,7 +125,7 @@ public class TripService {
     }
 
     @Transactional
-    public void changeTripStatus(Long tripId, TripStatus tripStatus) {
+    public void changeTripStatusForScheduler(Long tripId, TripStatus tripStatus) {
         TripEntity trip = tripFindService.findTrip(tripId);
         trip.editStatus(tripStatus);
     }
@@ -141,11 +140,11 @@ public class TripService {
         if (addressResponse == null
                 || addressResponse.getDocuments() == null
                 || addressResponse.getDocuments().isEmpty()
-                || addressResponse.getDocuments().get(0) == null) {
+                || addressResponse.getDocuments().getFirst() == null) {
             throw new CustomException(TripError.TRIP_LOCATION_UNAVAILABLE);
         }
 
-        Address address = addressResponse.getDocuments().get(0).getAddress();
+        Address address = addressResponse.getDocuments().getFirst().getAddress();
         if (address == null || address.getRegion_1depth_name() == null || address.getRegion_1depth_name().isBlank()) {
             throw new CustomException(TripError.TRIP_LOCATION_UNAVAILABLE);
         }

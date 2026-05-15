@@ -1,6 +1,7 @@
 package com.chocobi.leafy.trip.presentation;
 
 import com.chocobi.leafy.global.response.SuccessResponse;
+import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.dto.request.TripRequest;
 import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
 import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
@@ -77,5 +78,17 @@ public class TripController implements TripDocs {
     ) {
         Long userId = (Long) authentication.getPrincipal();
         return ResponseEntity.ok(SuccessResponse.of(tripService.updateTripInfo(tripId, request, userId)));
+    }
+
+    @PostMapping("/{tripId}/certify")
+    public ResponseEntity<String> certifyTrip(
+            @PathVariable @Positive Long tripId,
+            @Valid @RequestBody TransCoordDTO transCoordDTO,
+            Authentication authentication
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+        tripService.certifyTrip(tripId, transCoordDTO, userId);
+
+        return ResponseEntity.ok("여행이 성공적으로 인증되었습니다.");
     }
 }
