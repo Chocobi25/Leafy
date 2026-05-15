@@ -25,6 +25,16 @@ public class TripFindService {
                 .orElseThrow(() -> new CustomException(TripError.TRIP_NOT_FOUND));
     }
 
+    public TripEntity findOwnedTrip(Long tripId, Long userId) {
+        TripEntity trip = findTrip(tripId);
+
+        if (!trip.getUser().getId().equals(userId)) {
+            throw new CustomException(TripError.TRIP_ACCESS_DENIED);
+        }
+
+        return trip;
+    }
+
     public List<TripEntity> findTripsByUserId(Long userId) {
         return tripRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }

@@ -24,8 +24,8 @@ public class TripMessageService {
      */
     @Transactional
     public void notifyTripCreated(Long userId, Long tripId) throws FirebaseMessagingException {
-        UserEntity user = userService.findById(userId);  // TODO: 로직 동작 확인
-        TripEntity trip = tripService.getTripById(tripId);
+        UserEntity user = userService.findById(userId);
+        TripEntity trip = tripService.findOwnedTrip(tripId, userId);
 
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),

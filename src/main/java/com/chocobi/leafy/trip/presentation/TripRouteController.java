@@ -54,7 +54,7 @@ public class TripRouteController {
             response.put("message", "여행 계획이 성공적으로 완료되었습니다.");
             response.put("tripId", tripId);
 
-            tripService.changeTripStatus(tripId, TripStatus.READY);
+            tripService.changeOwnedTripStatus(tripId, TripStatus.READY, userId);
             tripMessageService.notifyTripCreated(userId, tripId);
 
             return ResponseEntity.ok(response);

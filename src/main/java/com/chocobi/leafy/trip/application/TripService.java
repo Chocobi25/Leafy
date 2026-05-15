@@ -24,9 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 
 @Service
@@ -67,11 +65,7 @@ public class TripService {
 
     @Transactional(readOnly = true)
     public TripDetailResponse getTripDetails(Long tripId, Long userId) {
-        TripEntity trip = tripFindService.findTrip(tripId);
-
-        if (!userId.equals(trip.getUser().getId())) {
-            throw new CustomException(TripError.TRIP_ACCESS_DENIED);
-        }
+        TripEntity trip = findOwnedTrip(tripId, userId);
 
         List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
         return TripDetailResponse.from(trip, tripSegments);
@@ -80,11 +74,7 @@ public class TripService {
     @Transactional
     public void deleteTrip(Long tripId, Long userId) {
 
-        TripEntity trip = tripFindService.findTrip(tripId);
-
-        if (!trip.getUser().getId().equals(userId)) {
-            throw new CustomException(TripError.TRIP_ACCESS_DENIED);
-        }
+        TripEntity trip = findOwnedTrip(tripId, userId);
 
         tripSegmentService.deleteTripSegments(trip);
         tripPlaceService.deleteTripPlaces(trip);
@@ -94,11 +84,7 @@ public class TripService {
     @Transactional
     public TripUpdateResponse updateTripInfo(Long tripId, TripUpdateRequest request, Long userId) {
 
-        TripEntity trip = tripFindService.findTrip(tripId);
-
-        if (!trip.getUser().getId().equals(userId)) {
-            throw new CustomException(TripError.TRIP_ACCESS_DENIED);
-        }
+        TripEntity trip = findOwnedTrip(tripId, userId);
 
         trip.update(request.title(), request.startDate(), request.endDate());
         return TripUpdateResponse.from(trip);
@@ -106,8 +92,8 @@ public class TripService {
 
     // TODO: 추후 리팩토링 시 삭제 고려
     @Transactional(readOnly = true)
-    public TripEntity getTripById(Long tripId) {
-        return tripFindService.findTrip(tripId);
+    public TripEntity findOwnedTrip(Long tripId, Long userId) {
+        return tripFindService.findOwnedTrip(tripId, userId);
     }
 
     @Transactional
@@ -142,6 +128,12 @@ public class TripService {
     @Transactional
     public void changeTripStatus(Long tripId, TripStatus tripStatus) {
         TripEntity trip = tripFindService.findTrip(tripId);
+        trip.editStatus(tripStatus);
+    }
+
+    @Transactional
+    public void changeOwnedTripStatus(Long tripId, TripStatus tripStatus, Long userId) {
+        TripEntity trip = findOwnedTrip(tripId, userId);
         trip.editStatus(tripStatus);
     }
 
