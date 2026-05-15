@@ -7,7 +7,6 @@ import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
 import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
 import com.chocobi.leafy.trip.dto.response.TripListResponse;
 import com.chocobi.leafy.trip.dto.response.TripSaveResponse;
-import com.chocobi.leafy.trip.dto.response.TripUpdateResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -180,7 +179,7 @@ public interface TripDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200",
                     content = @Content(
-                            schema = @Schema(implementation = TripUpdateResponse.class),
+                            schema = @Schema(implementation = TripDetailResponse.class),
                             examples = @ExampleObject(value = """
                                     {
                                         "code": "SUCCESS",
@@ -190,7 +189,16 @@ public interface TripDocs {
                                             "title": "수정된 여행",
                                             "startDate": "2026-06-02",
                                             "endDate": "2026-06-04",
-                                            "status": "CREATING"
+                                            "departure": "서울",
+                                            "arrival": "부산",
+                                            "carbonSaved": 5.2,
+                                            "carbonEmission": 12.5,
+                                            "status": "CREATING",
+                                            "certificationAt": null,
+                                            "userId": 1,
+                                            "createdAt": "2026-05-14T10:00:00",
+                                            "updatedAt": "2026-05-14T10:00:00",
+                                            "tripSegments": []
                                         }
                                     }
                                     """)
@@ -232,7 +240,7 @@ public interface TripDocs {
                                     """)
                     ))
     })
-    ResponseEntity<SuccessResponse<TripUpdateResponse>> updateTrip(
+    ResponseEntity<SuccessResponse<TripDetailResponse>> updateTrip(
             @PathVariable @Positive Long tripId,
             @Valid @RequestBody TripUpdateRequest request,
             Authentication authentication

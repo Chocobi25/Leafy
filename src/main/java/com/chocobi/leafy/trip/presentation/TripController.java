@@ -7,7 +7,6 @@ import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
 import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
 import com.chocobi.leafy.trip.dto.response.TripListResponse;
 import com.chocobi.leafy.trip.dto.response.TripSaveResponse;
-import com.chocobi.leafy.trip.dto.response.TripUpdateResponse;
 import com.chocobi.leafy.trip.application.TripService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -71,7 +70,7 @@ public class TripController implements TripDocs {
     }
 
     @PatchMapping("/{tripId}")
-    public ResponseEntity<SuccessResponse<TripUpdateResponse>> updateTrip(
+    public ResponseEntity<SuccessResponse<TripDetailResponse>> updateTrip(
             @PathVariable @Positive Long tripId,
             @Valid @RequestBody TripUpdateRequest request,
             Authentication authentication

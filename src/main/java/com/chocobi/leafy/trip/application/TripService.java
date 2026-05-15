@@ -13,7 +13,6 @@ import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
 import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
 import com.chocobi.leafy.trip.dto.response.TripListResponse;
 import com.chocobi.leafy.trip.dto.response.TripSaveResponse;
-import com.chocobi.leafy.trip.dto.response.TripUpdateResponse;
 import com.chocobi.leafy.trip.infra.TripCommandService;
 import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
@@ -82,12 +81,14 @@ public class TripService {
     }
 
     @Transactional
-    public TripUpdateResponse updateTripInfo(Long tripId, TripUpdateRequest request, Long userId) {
+    public TripDetailResponse updateTripInfo(Long tripId, TripUpdateRequest request, Long userId) {
 
-        TripEntity trip = findOwnedTrip(tripId, userId);
+        TripEntity trip = tripFindService.findOwnedTripDetail(tripId, userId);
 
         trip.update(request.title(), request.startDate(), request.endDate());
-        return TripUpdateResponse.from(trip);
+        List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
+
+        return TripDetailResponse.from(trip, tripSegments);
     }
 
     @Transactional(readOnly = true)
