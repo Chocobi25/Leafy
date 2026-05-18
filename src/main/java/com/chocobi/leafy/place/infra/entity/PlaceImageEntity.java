@@ -15,10 +15,10 @@ public class PlaceImageEntity extends BaseEntity {
     @Column(length = 2000, nullable = false)
     private String url;
 
-    private String contentId;
     private String source;
 
     private Integer sortOrder;
+
     private Boolean thumbnail;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,9 +26,8 @@ public class PlaceImageEntity extends BaseEntity {
     private ExternalPlaceEntity place;
 
     @Builder
-    public PlaceImageEntity(String url, String contentId, String source, Integer sortOrder, Boolean thumbnail, ExternalPlaceEntity place) {
+    public PlaceImageEntity(String url, String source, Integer sortOrder, Boolean thumbnail, ExternalPlaceEntity place) {
         this.url = url;
-        this.contentId = contentId;
         this.source = source;
         this.sortOrder = sortOrder;
         this.thumbnail = thumbnail;
