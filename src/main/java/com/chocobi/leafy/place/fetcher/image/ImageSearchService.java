@@ -1,6 +1,6 @@
 package com.chocobi.leafy.place.fetcher.image;
 
-import com.chocobi.leafy.place.infra.entity.Image;
+import com.chocobi.leafy.place.infra.entity.PlaceImageEntity;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.fetcher.image.dto.ImageItem;
 import com.chocobi.leafy.place.fetcher.image.dto.SearchResponse;
@@ -23,7 +23,7 @@ public class ImageSearchService {
     private final TourImageClient tourImageClient;
     private final NaverImageClient naverImageClient;
 
-    public Mono<List<Image>> findImagesForPlace(ExternalPlaceEntity place) {
+    public Mono<List<PlaceImageEntity>> findImagesForPlace(ExternalPlaceEntity place) {
         return tourImageClient.fetchTourImages(place.getTitle())
                 .flatMap(apiResponse -> {
                     if (apiResponse != null && apiResponse.getResponse() != null) {
@@ -43,7 +43,7 @@ public class ImageSearchService {
                 });
     }
 
-    private Mono<List<Image>> searchNaverImages(ExternalPlaceEntity place) {
+    private Mono<List<PlaceImageEntity>> searchNaverImages(ExternalPlaceEntity place) {
         log.info("➡️ 네이버 API로 이미지 검색을 시작합니다. 장소: {}", place.getTitle());
         List<String> queries = List.of(
                 //String.format("%s %s", place.getRegionGroup(), place.getTitle()),
@@ -64,48 +64,48 @@ public class ImageSearchService {
                 )
                 .collectList()
                 .map(responses -> {
-                    List<Image> naverImages = new ArrayList<>();
+                    List<PlaceImageEntity> naverPlaceImageEntities = new ArrayList<>();
                     for (SearchResponse naverResponse : responses) {
                         if (naverResponse != null && naverResponse.getItems() != null) {
-                            List<Image> foundImages = mapNaverApiItemsToImages(naverResponse.getItems(), place);
-                            int remaining = 5 - naverImages.size();
+                            List<PlaceImageEntity> foundPlaceImageEntities = mapNaverApiItemsToImages(naverResponse.getItems(), place);
+                            int remaining = 5 - naverPlaceImageEntities.size();
                             if (remaining > 0) {
-                                naverImages.addAll(foundImages.stream().limit(remaining).toList());
+                                naverPlaceImageEntities.addAll(foundPlaceImageEntities.stream().limit(remaining).toList());
                             }
                         }
-                        if (naverImages.size() >= 5) {
+                        if (naverPlaceImageEntities.size() >= 5) {
                             break;
                         }
                     }
-                    if (!naverImages.isEmpty()) {
-                        log.info("✔️ 네이버 API로 이미지 {}개를 찾았습니다. 장소: {}", naverImages.size(), place.getTitle());
+                    if (!naverPlaceImageEntities.isEmpty()) {
+                        log.info("✔️ 네이버 API로 이미지 {}개를 찾았습니다. 장소: {}", naverPlaceImageEntities.size(), place.getTitle());
                     } else {
                         log.warn("❌ 모든 API에서 장소에 대한 이미지 검색 결과가 없습니다: {}", place.getTitle());
                     }
-                    return naverImages;
+                    return naverPlaceImageEntities;
                 });
     }
 
-    private List<Image> mapTourApiItemsToImages(List<TourImageItem> tourItems, ExternalPlaceEntity place) {
+    private List<PlaceImageEntity> mapTourApiItemsToImages(List<TourImageItem> tourItems, ExternalPlaceEntity place) {
         return tourItems.stream()
                 .map(item -> {
-                    Image image = new Image();
-                    image.setUrl(item.getGalWebImageUrl());
-                    image.setCopyright(item.getGalPhotographer());
-                    image.setPlace(place);
-                    return image;
+                    return PlaceImageEntity.builder()
+                            .url(item.getGalWebImageUrl())
+                            .source(item.getGalPhotographer())
+                            .place(place)
+                            .build();
                 })
                 .collect(Collectors.toList());
     }
 
-    private List<Image> mapNaverApiItemsToImages(List<ImageItem> naverItems, ExternalPlaceEntity place) {
+    private List<PlaceImageEntity> mapNaverApiItemsToImages(List<ImageItem> naverItems, ExternalPlaceEntity place) {
         return naverItems.stream()
                 .map(item -> {
-                    Image image = new Image();
-                    image.setUrl(item.getLink());
-                    image.setCopyright(item.getTitle());
-                    image.setPlace(place);
-                    return image;
+                    return PlaceImageEntity.builder()
+                            .url(item.getLink())
+                            .source(item.getTitle())
+                            .place(place)
+                            .build();
                 })
                 .collect(Collectors.toList());
     }

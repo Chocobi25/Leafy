@@ -1,6 +1,6 @@
 package com.chocobi.leafy.place.common.dto;
 
-import com.chocobi.leafy.place.infra.entity.Image;
+import com.chocobi.leafy.place.infra.entity.PlaceImageEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -9,13 +9,13 @@ import lombok.Data;
 public class ImageDTO {
     private Long id;
     private String url;
-    private String copyright;
+    private String source;
 
-    public static ImageDTO fromEntity(Image image) {
+    public static ImageDTO fromEntity(PlaceImageEntity placeImageEntity) {
         return new ImageDTO(
-                image.getId(),
-                image.getUrl(),
-                image.getCopyright()
+                placeImageEntity.getId(),
+                placeImageEntity.getUrl(),
+                placeImageEntity.getSource()
         );
     }
 }
