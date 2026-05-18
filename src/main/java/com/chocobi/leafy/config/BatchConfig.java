@@ -1,11 +1,11 @@
 package com.chocobi.leafy.config;
 
 import com.chocobi.leafy.place.batch.*;
-import com.chocobi.leafy.place.infra.entity.Image;
+import com.chocobi.leafy.place.infra.entity.PlaceImageEntity;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceStaging;
 import com.chocobi.leafy.place.fetcher.image.ImageSearchService;
-import com.chocobi.leafy.place.infra.repository.ImageRepository;
+import com.chocobi.leafy.place.infra.repository.PlaceImageRepository;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
@@ -40,7 +40,7 @@ public class BatchConfig {
     private final PlaceGeocodeProcessor placeGeocodeProcessor;
     private final PlaceWriter placeWriter;
     private final ImageSearchService imageSearchService;
-    private final ImageRepository imageRepository;
+    private final PlaceImageRepository placeImageRepository;
     private final ImageWriter imageWriter;
 
     @Bean
@@ -96,7 +96,7 @@ public class BatchConfig {
     @Bean
     @StepScope
     public PlaceImageProcessor placeImageProcessor() {
-        return new PlaceImageProcessor(imageSearchService, imageRepository);
+        return new PlaceImageProcessor(imageSearchService, placeImageRepository);
     }
 
     @Bean(name = "imageStep")
@@ -105,7 +105,7 @@ public class BatchConfig {
                           @Qualifier("imageWriter") ImageWriter imageWriter,
                           @Qualifier("taskExecutor") TaskExecutor taskExecutor) {
         return new StepBuilder("imageStep", jobRepository)
-                .<ExternalPlaceEntity, List<Image>>chunk(100, transactionManager)
+                .<ExternalPlaceEntity, List<PlaceImageEntity>>chunk(100, transactionManager)
                 .reader(placeReader)
                 .processor(placeImageProcessor)
                 .writer(imageWriter)

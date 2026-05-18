@@ -1,7 +1,7 @@
 package com.chocobi.leafy.place.batch;
 
-import com.chocobi.leafy.place.infra.entity.Image;
-import com.chocobi.leafy.place.infra.repository.ImageRepository;
+import com.chocobi.leafy.place.infra.entity.PlaceImageEntity;
+import com.chocobi.leafy.place.infra.repository.PlaceImageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.Chunk;
@@ -13,20 +13,20 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ImageWriter implements ItemWriter<List<Image>> {
-    private final ImageRepository imageRepository;
+public class ImageWriter implements ItemWriter<List<PlaceImageEntity>> {
+    private final PlaceImageRepository placeImageRepository;
 
     @Override
-    public void write(Chunk<? extends List<Image>> chunk) throws Exception {
+    public void write(Chunk<? extends List<PlaceImageEntity>> chunk) throws Exception {
         log.info("Saving a chunk of image lists. Chunk size: {}.", chunk.size());
 
-        List<Image> allImages = chunk.getItems().stream()
+        List<PlaceImageEntity> allPlaceImageEntities = chunk.getItems().stream()
                 .flatMap(List::stream)
                 .toList();
 
-        if (!allImages.isEmpty()) {
-            imageRepository.saveAll(allImages);
-            log.info("Successfully saved {} images.", allImages.size());
+        if (!allPlaceImageEntities.isEmpty()) {
+            placeImageRepository.saveAll(allPlaceImageEntities);
+            log.info("Successfully saved {} images.", allPlaceImageEntities.size());
         } else {
             log.warn("No images to save in this chunk.");
         }
