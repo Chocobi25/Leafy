@@ -11,11 +11,13 @@ public class TripPlaceRequest {
     @Positive
     private Long placeId;
 
+    @NotNull
     @PositiveOrZero
-    private int visitOrder;
+    private Integer visitOrder;
 
+    @NotNull
     @PositiveOrZero
-    private int dayIndex;
+    private Integer dayIndex;
 
     private String memo;
 }

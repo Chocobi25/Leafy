@@ -9,7 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -22,6 +22,6 @@ public interface TripPlanDocs {
     ResponseEntity<SuccessResponse<List<TripPlaceResponse>>> saveTripPlaces(
             @PathVariable @Positive Long tripId,
             @Valid @NotEmpty @RequestBody List<TripPlaceRequest> request,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     );
 }
