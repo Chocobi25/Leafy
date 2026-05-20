@@ -21,11 +21,7 @@ public class TripPlaceFindService {
                 .orElseThrow(() -> new CustomException(TripError.TRIP_PLACE_NOT_FOUND));
     }
 
-    public List<TripPlaceEntity> findTripPlacesByTripId(Long tripId) {
-        return tripPlaceRepository.findByTrip_Id(tripId);
-    }
-
-    public List<TripPlaceEntity> findTripPlacesOrderByVisitOrder(Long tripId) {
-        return tripPlaceRepository.findByTrip_IdOrderByVisitOrderAsc(tripId);
+    public List<TripPlaceEntity> findOrderedTripPlaces(Long tripId) {
+        return tripPlaceRepository.findAllByTripIdOrderByVisitOrderAsc(tripId);
     }
 }

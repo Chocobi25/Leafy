@@ -33,9 +33,4 @@ public class TripPlaceEntity extends BaseEntity {
 
     private String memo;
 
-    public void updateDetails(int dayIndex, int visitOrder, String memo){
-        this.dayIndex = dayIndex;
-        this.visitOrder = visitOrder;
-        this.memo = memo;
-    }
 }

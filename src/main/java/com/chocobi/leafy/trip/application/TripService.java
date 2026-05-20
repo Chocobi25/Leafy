@@ -12,9 +12,12 @@ import com.chocobi.leafy.trip.dto.request.CreateTripRequest;
 import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
 import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
 import com.chocobi.leafy.trip.dto.response.TripListResponse;
+import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.response.TripSaveResponse;
 import com.chocobi.leafy.trip.infra.TripCommandService;
 import com.chocobi.leafy.trip.infra.TripFindService;
+import com.chocobi.leafy.trip.infra.TripPlaceCommandService;
+import com.chocobi.leafy.trip.infra.TripPlaceFindService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import com.chocobi.leafy.trip.vo.TripError;
@@ -32,7 +35,8 @@ public class TripService {
     private final TripFindService tripFindService;
     private final TripCommandService tripCommandService;
     private final UserService userService;
-    private final TripPlaceService tripPlaceService;
+    private final TripPlaceFindService tripPlaceFindService;
+    private final TripPlaceCommandService tripPlaceCommandService;
     private final TripSegmentService tripSegmentService;
     private final TranscodeClient transcodeClient;
     private final RegionFindService regionFindService;
@@ -67,16 +71,16 @@ public class TripService {
         TripEntity trip = tripFindService.findOwnedTripDetail(tripId, userId);
 
         List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
-        return TripDetailResponse.from(trip, tripSegments);
+        return TripDetailResponse.from(trip, tripSegments, getTripPlaces(tripId));
     }
 
     @Transactional
     public void deleteTrip(Long tripId, Long userId) {
 
-        TripEntity trip = findOwnedTrip(tripId, userId);
+        TripEntity trip = getOwnedTrip(tripId, userId);
 
         tripSegmentService.deleteTripSegments(trip);
-        tripPlaceService.deleteTripPlaces(trip);
+        tripPlaceCommandService.deleteAllByTrip(trip);
         tripCommandService.delete(trip);
     }
 
@@ -88,17 +92,17 @@ public class TripService {
         trip.update(request.title(), request.startDate(), request.endDate());
         List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
 
-        return TripDetailResponse.from(trip, tripSegments);
+        return TripDetailResponse.from(trip, tripSegments, getTripPlaces(tripId));
     }
 
     @Transactional(readOnly = true)
-    public TripEntity findOwnedTrip(Long tripId, Long userId) {
+    public TripEntity getOwnedTrip(Long tripId, Long userId) {
         return tripFindService.findOwnedTrip(tripId, userId);
     }
 
     @Transactional
     public void certifyTrip(Long tripId, TransCoordDTO transCoordDTO, Long userId) {
-        TripEntity trip = findOwnedTrip(tripId, userId);
+        TripEntity trip = getOwnedTrip(tripId, userId);
 
         if (trip.getStatus() != TripStatus.IN_PROGRESS) {
             throw new CustomException(TripError.TRIP_NOT_IN_PROGRESS);
@@ -133,7 +137,7 @@ public class TripService {
 
     @Transactional
     public void changeOwnedTripStatus(Long tripId, TripStatus tripStatus, Long userId) {
-        TripEntity trip = findOwnedTrip(tripId, userId);
+        TripEntity trip = getOwnedTrip(tripId, userId);
         trip.editStatus(tripStatus);
     }
 
@@ -152,4 +156,12 @@ public class TripService {
 
         return address.getRegion_1depth_name();
     }
+
+    private List<TripPlaceResponse> getTripPlaces(Long tripId) {
+        return tripPlaceFindService.findOrderedTripPlaces(tripId).stream()
+                .filter(tripPlace -> tripPlace.getPlace() != null)
+                .map(TripPlaceResponse::from)
+                .toList();
+    }
+
 }

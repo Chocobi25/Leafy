@@ -3,10 +3,8 @@ package com.chocobi.leafy.trip.application;
 import com.chocobi.leafy.place.application.PlaceService;
 import com.chocobi.leafy.trip.infra.TripPlaceCommandService;
 import com.chocobi.leafy.trip.infra.TripPlaceFindService;
-import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.dto.request.TripPlaceRequest;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
-import com.chocobi.leafy.trip.dto.request.TripPlacesListRequest;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import lombok.RequiredArgsConstructor;
@@ -18,39 +16,18 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class TripPlaceService {
     private final TripPlaceFindService tripPlaceFindService;
     private final TripPlaceCommandService tripPlaceCommandService;
     private final PlaceService placeService;
-    private final TripFindService tripFindService;
+    private final TripService tripService;
 
-    public void saveInitialTripPlaces(TripPlacesListRequest request, Long userId) {
-        TripEntity trip = tripFindService.findOwnedTrip(request.getTripId(), userId);
-        List<TripPlaceEntity> tripPlaces = buildTripPlaces(trip, request.getPlaces());
+    public List<TripPlaceResponse> saveTripPlaces(Long tripId, List<TripPlaceRequest> request, Long userId) {
+        TripEntity trip = tripService.getOwnedTrip(tripId, userId);
 
-        tripPlaceCommandService.saveAll(tripPlaces);
-    }
+        tripPlaceCommandService.deleteAllByTrip(trip);
 
-    @Transactional
-    public void editTripPlaceDetails(TripPlacesListRequest request, Long userId) {
-        TripEntity trip = tripFindService.findOwnedTrip(request.getTripId(), userId);
-        editTripPlaceDetails(trip, request.getPlaces());
-    }
-
-    @Transactional
-    public void editTripPlaceDetails(TripEntity trip, List<TripPlaceRequest> places) {
-        // 기존 TripPlace 삭제
-        deleteTripPlaces(trip);
-
-        // 새로운 TripPlace 저장
-        List<TripPlaceEntity> tripPlaces = buildTripPlaces(trip, places);
-
-        tripPlaceCommandService.saveAll(tripPlaces);
-    }
-
-    private List<TripPlaceEntity> buildTripPlaces(TripEntity trip, List<TripPlaceRequest> places) {
-        return places.stream()
+        List<TripPlaceEntity> tripPlaces = request.stream()
                 .map(placeReq -> TripPlaceEntity.builder()
                         .trip(trip)
                         .place(placeService.getPlace(placeReq.getPlaceId()))
@@ -59,26 +36,20 @@ public class TripPlaceService {
                         .visitOrder(placeReq.getVisitOrder())
                         .build())
                 .toList();
+
+        return tripPlaceCommandService.saveAll(tripPlaces).stream()
+                .map(TripPlaceResponse::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public List<TripPlaceResponse> getTripPlaces(Long tripId) {
-        List<TripPlaceEntity> places = tripPlaceFindService.findTripPlacesByTripId(tripId);
+        List<TripPlaceEntity> places = tripPlaceFindService.findOrderedTripPlaces(tripId);
 
         return places.stream()
-                .filter(tripPlace -> tripPlace.getPlace() != null) // null 체크 추가
-                .map(TripPlaceResponse::toDTO)
+                .filter(tripPlace -> tripPlace.getPlace() != null)
+                .map(TripPlaceResponse::from)
                 .toList();
-    }
-
-    public void deleteTripPlace(Long tripPlaceId) {
-        TripPlaceEntity tripPlace = tripPlaceFindService.findTripPlace(tripPlaceId);
-        tripPlaceCommandService.delete(tripPlace);
-    }
-
-    @Transactional
-    public void deleteTripPlaces(TripEntity trip) {
-        tripPlaceCommandService.deleteAllByTrip(trip);
     }
 
     @Transactional(readOnly = true)

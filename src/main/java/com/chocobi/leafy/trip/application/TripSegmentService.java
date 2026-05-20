@@ -334,7 +334,7 @@ public class TripSegmentService {
                 .map(req -> TripPlaceResponse.builder()
                         .tripId(trip.getId())
                         .place(PlaceDTO.fromEntity(placeService.getPlace(req.getPlaceId())))
-                        .day_index(req.getDayIndex())
+                        .dayIndex(req.getDayIndex())
                         .visitOrder(req.getVisitOrder())
                         .memo(req.getMemo())
                         .build())

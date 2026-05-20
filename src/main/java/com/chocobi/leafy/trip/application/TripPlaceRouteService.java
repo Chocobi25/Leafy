@@ -21,7 +21,7 @@ public class TripPlaceRouteService {
     public void editTripPlacesAndRecalculateRoutes(RecalculateRoutesRequest request, Long userId) {
         TripEntity trip = tripFindService.findOwnedTrip(request.getTripId(), userId);
 
-        tripPlaceService.editTripPlaceDetails(trip, request.getPlaces());
+        tripPlaceService.saveTripPlaces(request.getTripId(), request.getPlaces(), userId);
         List<TripPlaceResponse> updatedTripPlaces = tripPlaceService.getTripPlaces(trip.getId());
         tripSegmentService.recalculateRoutesAndSaveV2(trip, request.getTransport(), updatedTripPlaces);
         tripSegmentService.completeTripSegments(trip.getId(), request.getTransport());
