@@ -15,3 +15,43 @@ spring:
   sql:
     init:
       mode: never
+
+kakao:
+  admin-key: test-admin-key
+  api:
+    key: test-kakao-api-key
+
+tour:
+  api:
+    key: test-tour-api-key
+
+theme:
+  api:
+    key: test-theme-api-key
+
+rural:
+  api:
+    key: test-rural-api-key
+
+farm:
+  api:
+    key: test-farm-api-key
+
+tmap:
+  api:
+    key: test-tmap-api-key
+
+naver:
+  client:
+    id: test-naver-client-id
+    secret: test-naver-client-secret
+
+jwt:
+  secret: test-jwt-secret-key-for-leafy-tests-1234567890
+  access-token:
+    expiration: 3600000
+  refresh-token:
+    expiration: 1209600000
+
+cookie:
+  secure: false
