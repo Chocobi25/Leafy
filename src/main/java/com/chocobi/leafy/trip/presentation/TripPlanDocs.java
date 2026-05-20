@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@Tag(name = "여행 장소 API", description = "여행에 속한 장소 목록 저장 및 수정")
-public interface TripPlaceDocs {
+@Tag(name = "여행 계획 API", description = "여행 계획에 필요한 장소 목록 저장 및 수정")
+public interface TripPlanDocs {
 
     @Operation(summary = "여행 장소 목록 저장")
     ResponseEntity<SuccessResponse<List<TripPlaceResponse>>> saveTripPlaces(

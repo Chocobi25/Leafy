@@ -23,10 +23,11 @@ import java.util.List;
 @RequestMapping("/api/trip")
 @RequiredArgsConstructor
 @Validated
-public class TripPlaceController implements TripPlaceDocs {
+public class TripPlanController implements TripPlanDocs {
 
     private final TripPlaceService tripPlaceService;
 
+    // TODO: 여행 계획 흐름을 정리할 때 route, segment, summary, complete API를 이 컨트롤러로 옮긴다.
     @PutMapping("/{tripId}/places")
     public ResponseEntity<SuccessResponse<List<TripPlaceResponse>>> saveTripPlaces(
             @PathVariable @Positive Long tripId,
