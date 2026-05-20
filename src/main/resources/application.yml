@@ -3,13 +3,10 @@ spring:
     name: leafy
   profiles:
     active: local
-    include: oauth, secret
+    include: secret
 
   codec:
     max-in-memory-size: 5MB
-
-kakao:
-  admin-key: ${KAKAO_ADMIN_KEY}
 
 app:
   user:
