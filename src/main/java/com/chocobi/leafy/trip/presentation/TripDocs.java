@@ -17,7 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -58,7 +58,7 @@ public interface TripDocs {
     })
     ResponseEntity<SuccessResponse<TripSaveResponse>> createTrip(
             @Valid @RequestBody CreateTripRequest createTripRequest,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     );
 
     @Operation(summary = "내 여행 목록 조회")
@@ -82,7 +82,7 @@ public interface TripDocs {
                             }
                             """)
             ))
-    ResponseEntity<SuccessResponse<List<TripListResponse>>> getTrips(Authentication authentication);
+    ResponseEntity<SuccessResponse<List<TripListResponse>>> getTrips(@AuthenticationPrincipal Long userId);
 
     @Operation(summary = "여행 상세 조회")
     @ApiResponses({
@@ -139,7 +139,7 @@ public interface TripDocs {
     })
     ResponseEntity<SuccessResponse<TripDetailResponse>> getTripDetails(
             @PathVariable @Positive Long tripId,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     );
 
     @Operation(summary = "여행 삭제")
@@ -172,7 +172,7 @@ public interface TripDocs {
     })
     ResponseEntity<Void> deleteTrip(
             @PathVariable @Positive Long tripId,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     );
 
     @Operation(summary = "여행 기본 정보 수정")
@@ -243,6 +243,6 @@ public interface TripDocs {
     ResponseEntity<SuccessResponse<TripDetailResponse>> updateTrip(
             @PathVariable @Positive Long tripId,
             @Valid @RequestBody TripUpdateRequest request,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     );
 }
