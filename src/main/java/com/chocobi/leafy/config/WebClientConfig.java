@@ -72,6 +72,11 @@ public class WebClientConfig {
                 .build();
     }
 
+    @Bean
+    public WebClient vWorldClient(@Value("${VWORLD_API_URL}") String vWorldUrl) {
+        return createWebClient(vWorldUrl);
+    }
+
 
     private WebClient createWebClient(String baseUrl) {
         return WebClient.builder()

@@ -12,9 +12,9 @@ VALUES
 (2, 2, 'fcm_token_sample_admin', NOW(), NOW());
 
 -- 3. 지역 데이터 먼저 삽입 (ID: 1, 2, 3...)
-INSERT INTO region (id, name, parent_id, level) VALUES (1, '서울', NULL, 'SIDO');
-INSERT INTO region (id, name, parent_id, level) VALUES (2, '부산', NULL, 'SIDO');
-INSERT INTO region (id, name, parent_id, level) VALUES (3, '제주', NULL, 'SIDO');
+INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (1, '11', '서울특별시', '서울특별시', NULL, 'SIDO');
+INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (2, '26', '부산광역시', '부산광역시', NULL, 'SIDO');
+INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (3, '50', '제주특별자치도', '제주특별자치도', NULL, 'SIDO');
 
 -- 4. 카테고리 데이터
 INSERT INTO category_entity (id, code, name, icon_url) VALUES

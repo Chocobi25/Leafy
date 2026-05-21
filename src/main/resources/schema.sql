@@ -33,7 +33,9 @@ DROP TABLE IF EXISTS region;
 CREATE TABLE region
 (
     id        bigint PRIMARY KEY,
+    code      varchar(255) NOT NULL UNIQUE,
     name      varchar(100) NOT NULL,
+    full_name varchar(200) NOT NULL,
     parent_id bigint,
     level     varchar(20)  NOT NULL
 );

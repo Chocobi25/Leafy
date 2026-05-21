@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -24,8 +25,14 @@ public class RegionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String code;
+
     @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(nullable = false, length = 200)
+    private String fullName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -35,8 +42,11 @@ public class RegionEntity {
     @Column(nullable = false, length = 20)
     private RegionLevel level;
 
-    public RegionEntity(String name, RegionEntity parent, RegionLevel level) {
+    @Builder
+    public RegionEntity(String code, String name, String fullName, RegionEntity parent, RegionLevel level) {
+        this.code = code;
         this.name = name;
+        this.fullName = fullName;
         this.parent = parent;
         this.level = level;
     }
