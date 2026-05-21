@@ -3,21 +3,22 @@ package com.chocobi.leafy.trip.dto.request;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.Data;
+import jakarta.validation.constraints.Size;
 
-@Data
-public class TripPlaceRequest {
-    @NotNull
-    @Positive
-    private Long placeId;
+public record TripPlaceRequest(
+        @NotNull
+        @Positive
+        Long placeId,
 
-    @NotNull
-    @PositiveOrZero
-    private Integer visitOrder;
+        @NotNull
+        @PositiveOrZero
+        Integer visitOrder,
 
-    @NotNull
-    @PositiveOrZero
-    private Integer dayIndex;
+        @NotNull
+        @PositiveOrZero
+        Integer dayIndex,
 
-    private String memo;
+        @Size(max = 255)
+        String memo
+) {
 }

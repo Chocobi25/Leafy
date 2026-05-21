@@ -30,10 +30,10 @@ public class TripPlaceService {
         List<TripPlaceEntity> tripPlaces = request.stream()
                 .map(placeReq -> TripPlaceEntity.builder()
                         .trip(trip)
-                        .place(placeService.getPlace(placeReq.getPlaceId()))
-                        .memo(placeReq.getMemo())
-                        .dayIndex(placeReq.getDayIndex())
-                        .visitOrder(placeReq.getVisitOrder())
+                        .place(placeService.getPlace(placeReq.placeId()))
+                        .memo(placeReq.memo())
+                        .dayIndex(placeReq.dayIndex())
+                        .visitOrder(placeReq.visitOrder())
                         .build())
                 .toList();
 

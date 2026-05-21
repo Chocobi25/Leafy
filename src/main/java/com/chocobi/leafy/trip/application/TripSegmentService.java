@@ -333,10 +333,10 @@ public class TripSegmentService {
         List<TripPlaceResponse> tripPlaces = tripPlaceRequests.stream()
                 .map(req -> TripPlaceResponse.builder()
                         .tripId(trip.getId())
-                        .place(PlaceDTO.fromEntity(placeService.getPlace(req.getPlaceId())))
-                        .dayIndex(req.getDayIndex())
-                        .visitOrder(req.getVisitOrder())
-                        .memo(req.getMemo())
+                        .place(PlaceDTO.fromEntity(placeService.getPlace(req.placeId())))
+                        .dayIndex(req.dayIndex())
+                        .visitOrder(req.visitOrder())
+                        .memo(req.memo())
                         .build())
                 .toList();
 
