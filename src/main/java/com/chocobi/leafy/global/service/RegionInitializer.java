@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -24,9 +23,8 @@ public class RegionInitializer {
     private final RegionFindService regionFindService;
 
     @EventListener(ApplicationReadyEvent.class)
-    @Transactional
     public void initRegions() {
-        if (regionFindService.findRegionCount() > 0) {
+        if (isAllRegionLevelsInitialized()) {
             log.info("이미 지역 데이터가 존재합니다.");
             return;
         }
@@ -41,7 +39,6 @@ public class RegionInitializer {
         log.info("행정구역 데이터 초기화 완료");
     }
 
-    @Transactional
     public void initSido() {
         initRegionLevel(
                 RegionLevel.SIDO,
@@ -49,7 +46,6 @@ public class RegionInitializer {
         );
     }
 
-    @Transactional
     public void initSigungu() {
         initRegionLevel(
                 RegionLevel.SIGUNGU,
@@ -57,7 +53,6 @@ public class RegionInitializer {
         );
     }
 
-    @Transactional
     public void initDong() {
         initRegionLevel(
                 RegionLevel.EMD,
@@ -65,7 +60,6 @@ public class RegionInitializer {
         );
     }
 
-    @Transactional
     public void initRee() {
         initRegionLevel(
                 RegionLevel.REE,
@@ -74,6 +68,11 @@ public class RegionInitializer {
     }
 
     private void initRegionLevel(RegionLevel level, RegionLevel parentLevel) {
+        if (isRegionLevelInitialized(level)) {
+            log.info("{} 데이터가 이미 존재합니다. 초기화를 건너뜁니다.", level.getDescription());
+            return;
+        }
+
         log.info("{} 데이터 초기화 시작", level.getDescription());
 
         List<VWorldRegionItem> items;
@@ -83,9 +82,8 @@ public class RegionInitializer {
         } else {
             List<RegionEntity> parentRegions = regionFindService.findRegions(parentLevel);
             if (parentRegions.isEmpty()) {
-                log.warn("{} 데이터가 없습니다. 먼저 {} 데이터를 초기화해주세요.",
-                        parentLevel.getDescription(), parentLevel.getDescription());
-                return;
+                throw new IllegalStateException(parentLevel.getDescription() + " 데이터가 없어 "
+                        + level.getDescription() + " 데이터를 초기화할 수 없습니다.");
             }
 
             items = fetchChildRegions(level, parentRegions);
@@ -93,6 +91,17 @@ public class RegionInitializer {
 
         int count = saveRegionsWithParent(items, level, parentLevel);
         log.info("{} 데이터 {}건 저장 완료", level.getDescription(), count);
+    }
+
+    private boolean isAllRegionLevelsInitialized() {
+        return isRegionLevelInitialized(RegionLevel.SIDO)
+                && isRegionLevelInitialized(RegionLevel.SIGUNGU)
+                && isRegionLevelInitialized(RegionLevel.EMD)
+                && isRegionLevelInitialized(RegionLevel.REE);
+    }
+
+    private boolean isRegionLevelInitialized(RegionLevel level) {
+        return !regionFindService.findRegions(level).isEmpty();
     }
 
     private List<VWorldRegionItem> fetchChildRegions(RegionLevel level, List<RegionEntity> parentRegions) {
@@ -120,11 +129,15 @@ public class RegionInitializer {
                 if (e instanceof InterruptedException) {
                     Thread.currentThread().interrupt();
                     log.warn("{} 조회 중 인터럽트 발생 ({}번째, code: {})", parent.getName(), count, parent.getCode());
-                    break;
+                    throw new IllegalStateException(level.getDescription() + " 데이터 초기화가 중단되었습니다.", e);
                 }
 
-                log.warn("{} 조회 실패 ({}번째, code: {}): {}",
-                        parent.getName(), count, parent.getCode(), e.getMessage());
+                throw new IllegalStateException(String.format(
+                        "%s 데이터 초기화 중 %s 하위 지역 조회 실패 (code: %s)",
+                        level.getDescription(),
+                        parent.getName(),
+                        parent.getCode()
+                ), e);
             }
         }
 
