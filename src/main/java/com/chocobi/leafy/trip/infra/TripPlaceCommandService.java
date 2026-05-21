@@ -19,7 +19,7 @@ public class TripPlaceCommandService {
         return tripPlaceRepository.saveAll(tripPlaceEntities);
     }
 
-    public void deleteAllByTrip(TripEntity tripEntity) {
+    public void deleteAll(TripEntity tripEntity) {
         tripPlaceRepository.deleteAllByTrip(tripEntity);
     }
 }

@@ -80,7 +80,7 @@ public class TripService {
         TripEntity trip = getOwnedTrip(tripId, userId);
 
         tripSegmentService.deleteTripSegments(trip);
-        tripPlaceCommandService.deleteAllByTrip(trip);
+        tripPlaceCommandService.deleteAll(trip);
         tripCommandService.delete(trip);
     }
 

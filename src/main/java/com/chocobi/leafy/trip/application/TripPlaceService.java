@@ -25,7 +25,7 @@ public class TripPlaceService {
     public List<TripPlaceResponse> saveTripPlaces(Long tripId, List<TripPlaceRequest> request, Long userId) {
         TripEntity trip = tripService.getOwnedTrip(tripId, userId);
 
-        tripPlaceCommandService.deleteAllByTrip(trip);
+        tripPlaceCommandService.deleteAll(trip);
 
         List<TripPlaceEntity> tripPlaces = request.stream()
                 .map(placeReq -> TripPlaceEntity.builder()
