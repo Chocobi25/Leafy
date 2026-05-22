@@ -15,6 +15,9 @@ VALUES
 INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (1, '11', '서울특별시', '서울특별시', NULL, 'SIDO');
 INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (2, '26', '부산광역시', '부산광역시', NULL, 'SIDO');
 INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (3, '50', '제주특별자치도', '제주특별자치도', NULL, 'SIDO');
+INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (4, '11110', '종로구', '서울특별시 종로구', 1, 'SIGUNGU');
+INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (5, '11110101', '청운동', '서울특별시 종로구 청운동', 4, 'EMD');
+INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (6, '1111010100', '청운동리', '서울특별시 종로구 청운동 청운동리', 5, 'REE');
 
 -- 4. 카테고리 데이터
 INSERT INTO category_entity (id, code, name, icon_url) VALUES
