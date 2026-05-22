@@ -3,7 +3,7 @@ package com.chocobi.leafy.trip.application;
 import com.chocobi.leafy.global.entity.RegionEntity;
 import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.global.service.RegionFindService;
-import com.chocobi.leafy.place.fetcher.kakao.dto.Address;
+import com.chocobi.leafy.external.kakao.dto.GeocodeResponse.Address;
 import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.client.TransCoordResponse;
 import com.chocobi.leafy.trip.client.TranscodeClient;

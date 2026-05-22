@@ -4,8 +4,8 @@ import com.chocobi.leafy.place.infra.entity.Category;
 import com.chocobi.leafy.place.infra.entity.CategoryEntity;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceStaging;
-import com.chocobi.leafy.place.fetcher.kakao.GeocodeService;
-import com.chocobi.leafy.place.fetcher.kakao.dto.GeocodeResult;
+import com.chocobi.leafy.external.kakao.client.GeocodeClient;
+import com.chocobi.leafy.external.kakao.dto.GeocodedAddress;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -17,23 +17,23 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class PlaceGeocodeProcessor implements ItemProcessor<PlaceStaging, ExternalPlaceEntity> {
-    private final GeocodeService geocodeService;
+    private final GeocodeClient geocodeService;
     private final EntityManager entityManager;
 
     @Override
     public ExternalPlaceEntity process(PlaceStaging item) throws Exception {
-        GeocodeResult geocodeResult = geocodeService.getCoordinatesFromAddress(item.getAddress());
+        GeocodedAddress geocodedAddress = geocodeService.getCoordinatesFromAddress(item.getAddress());
 
-        if (geocodeResult.getAddress() == null) {
+        if (geocodedAddress.getAddress() == null) {
             log.warn("Failed to get coordinates for address: {}. Skipping item.", item.getAddress());
             return null;
         }
 
         return ExternalPlaceEntity.builder()
                 .title(item.getTitle())
-                .address(geocodeResult.getAddress().getAddress_name())
-                .latitude(geocodeResult.getLatitude())
-                .longitude(geocodeResult.getLongitude())
+                .address(geocodedAddress.getAddress().getAddress_name())
+                .latitude(geocodedAddress.getLatitude())
+                .longitude(geocodedAddress.getLongitude())
                 .copyright(item.getCopyright())
                 .description(item.getDescription())
                 .category(findCategory(item.getCategory()))
