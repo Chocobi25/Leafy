@@ -1,10 +1,6 @@
 package com.chocobi.leafy.place.batch;
 
 import com.chocobi.leafy.place.infra.entity.PlaceStaging;
-import com.chocobi.leafy.place.fetcher.eco.EcoService;
-import com.chocobi.leafy.place.fetcher.farm.FarmService;
-import com.chocobi.leafy.place.fetcher.rural.RuralService;
-import com.chocobi.leafy.place.fetcher.theme.ThemeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
@@ -22,17 +18,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PlaceStagingTasklet implements Tasklet {
 
-    private final EcoService ecoService;
-    private final RuralService ruralService;
-    private final ThemeService themeService;
-    private final FarmService farmService;
-
     private final PlaceStagingRepository placeStagingRepository;
 
     private List<PlaceStaging> fetchAllPlaces() {
         List<PlaceStaging> allPlaces = new ArrayList<>();
 
-        try {
+        // TODO: 나중에 변경 예정
+        /*try {
             List<PlaceStaging> ecoPlaces = ecoService.getPlaceStaging();
             ecoPlaces.stream().filter(p -> p.getAddress() != null).forEach(allPlaces::add);
             log.info("EcoService fetched {} places", ecoPlaces.size());
@@ -62,7 +54,7 @@ public class PlaceStagingTasklet implements Tasklet {
             log.info("FarmService fetched {} places", farmPlaces.size());
         } catch (Exception e) {
             log.error("FarmService fetch failed", e);
-        }
+        }*/
 
         return allPlaces;
     }

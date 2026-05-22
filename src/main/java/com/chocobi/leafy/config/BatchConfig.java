@@ -4,7 +4,6 @@ import com.chocobi.leafy.place.batch.*;
 import com.chocobi.leafy.place.infra.entity.PlaceImageEntity;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceStaging;
-import com.chocobi.leafy.place.fetcher.image.ImageSearchService;
 import com.chocobi.leafy.place.infra.repository.PlaceImageRepository;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,6 @@ public class BatchConfig {
     private final PlaceStagingTasklet placeStagingTasklet;
     private final PlaceGeocodeProcessor placeGeocodeProcessor;
     private final PlaceWriter placeWriter;
-    private final ImageSearchService imageSearchService;
     private final PlaceImageRepository placeImageRepository;
     private final ImageWriter imageWriter;
 
@@ -96,7 +94,7 @@ public class BatchConfig {
     @Bean
     @StepScope
     public PlaceImageProcessor placeImageProcessor() {
-        return new PlaceImageProcessor(imageSearchService, placeImageRepository);
+        return new PlaceImageProcessor(placeImageRepository);
     }
 
     @Bean(name = "imageStep")

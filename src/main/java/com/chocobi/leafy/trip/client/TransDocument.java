@@ -1,6 +1,6 @@
 package com.chocobi.leafy.trip.client;
 
-import com.chocobi.leafy.place.fetcher.kakao.dto.Address;
+import com.chocobi.leafy.external.kakao.dto.GeocodeResponse.Address;
 import lombok.Data;
 
 @Data

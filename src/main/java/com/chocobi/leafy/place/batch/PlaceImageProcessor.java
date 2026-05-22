@@ -2,8 +2,8 @@ package com.chocobi.leafy.place.batch;
 
 import com.chocobi.leafy.place.infra.entity.PlaceImageEntity;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
-import com.chocobi.leafy.place.fetcher.image.ImageSearchService;
 import com.chocobi.leafy.place.infra.repository.PlaceImageRepository;
+import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
@@ -15,7 +15,6 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class PlaceImageProcessor implements ItemProcessor<ExternalPlaceEntity, List<PlaceImageEntity>> {
-    private final ImageSearchService imageSearchService;
     private final PlaceImageRepository placeImageRepository;
 
     @Override
@@ -27,7 +26,7 @@ public class PlaceImageProcessor implements ItemProcessor<ExternalPlaceEntity, L
         }
 
         // imageSearchService의 Mono를 .block()으로 기다린 후 결과를 가져옵니다.
-        List<PlaceImageEntity> placeImageEntities = imageSearchService.findImagesForPlace(place).block();
+        List<PlaceImageEntity> placeImageEntities = new ArrayList<>(); // TODO: 나중에 변경 예정
 
         if (placeImageEntities != null && !placeImageEntities.isEmpty()) {
             log.info("검색된 이미지 {}개를 저장합니다. 장소: {}", placeImageEntities.size(), place.getTitle());
