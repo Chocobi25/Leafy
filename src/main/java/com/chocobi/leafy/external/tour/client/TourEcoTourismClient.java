@@ -1,6 +1,7 @@
 package com.chocobi.leafy.external.tour.client;
 
 import com.chocobi.leafy.external.tour.dto.TourEcoTourismResponse;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -35,6 +36,6 @@ public class TourEcoTourismClient {
                 )
                 .retrieve()
                 .bodyToMono(TourEcoTourismResponse.class)
-                .block();
+                .block(Duration.ofSeconds(10));
     }
 }

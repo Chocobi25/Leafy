@@ -1,10 +1,12 @@
 package com.chocobi.leafy.external.tour.dto;
 
 import com.chocobi.leafy.external.common.dto.ExternalApiResponse;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 @Getter
 public class TourEcoTourismResponse {
+    @JsonProperty("response")
     private ExternalApiResponse<TourEcoTourismItem> externalApiResponse;
 
     @Getter

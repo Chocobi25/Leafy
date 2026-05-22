@@ -3,6 +3,7 @@ package com.chocobi.leafy.external.tour.client;
 import com.chocobi.leafy.external.tour.dto.TourImageResponse.TourImageItem;
 import com.chocobi.leafy.place.common.util.PlaceConstants;
 import com.chocobi.leafy.external.tour.dto.TourImageResponse;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,6 @@ public class TourImageClient {
                 )
                 .retrieve()
                 .bodyToMono(TourImageResponse.class)
-                .block();
+                .block(Duration.ofSeconds(10));
     }
 }

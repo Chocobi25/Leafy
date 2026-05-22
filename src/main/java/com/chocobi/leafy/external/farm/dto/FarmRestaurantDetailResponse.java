@@ -22,6 +22,7 @@ public class FarmRestaurantDetailResponse {
     }
 
     @Getter
+    @XmlAccessorType(XmlAccessType.FIELD)
     public static class FarmRestaurantDetailItem {
         private String cntntsNo;
         private String cntntsSj;

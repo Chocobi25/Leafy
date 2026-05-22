@@ -40,11 +40,15 @@ public class GeocodeClient {
     }
 
     private GeocodedAddress extractCoordinatesAndAddress(GeocodeResponse response) {
-        if (response == null || response.getDocuments().isEmpty()) {
+        if (response == null || response.getDocuments() == null || response.getDocuments().isEmpty()) {
             return defaultResult();
         }
 
         Document doc = response.getDocuments().getFirst();
+        if (doc == null) {
+            return defaultResult();
+        }
+
         try {
             double x = Double.parseDouble(doc.getX());
             double y = Double.parseDouble(doc.getY());

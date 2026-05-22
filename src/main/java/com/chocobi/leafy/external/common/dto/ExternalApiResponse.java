@@ -1,5 +1,7 @@
 package com.chocobi.leafy.external.common.dto;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import java.util.List;
 import lombok.Getter;
 
@@ -9,6 +11,7 @@ public class ExternalApiResponse<T> {
     private Body<T> body;
 
     @Getter
+    @XmlAccessorType(XmlAccessType.FIELD)
     public static class Header {
         private String resultCode;
         private String resultMsg;
