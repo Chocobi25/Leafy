@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
-public record TripPlaceRequest(
+public record CreateTripPlaceRequest(
         @NotNull
         @Positive
         Long placeId,

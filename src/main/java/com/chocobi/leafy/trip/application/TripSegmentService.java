@@ -9,7 +9,7 @@ import com.chocobi.leafy.distance.service.DistanceUtils;
 import com.chocobi.leafy.distance.service.TransDistanceService;
 import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.application.PlaceService;
-import com.chocobi.leafy.trip.dto.request.TripPlaceRequest;
+import com.chocobi.leafy.trip.dto.request.UpdateTripPlaceRequest;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
@@ -68,7 +68,7 @@ public class TripSegmentService {
         if (tripPlaces == null || tripPlaces.size() < 2) return tripSegmentDtos;
 
         List<TripPlaceResponse> mutableTripPlaces = new ArrayList<>(tripPlaces);
-        mutableTripPlaces.sort(Comparator.comparing(TripPlaceResponse::getVisitOrder));
+        mutableTripPlaces.sort(tripPlaceRouteOrder());
 
         // sections 길이 체크: 보통 sections.size() == tripPlaces.size()-1 이어야 함
         for (int i = 0; i < mutableTripPlaces.size() - 1; i++) {
@@ -133,7 +133,7 @@ public class TripSegmentService {
         TripEntity trip = tripFindService.findTrip(tripId);
 
         List<TripPlaceResponse> mutableTripPlaces = new ArrayList<>(tripPlaces);
-        mutableTripPlaces.sort(Comparator.comparing(TripPlaceResponse::getVisitOrder));
+        mutableTripPlaces.sort(tripPlaceRouteOrder());
 
         for (int i = 0; i < mutableTripPlaces.size() - 1; i++) {
             if (i >= sections.size()) break;
@@ -166,9 +166,11 @@ public class TripSegmentService {
     /**
      * 임시 TripSegments를 DB에 저장하고 Redis에서 삭제
      */
+    @Transactional
     public void completeTripSegments(Long tripId, String transport) {
         if (transport == null) throw new IllegalArgumentException("transport가 필요합니다.");
 
+        TripEntity trip = tripFindService.findTrip(tripId);
         String normalized = transport.toLowerCase();
         List<TripSegmentRedisDto> tripSegmentDtos = getTempTripSegments(tripId, normalized); // 임시 TripSegmentRedisDto를 불러와서
 
@@ -201,7 +203,9 @@ public class TripSegmentService {
             ));
         }
 
+        tripSegmentCommandService.deleteAllByTrip(trip);
         saveTripSegments(tripSegments); // DB에 저장
+        trip.clearRouteStale();
         deleteTempTripSegments(tripId, normalized); // 임시 저장한 TripSegments를 삭제
         deleteTempTripSegments(tripId, otherTransport);
     }
@@ -329,7 +333,7 @@ public class TripSegmentService {
      * 적절한 거리 서비스 메서드를 호출(그 내부에서 Redis 저장까지 수행).
      */
     @Transactional
-    public void recalculateRoutesAndSave(TripEntity trip, String transport, List<TripPlaceRequest> tripPlaceRequests) {
+    public void recalculateRoutesAndSave(TripEntity trip, String transport, List<UpdateTripPlaceRequest> tripPlaceRequests) {
         List<TripPlaceResponse> tripPlaces = tripPlaceRequests.stream()
                 .map(req -> TripPlaceResponse.builder()
                         .tripId(trip.getId())
@@ -401,7 +405,7 @@ public class TripSegmentService {
 
         // visitOrder로 정렬
         List<TripPlaceResponse> sortedPlaces = new ArrayList<>(tripPlaces);
-        sortedPlaces.sort(Comparator.comparing(TripPlaceResponse::getVisitOrder));
+        sortedPlaces.sort(tripPlaceRouteOrder());
 
         String normalized = transport == null ? "car" : transport.toLowerCase();
 
@@ -454,5 +458,10 @@ public class TripSegmentService {
             System.out.println("[DEBUG] PublicTransport BatchRequest: " + batchRequest);
             calculateAndSavePublicRoute(batchRequest, sortedPlaces);
         }
+    }
+
+    private Comparator<TripPlaceResponse> tripPlaceRouteOrder() {
+        return Comparator.comparing(TripPlaceResponse::getDayIndex)
+                .thenComparing(TripPlaceResponse::getVisitOrder);
     }
 }

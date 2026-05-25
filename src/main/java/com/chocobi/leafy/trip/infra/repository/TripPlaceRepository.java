@@ -12,7 +12,8 @@ import java.util.List;
 public interface TripPlaceRepository extends JpaRepository<TripPlaceEntity, Long> {
     void deleteAllByTrip(TripEntity trip);
     List<TripPlaceEntity> findByTrip_Id(Long tripId);
+    boolean existsByTrip_Id(Long tripId);
 
     @EntityGraph(attributePaths = {"place"})
-    List<TripPlaceEntity> findAllByTripIdOrderByVisitOrderAsc(Long tripId);
+    List<TripPlaceEntity> findAllByTripIdOrderByDayIndexAscVisitOrderAsc(Long tripId);
 }

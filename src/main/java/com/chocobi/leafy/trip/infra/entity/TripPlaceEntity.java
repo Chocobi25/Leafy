@@ -36,4 +36,11 @@ public class TripPlaceEntity extends BaseEntity {
     @Column(length = 255)
     private String memo;
 
+    public void updateDetails(PlaceEntity place, Integer dayIndex, Integer visitOrder, String memo) {
+        this.place = place;
+        this.dayIndex = dayIndex;
+        this.visitOrder = visitOrder;
+        this.memo = memo;
+    }
+
 }

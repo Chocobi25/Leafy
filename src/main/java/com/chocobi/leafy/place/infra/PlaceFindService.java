@@ -14,6 +14,8 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -31,6 +33,20 @@ public class PlaceFindService {
     public PlaceEntity findPlace(Long id) {
         return placeRepository.findById(id)
                 .orElseThrow(() -> new CustomException(PlaceError.PLACE_NOT_FOUND));
+    }
+
+    public List<PlaceEntity> findPlaces(List<Long> ids) {
+        List<PlaceEntity> places = placeRepository.findAllById(ids);
+        Set<Long> requestedIds = Set.copyOf(ids);
+        Set<Long> foundIds = places.stream()
+                .map(PlaceEntity::getId)
+                .collect(Collectors.toSet());
+
+        if (!foundIds.containsAll(requestedIds)) {
+            throw new CustomException(PlaceError.PLACE_NOT_FOUND);
+        }
+
+        return places;
     }
 
     public List<PlaceEntity> findAll() {

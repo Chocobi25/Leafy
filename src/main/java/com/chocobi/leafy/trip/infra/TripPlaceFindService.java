@@ -3,7 +3,7 @@ package com.chocobi.leafy.trip.infra;
 import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import com.chocobi.leafy.trip.infra.repository.TripPlaceRepository;
-import com.chocobi.leafy.trip.vo.TripError;
+import com.chocobi.leafy.trip.vo.TripPlaceError;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +18,14 @@ public class TripPlaceFindService {
 
     public TripPlaceEntity findTripPlace(Long tripPlaceId) {
         return tripPlaceRepository.findById(tripPlaceId)
-                .orElseThrow(() -> new CustomException(TripError.TRIP_PLACE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(TripPlaceError.TRIP_PLACE_NOT_FOUND));
     }
 
     public List<TripPlaceEntity> findOrderedTripPlaces(Long tripId) {
-        return tripPlaceRepository.findAllByTripIdOrderByVisitOrderAsc(tripId);
+        return tripPlaceRepository.findAllByTripIdOrderByDayIndexAscVisitOrderAsc(tripId);
+    }
+
+    public boolean hasTripPlaces(Long tripId) {
+        return tripPlaceRepository.existsByTrip_Id(tripId);
     }
 }

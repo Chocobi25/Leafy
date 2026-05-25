@@ -32,7 +32,9 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 @WebMvcTest(TripController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -70,7 +72,7 @@ class TripControllerTest {
                         .build());
 
         mockMvc.perform(post("/api/trip")
-                        .principal(authentication())
+                        .with(userAuthentication())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -93,7 +95,7 @@ class TripControllerTest {
         );
 
         mockMvc.perform(post("/api/trip")
-                        .principal(authentication())
+                        .with(userAuthentication())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -111,7 +113,7 @@ class TripControllerTest {
         );
 
         mockMvc.perform(post("/api/trip")
-                        .principal(authentication())
+                        .with(userAuthentication())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -130,7 +132,7 @@ class TripControllerTest {
                         .build()));
 
         mockMvc.perform(get("/api/trip")
-                        .principal(authentication()))
+                        .with(userAuthentication()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].tripId").value(10))
                 .andExpect(jsonPath("$.data[0].title").value("부산 여행"));
@@ -149,7 +151,7 @@ class TripControllerTest {
                         .build());
 
         mockMvc.perform(get("/api/trip/{tripId}", 10L)
-                        .principal(authentication()))
+                        .with(userAuthentication()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.tripId").value(10))
                 .andExpect(jsonPath("$.data.title").value("부산 여행"));
@@ -161,7 +163,7 @@ class TripControllerTest {
     @DisplayName("여행 ID가 양수가 아니면 400을 반환한다")
     void getTripDetails_InvalidTripId() throws Exception {
         mockMvc.perform(get("/api/trip/{tripId}", 0L)
-                        .principal(authentication()))
+                        .with(userAuthentication()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -169,7 +171,7 @@ class TripControllerTest {
     @DisplayName("여행을 삭제한다")
     void deleteTrip() throws Exception {
         mockMvc.perform(delete("/api/trip/{tripId}", 10L)
-                        .principal(authentication()))
+                        .with(userAuthentication()))
                 .andExpect(status().isNoContent());
 
         then(tripService).should().deleteTrip(10L, 1L);
@@ -191,7 +193,7 @@ class TripControllerTest {
                         .build());
 
         mockMvc.perform(patch("/api/trip/{tripId}", 10L)
-                        .principal(authentication())
+                        .with(userAuthentication())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -200,7 +202,12 @@ class TripControllerTest {
         then(tripService).should().updateTripInfo(eq(10L), any(TripUpdateRequest.class), eq(1L));
     }
 
-    private Authentication authentication() {
-        return new UsernamePasswordAuthenticationToken(1L, null, List.of());
+    private RequestPostProcessor userAuthentication() {
+        return request -> {
+            Authentication authentication = new UsernamePasswordAuthenticationToken(1L, null, List.of());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            request.setUserPrincipal(authentication);
+            return request;
+        };
     }
 }

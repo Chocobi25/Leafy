@@ -46,6 +46,10 @@ public class TripEntity extends BaseEntity {
     @Builder.Default
     private double carbonEmission = 0.0;
 
+    @Column(name = "route_stale", nullable = false)
+    @Builder.Default
+    private boolean routeStale = false;
+
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -69,5 +73,13 @@ public class TripEntity extends BaseEntity {
 
     public void editStatus(TripStatus status) {
         this.status = status;
+    }
+
+    public void markRouteStale() {
+        this.routeStale = true;
+    }
+
+    public void clearRouteStale() {
+        this.routeStale = false;
     }
 }
