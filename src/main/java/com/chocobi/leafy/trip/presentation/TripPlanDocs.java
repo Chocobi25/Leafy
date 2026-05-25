@@ -5,6 +5,7 @@ import com.chocobi.leafy.trip.dto.request.CreateTripPlaceRequest;
 import com.chocobi.leafy.trip.dto.request.UpdateTripPlaceRequest;
 import com.chocobi.leafy.trip.dto.response.TripPlacesResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -25,6 +26,7 @@ public interface TripPlanDocs {
             @PathVariable @Positive Long tripId,
             @NotEmpty(message = "여행에는 여행 장소가 하나 이상 존재해야 합니다.")
             @RequestBody List<@Valid @NotNull CreateTripPlaceRequest> request,
+            @Parameter(hidden = true)
             @AuthenticationPrincipal Long userId
     );
 
@@ -33,6 +35,7 @@ public interface TripPlanDocs {
             @PathVariable @Positive Long tripId,
             @NotEmpty(message = "여행에는 여행 장소가 하나 이상 존재해야 합니다.")
             @RequestBody List<@Valid @NotNull UpdateTripPlaceRequest> request,
+            @Parameter(hidden = true)
             @AuthenticationPrincipal Long userId
     );
 }

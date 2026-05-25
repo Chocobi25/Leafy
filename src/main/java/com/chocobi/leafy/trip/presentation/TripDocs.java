@@ -8,6 +8,7 @@ import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
 import com.chocobi.leafy.trip.dto.response.TripListResponse;
 import com.chocobi.leafy.trip.dto.response.TripSaveResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -58,6 +59,7 @@ public interface TripDocs {
     })
     ResponseEntity<SuccessResponse<TripSaveResponse>> createTrip(
             @Valid @RequestBody CreateTripRequest createTripRequest,
+            @Parameter(hidden = true)
             @AuthenticationPrincipal Long userId
     );
 
@@ -82,7 +84,10 @@ public interface TripDocs {
                             }
                             """)
             ))
-    ResponseEntity<SuccessResponse<List<TripListResponse>>> getTrips(@AuthenticationPrincipal Long userId);
+    ResponseEntity<SuccessResponse<List<TripListResponse>>> getTrips(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Long userId
+    );
 
     @Operation(summary = "여행 상세 조회")
     @ApiResponses({
@@ -139,6 +144,7 @@ public interface TripDocs {
     })
     ResponseEntity<SuccessResponse<TripDetailResponse>> getTripDetails(
             @PathVariable @Positive Long tripId,
+            @Parameter(hidden = true)
             @AuthenticationPrincipal Long userId
     );
 
@@ -172,6 +178,7 @@ public interface TripDocs {
     })
     ResponseEntity<Void> deleteTrip(
             @PathVariable @Positive Long tripId,
+            @Parameter(hidden = true)
             @AuthenticationPrincipal Long userId
     );
 
@@ -243,6 +250,7 @@ public interface TripDocs {
     ResponseEntity<SuccessResponse<TripDetailResponse>> updateTrip(
             @PathVariable @Positive Long tripId,
             @Valid @RequestBody TripUpdateRequest request,
+            @Parameter(hidden = true)
             @AuthenticationPrincipal Long userId
     );
 }
