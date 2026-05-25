@@ -43,4 +43,14 @@ public class TripPlaceEntity extends BaseEntity {
         this.memo = memo;
     }
 
+    public void updateSchedule(Integer dayIndex, Integer visitOrder, String memo) {
+        this.dayIndex = dayIndex;
+        this.visitOrder = visitOrder;
+        this.memo = memo;
+    }
+
+    public void updateMemo(String memo) {
+        this.memo = memo;
+    }
+
 }
