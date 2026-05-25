@@ -3,7 +3,6 @@ package com.chocobi.leafy.trip.infra.entity;
 import com.chocobi.leafy.global.entity.BaseEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 
@@ -32,8 +31,7 @@ public class TripPlaceEntity extends BaseEntity {
     @Builder.Default
     private int visitOrder = 0;
 
-    @Size(max = 255)
-    @Column(length = 255)
+    @Column(name = "memo", length = 255)
     private String memo;
 
     public void updateDetails(PlaceEntity place, Integer dayIndex, Integer visitOrder, String memo) {
