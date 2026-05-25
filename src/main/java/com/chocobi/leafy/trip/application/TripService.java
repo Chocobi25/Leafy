@@ -19,8 +19,10 @@ import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripPlaceCommandService;
 import com.chocobi.leafy.trip.infra.TripPlaceFindService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
+import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import com.chocobi.leafy.trip.vo.TripError;
+import com.chocobi.leafy.trip.vo.TripPlaceError;
 import com.chocobi.leafy.user.infra.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -159,9 +161,16 @@ public class TripService {
 
     private List<TripPlaceResponse> getTripPlaces(Long tripId) {
         return tripPlaceFindService.findOrderedTripPlaces(tripId).stream()
-                .filter(tripPlace -> tripPlace.getPlace() != null)
-                .map(TripPlaceResponse::from)
+                .map(this::toTripPlaceResponse)
                 .toList();
+    }
+
+    private TripPlaceResponse toTripPlaceResponse(TripPlaceEntity tripPlace) {
+        if (tripPlace.getPlace() == null) {
+            throw new CustomException(TripPlaceError.TRIP_PLACE_NOT_FOUND);
+        }
+
+        return TripPlaceResponse.from(tripPlace);
     }
 
 }

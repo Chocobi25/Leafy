@@ -153,8 +153,7 @@ public class TripPlaceService {
         List<TripPlaceEntity> places = tripPlaceFindService.findOrderedTripPlaces(tripId);
 
         return places.stream()
-                .filter(tripPlace -> tripPlace.getPlace() != null)
-                .map(TripPlaceResponse::from)
+                .map(this::toTripPlaceResponse)
                 .toList();
     }
 
@@ -215,7 +214,23 @@ public class TripPlaceService {
     }
 
     private boolean isPlaceChanged(TripPlaceEntity existingTripPlace, UpdateTripPlaceRequest request) {
-        return !Objects.equals(existingTripPlace.getPlace().getId(), request.placeId());
+        return !Objects.equals(getPlaceId(existingTripPlace), request.placeId());
+    }
+
+    private TripPlaceResponse toTripPlaceResponse(TripPlaceEntity tripPlace) {
+        validatePlaceExists(tripPlace);
+        return TripPlaceResponse.from(tripPlace);
+    }
+
+    private Long getPlaceId(TripPlaceEntity tripPlace) {
+        validatePlaceExists(tripPlace);
+        return tripPlace.getPlace().getId();
+    }
+
+    private void validatePlaceExists(TripPlaceEntity tripPlace) {
+        if (tripPlace.getPlace() == null) {
+            throw new CustomException(TripPlaceError.TRIP_PLACE_NOT_FOUND);
+        }
     }
 
     private record VisitOrderKey(Integer dayIndex, Integer visitOrder) {
