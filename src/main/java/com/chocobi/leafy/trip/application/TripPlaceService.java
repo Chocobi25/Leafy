@@ -45,9 +45,7 @@ public class TripPlaceService {
             throw new CustomException(TripPlaceError.TRIP_PLACES_ALREADY_EXIST);
         }
 
-        Map<Long, PlaceEntity> placeMap = getPlaceMap(request.stream()
-                .map(CreateTripPlaceRequest::placeId)
-                .toList());
+        Map<Long, PlaceEntity> placeMap = getPlaceMapForCreateRequests(request);
 
         List<TripPlaceEntity> tripPlaces = request.stream()
                 .map(placeReq -> TripPlaceEntity.builder()
@@ -75,73 +73,29 @@ public class TripPlaceService {
                 .map(placeReq -> new VisitOrderKey(placeReq.dayIndex(), placeReq.visitOrder()))
                 .toList());
 
-        List<TripPlaceEntity> existingTripPlaces = tripPlaceFindService.findOrderedTripPlaces(tripId);
-        if (existingTripPlaces.isEmpty()) {
-            throw new CustomException(TripPlaceError.TRIP_PLACES_NOT_CREATED);
-        }
+        TripPlaceUpdateContext updateContext = TripPlaceUpdateContext.from(
+                tripPlaceFindService.findOrderedTripPlaces(tripId),
+                request
+        );
+        updateContext.validateRequestedTripPlacesExist();
 
-        Map<Long, TripPlaceEntity> existingTripPlaceMap = existingTripPlaces.stream()
-                .collect(Collectors.toMap(TripPlaceEntity::getId, Function.identity()));
-        Set<Long> requestedTripPlaceIds = request.stream()
-                .map(UpdateTripPlaceRequest::tripPlaceId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        TripPlaceUpdatePlan updatePlan = createUpdatePlan(request, updateContext);
 
-        if (!existingTripPlaceMap.keySet().containsAll(requestedTripPlaceIds)) {
-            throw new CustomException(TripPlaceError.TRIP_PLACE_NOT_FOUND);
-        }
-
-        List<TripPlaceEntity> deletedTripPlaces = existingTripPlaces.stream()
-                .filter(tripPlace -> !requestedTripPlaceIds.contains(tripPlace.getId()))
-                .toList();
-        boolean hasRouteAffectingUpdate = hasAnyRouteAffectingUpdate(request, existingTripPlaceMap);
-        boolean hasDeletedTripPlaces = !deletedTripPlaces.isEmpty();
-        boolean hasRouteAffectingChange = hasRouteAffectingUpdate || hasDeletedTripPlaces;
-        boolean needsPlaceLookup = needsPlaceLookup(request, existingTripPlaceMap);
-        Map<Long, PlaceEntity> placeMap = needsPlaceLookup
-                ? getPlaceMap(request.stream()
-                        .map(UpdateTripPlaceRequest::placeId)
-                        .toList())
+        Map<Long, PlaceEntity> placeMap = updatePlan.placeLookupRequired()
+                ? getPlaceMapForUpdateRequests(request)
                 : Map.of();
 
-        List<TripPlaceEntity> newTripPlaces = new ArrayList<>();
-        for (UpdateTripPlaceRequest placeReq : request) {
-            if (placeReq.tripPlaceId() == null) {
-                PlaceEntity place = placeMap.get(placeReq.placeId());
-                newTripPlaces.add(TripPlaceEntity.builder()
-                        .trip(trip)
-                        .place(place)
-                        .memo(placeReq.memo())
-                        .dayIndex(placeReq.dayIndex())
-                        .visitOrder(placeReq.visitOrder())
-                        .build());
-                continue;
-            }
+        List<TripPlaceEntity> newTripPlaces = applyTripPlaceUpdates(trip, request, updateContext, placeMap);
 
-            TripPlaceEntity existingTripPlace = existingTripPlaceMap.get(placeReq.tripPlaceId());
-            if (isRouteAffectingUpdate(existingTripPlace, placeReq)) {
-                if (isPlaceChanged(existingTripPlace, placeReq)) {
-                    PlaceEntity place = placeMap.get(placeReq.placeId());
-                    existingTripPlace.updateDetails(place, placeReq.dayIndex(), placeReq.visitOrder(), placeReq.memo());
-                    continue;
-                }
-
-                existingTripPlace.updateSchedule(placeReq.dayIndex(), placeReq.visitOrder(), placeReq.memo());
-                continue;
-            }
-
-            existingTripPlace.updateMemo(placeReq.memo());
-        }
-
-        if (hasDeletedTripPlaces) {
-            tripPlaceCommandService.deleteAll(deletedTripPlaces);
+        if (updatePlan.hasDeletedTripPlaces()) {
+            tripPlaceCommandService.deleteAll(updatePlan.deletedTripPlaces());
         }
 
         if (!newTripPlaces.isEmpty()) {
             tripPlaceCommandService.saveAll(newTripPlaces);
         }
 
-        if (hasRouteAffectingChange) {
+        if (updatePlan.routeRecalculationRequired()) {
             trip.markRouteStale();
         }
 
@@ -191,30 +145,84 @@ public class TripPlaceService {
                 .collect(Collectors.toMap(PlaceEntity::getId, Function.identity(), (first, second) -> first));
     }
 
-    private boolean hasAnyRouteAffectingUpdate(
-            List<UpdateTripPlaceRequest> request,
-            Map<Long, TripPlaceEntity> existingTripPlaceMap
-    ) {
-        return request.stream().anyMatch(placeReq -> placeReq.tripPlaceId() == null
-                || isRouteAffectingUpdate(existingTripPlaceMap.get(placeReq.tripPlaceId()), placeReq));
+    private Map<Long, PlaceEntity> getPlaceMapForCreateRequests(List<CreateTripPlaceRequest> request) {
+        return getPlaceMap(request.stream()
+                .map(CreateTripPlaceRequest::placeId)
+                .toList());
     }
 
-    private boolean needsPlaceLookup(
-            List<UpdateTripPlaceRequest> request,
-            Map<Long, TripPlaceEntity> existingTripPlaceMap
-    ) {
-        return request.stream().anyMatch(placeReq -> placeReq.tripPlaceId() == null
-                || isPlaceChanged(existingTripPlaceMap.get(placeReq.tripPlaceId()), placeReq));
+    private Map<Long, PlaceEntity> getPlaceMapForUpdateRequests(List<UpdateTripPlaceRequest> request) {
+        return getPlaceMap(request.stream()
+                .map(UpdateTripPlaceRequest::placeId)
+                .toList());
     }
 
-    private boolean isRouteAffectingUpdate(TripPlaceEntity existingTripPlace, UpdateTripPlaceRequest request) {
-        return isPlaceChanged(existingTripPlace, request)
-                || !Objects.equals(existingTripPlace.getDayIndex(), request.dayIndex())
-                || !Objects.equals(existingTripPlace.getVisitOrder(), request.visitOrder());
+    private List<TripPlaceEntity> applyTripPlaceUpdates(
+            TripEntity trip,
+            List<UpdateTripPlaceRequest> request,
+            TripPlaceUpdateContext updateContext,
+            Map<Long, PlaceEntity> placeMap
+    ) {
+        List<TripPlaceEntity> newTripPlaces = new ArrayList<>();
+        for (UpdateTripPlaceRequest placeReq : request) {
+            if (placeReq.tripPlaceId() == null) {
+                newTripPlaces.add(createNewTripPlace(trip, placeReq, placeMap));
+                continue;
+            }
+
+            TripPlaceEntity existingTripPlace = updateContext.getExistingTripPlace(placeReq.tripPlaceId());
+            updateExistingTripPlace(existingTripPlace, placeReq, placeMap);
+        }
+
+        return newTripPlaces;
+    }
+
+    private TripPlaceEntity createNewTripPlace(
+            TripEntity trip,
+            UpdateTripPlaceRequest request,
+            Map<Long, PlaceEntity> placeMap
+    ) {
+        return TripPlaceEntity.builder()
+                .trip(trip)
+                .place(placeMap.get(request.placeId()))
+                .memo(request.memo())
+                .dayIndex(request.dayIndex())
+                .visitOrder(request.visitOrder())
+                .build();
+    }
+
+    private void updateExistingTripPlace(
+            TripPlaceEntity existingTripPlace,
+            UpdateTripPlaceRequest request,
+            Map<Long, PlaceEntity> placeMap
+    ) {
+        if (isPlaceChanged(existingTripPlace, request)) {
+            PlaceEntity place = placeMap.get(request.placeId());
+            existingTripPlace.updateDetails(place, request.dayIndex(), request.visitOrder(), request.memo());
+            return;
+        }
+
+        if (isScheduleChanged(existingTripPlace, request)) {
+            existingTripPlace.updateSchedule(request.dayIndex(), request.visitOrder(), request.memo());
+            return;
+        }
+
+        existingTripPlace.updateMemo(request.memo());
     }
 
     private boolean isPlaceChanged(TripPlaceEntity existingTripPlace, UpdateTripPlaceRequest request) {
         return !Objects.equals(getPlaceId(existingTripPlace), request.placeId());
+    }
+
+    private boolean isScheduleChanged(TripPlaceEntity existingTripPlace, UpdateTripPlaceRequest request) {
+        return !Objects.equals(existingTripPlace.getDayIndex(), request.dayIndex())
+                || !Objects.equals(existingTripPlace.getVisitOrder(), request.visitOrder());
+    }
+
+    private boolean isRouteRecalculationRequired(TripPlaceEntity existingTripPlace, UpdateTripPlaceRequest request) {
+        return isPlaceChanged(existingTripPlace, request)
+                || !Objects.equals(existingTripPlace.getDayIndex(), request.dayIndex())
+                || !Objects.equals(existingTripPlace.getVisitOrder(), request.visitOrder());
     }
 
     private TripPlaceResponse toTripPlaceResponse(TripPlaceEntity tripPlace) {
@@ -233,7 +241,86 @@ public class TripPlaceService {
         }
     }
 
+    private TripPlaceUpdatePlan createUpdatePlan(
+            List<UpdateTripPlaceRequest> request,
+            TripPlaceUpdateContext updateContext
+    ) {
+        boolean routeRecalculationRequiredByUpdate = request.stream()
+                .anyMatch(placeReq -> placeReq.tripPlaceId() == null
+                        || isRouteRecalculationRequired(
+                                updateContext.getExistingTripPlace(placeReq.tripPlaceId()),
+                                placeReq
+                        ));
+
+        boolean placeLookupRequired = request.stream()
+                .anyMatch(placeReq -> placeReq.tripPlaceId() == null
+                        || isPlaceChanged(updateContext.getExistingTripPlace(placeReq.tripPlaceId()), placeReq));
+
+        return new TripPlaceUpdatePlan(
+                updateContext.findDeletedTripPlaces(),
+                routeRecalculationRequiredByUpdate,
+                placeLookupRequired
+        );
+    }
+
     private record VisitOrderKey(Integer dayIndex, Integer visitOrder) {
     }
 
+    private record TripPlaceUpdateContext(
+            List<TripPlaceEntity> existingTripPlaces,
+            Map<Long, TripPlaceEntity> existingTripPlaceMap,
+            Set<Long> requestedTripPlaceIds
+    ) {
+        private static TripPlaceUpdateContext from(
+                List<TripPlaceEntity> existingTripPlaces,
+                List<UpdateTripPlaceRequest> request
+        ) {
+
+            if (existingTripPlaces.isEmpty()) {
+                throw new CustomException(TripPlaceError.TRIP_PLACES_NOT_CREATED);
+            }
+
+            Map<Long, TripPlaceEntity> existingTripPlaceMap = existingTripPlaces.stream()
+                    .collect(Collectors.toMap(TripPlaceEntity::getId, Function.identity()));
+
+            Set<Long> requestedTripPlaceIds = request.stream()
+                    .map(UpdateTripPlaceRequest::tripPlaceId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            return new TripPlaceUpdateContext(
+                    existingTripPlaces, existingTripPlaceMap, requestedTripPlaceIds
+            );
+        }
+
+        private void validateRequestedTripPlacesExist() {
+            if (!existingTripPlaceMap.keySet().containsAll(requestedTripPlaceIds)) {
+                throw new CustomException(TripPlaceError.TRIP_PLACE_NOT_FOUND);
+            }
+        }
+
+        private TripPlaceEntity getExistingTripPlace(Long tripPlaceId) {
+            return existingTripPlaceMap.get(tripPlaceId);
+        }
+
+        private List<TripPlaceEntity> findDeletedTripPlaces() {
+            return existingTripPlaces.stream()
+                    .filter(tripPlace -> !requestedTripPlaceIds.contains(tripPlace.getId()))
+                    .toList();
+        }
+    }
+
+    private record TripPlaceUpdatePlan(
+            List<TripPlaceEntity> deletedTripPlaces,
+            boolean routeRecalculationRequiredByUpdate,
+            boolean placeLookupRequired
+    ) {
+        private boolean hasDeletedTripPlaces() {
+            return !deletedTripPlaces.isEmpty();
+        }
+
+        private boolean routeRecalculationRequired() {
+            return routeRecalculationRequiredByUpdate || hasDeletedTripPlaces();
+        }
+    }
 }
