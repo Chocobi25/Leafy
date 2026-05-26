@@ -131,7 +131,8 @@ CREATE TABLE trip_route_option
     recommended             boolean NOT NULL DEFAULT false,
     confirmed               boolean NOT NULL DEFAULT false,
     created_at              datetime(6) NOT NULL,
-    updated_at              datetime(6) NOT NULL
+    updated_at              datetime(6) NOT NULL,
+    CONSTRAINT uq_trip_route_option_trip_transport UNIQUE (trip_id, transport)
 );
 
 DROP TABLE IF EXISTS trip_segment;
@@ -139,8 +140,8 @@ CREATE TABLE trip_segment
 (
     id              bigint PRIMARY KEY,
     route_option_id bigint NOT NULL,
-    start_trip_place_id  bigint,
-    end_trip_place_id    bigint,
+    start_trip_place_id  bigint NOT NULL,
+    end_trip_place_id    bigint NOT NULL,
     distance        double NOT NULL,
     duration        int NOT NULL,
     carbon_emission  double NOT NULL,
