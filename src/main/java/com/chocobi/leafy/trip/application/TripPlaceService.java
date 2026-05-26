@@ -3,6 +3,7 @@ package com.chocobi.leafy.trip.application;
 import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.place.application.PlaceService;
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
+import com.chocobi.leafy.place.vo.PlaceError;
 import com.chocobi.leafy.trip.dto.request.CreateTripPlaceRequest;
 import com.chocobi.leafy.trip.dto.request.UpdateTripPlaceRequest;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
@@ -141,8 +142,14 @@ public class TripPlaceService {
                 .distinct()
                 .toList();
 
-        return placeService.getPlaces(uniquePlaceIds).stream()
+        Map<Long, PlaceEntity> placeMap = placeService.getPlaces(uniquePlaceIds).stream()
                 .collect(Collectors.toMap(PlaceEntity::getId, Function.identity(), (first, second) -> first));
+
+        if (placeMap.size() != uniquePlaceIds.size()) {
+            throw new CustomException(PlaceError.PLACE_NOT_FOUND);
+        }
+
+        return placeMap;
     }
 
     private Map<Long, PlaceEntity> getPlaceMapForCreateRequests(List<CreateTripPlaceRequest> request) {
