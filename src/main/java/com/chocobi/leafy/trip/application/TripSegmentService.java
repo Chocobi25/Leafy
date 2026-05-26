@@ -7,9 +7,9 @@ import com.chocobi.leafy.distance.dto.Section;
 import com.chocobi.leafy.distance.service.CarDistanceService;
 import com.chocobi.leafy.distance.service.DistanceUtils;
 import com.chocobi.leafy.distance.service.TransDistanceService;
-import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.application.PlaceService;
 import com.chocobi.leafy.trip.dto.request.UpdateTripPlaceRequest;
+import com.chocobi.leafy.trip.dto.response.TripPlaceLocationResponse;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
@@ -337,7 +337,7 @@ public class TripSegmentService {
         List<TripPlaceResponse> tripPlaces = tripPlaceRequests.stream()
                 .map(req -> TripPlaceResponse.builder()
                         .tripId(trip.getId())
-                        .place(PlaceDTO.fromEntity(placeService.getPlace(req.placeId())))
+                        .place(TripPlaceLocationResponse.from(placeService.getPlace(req.placeId())))
                         .dayIndex(req.dayIndex())
                         .visitOrder(req.visitOrder())
                         .memo(req.memo())
@@ -353,8 +353,8 @@ public class TripSegmentService {
             carRequest.setTripId(trip.getId());
 
             if (!tripPlaces.isEmpty()) {
-                PlaceDTO firstPlace = tripPlaces.get(0).getPlace();
-                PlaceDTO lastPlace = tripPlaces.get(tripPlaces.size() - 1).getPlace();
+                TripPlaceLocationResponse firstPlace = tripPlaces.get(0).getPlace();
+                TripPlaceLocationResponse lastPlace = tripPlaces.get(tripPlaces.size() - 1).getPlace();
 
                 carRequest.setOrigin(placeToPoint(firstPlace));
                 carRequest.setDestination(placeToPoint(lastPlace));
@@ -374,8 +374,8 @@ public class TripSegmentService {
         } else if ("public".equals(normalized)) {
             List<TransDistanceRequest> requests = new ArrayList<>();
             for (int i = 0; i < tripPlaces.size() - 1; i++) {
-                PlaceDTO start = tripPlaces.get(i).getPlace();
-                PlaceDTO end = tripPlaces.get(i + 1).getPlace();
+                TripPlaceLocationResponse start = tripPlaces.get(i).getPlace();
+                TripPlaceLocationResponse end = tripPlaces.get(i + 1).getPlace();
 
                 TransDistanceRequest req = new TransDistanceRequest();
                 req.setStartX(String.valueOf(start.getLongitude()));
@@ -415,8 +415,8 @@ public class TripSegmentService {
 
             // 🔥 첫 번째와 마지막 장소를 origin/destination으로 사용
             if (!sortedPlaces.isEmpty()) {
-                PlaceDTO firstPlace = sortedPlaces.get(0).getPlace();
-                PlaceDTO lastPlace = sortedPlaces.get(sortedPlaces.size() - 1).getPlace();
+                TripPlaceLocationResponse firstPlace = sortedPlaces.get(0).getPlace();
+                TripPlaceLocationResponse lastPlace = sortedPlaces.get(sortedPlaces.size() - 1).getPlace();
 
                 carRequest.setOrigin(placeToPoint(firstPlace));
                 carRequest.setDestination(placeToPoint(lastPlace));
@@ -439,8 +439,8 @@ public class TripSegmentService {
             List<TransDistanceRequest> requests = new ArrayList<>();
 
             for (int i = 0; i < sortedPlaces.size() - 1; i++) {
-                PlaceDTO start = sortedPlaces.get(i).getPlace();
-                PlaceDTO end = sortedPlaces.get(i + 1).getPlace();
+                TripPlaceLocationResponse start = sortedPlaces.get(i).getPlace();
+                TripPlaceLocationResponse end = sortedPlaces.get(i + 1).getPlace();
 
                 TransDistanceRequest req = new TransDistanceRequest();
                 req.setStartX(String.valueOf(start.getLongitude()));
