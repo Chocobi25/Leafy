@@ -2,8 +2,8 @@ package com.chocobi.leafy.distance.service;
 
 import com.chocobi.leafy.distance.domain.Point;
 import com.chocobi.leafy.distance.domain.Port;
-import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.place.infra.entity.RegionGroup;
+import com.chocobi.leafy.trip.dto.response.TripPlaceLocationResponse;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ public class DistanceUtils {
     public static boolean isJejuTrip(List<TripPlaceResponse> tripPlaces) {
         return tripPlaces.stream()
                 .anyMatch(tripPlace -> {
-                    PlaceDTO place = tripPlace.getPlace();
+                    TripPlaceLocationResponse place = tripPlace.getPlace();
                     return place.getAddress() != null && place.getAddress().contains("제주");
                 });
     }
@@ -56,7 +56,7 @@ public class DistanceUtils {
     /**
      * Place → Point 변환
      */
-    public static Point placeToPoint(PlaceDTO place) {
+    public static Point placeToPoint(TripPlaceLocationResponse place) {
         return new Point(place.getLongitude(), place.getLatitude());
     }
 

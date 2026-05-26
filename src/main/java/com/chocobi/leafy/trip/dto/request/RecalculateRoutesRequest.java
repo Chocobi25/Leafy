@@ -8,5 +8,5 @@ import java.util.List;
 public class RecalculateRoutesRequest {
     private Long tripId;
     private String transport;
-    private List<TripPlaceRequest> places;
+    private List<UpdateTripPlaceRequest> places;
 }

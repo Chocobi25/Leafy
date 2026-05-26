@@ -12,7 +12,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,35 +36,31 @@ public class TripController implements TripDocs {
     @PostMapping
     public ResponseEntity<SuccessResponse<TripSaveResponse>> createTrip(
             @Valid @RequestBody CreateTripRequest createTripRequest,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     ) {
-        Long userId = (Long) authentication.getPrincipal();
         return ResponseEntity.ok(SuccessResponse.of(tripService.createTrip(createTripRequest, userId)));
     }
 
     @GetMapping
     public ResponseEntity<SuccessResponse<List<TripListResponse>>> getTrips(
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     ) {
-        Long userId = (Long) authentication.getPrincipal();
         return ResponseEntity.ok(SuccessResponse.of(tripService.getTrips(userId)));
     }
 
     @GetMapping("/{tripId}")
     public ResponseEntity<SuccessResponse<TripDetailResponse>> getTripDetails(
             @PathVariable @Positive Long tripId,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     ) {
-        Long userId = (Long) authentication.getPrincipal();
         return ResponseEntity.ok(SuccessResponse.of(tripService.getTripDetails(tripId, userId)));
     }
 
     @DeleteMapping("/{tripId}")
     public ResponseEntity<Void> deleteTrip(
             @PathVariable @Positive Long tripId,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     ) {
-        Long userId = (Long) authentication.getPrincipal();
         tripService.deleteTrip(tripId, userId);
         return ResponseEntity.noContent().build();
     }
@@ -73,9 +69,8 @@ public class TripController implements TripDocs {
     public ResponseEntity<SuccessResponse<TripDetailResponse>> updateTrip(
             @PathVariable @Positive Long tripId,
             @Valid @RequestBody TripUpdateRequest request,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     ) {
-        Long userId = (Long) authentication.getPrincipal();
         return ResponseEntity.ok(SuccessResponse.of(tripService.updateTripInfo(tripId, request, userId)));
     }
 
@@ -83,9 +78,8 @@ public class TripController implements TripDocs {
     public ResponseEntity<String> certifyTrip(
             @PathVariable @Positive Long tripId,
             @Valid @RequestBody TransCoordDTO transCoordDTO,
-            Authentication authentication
+            @AuthenticationPrincipal Long userId
     ) {
-        Long userId = (Long) authentication.getPrincipal();
         tripService.certifyTrip(tripId, transCoordDTO, userId);
 
         return ResponseEntity.ok("여행이 성공적으로 인증되었습니다.");

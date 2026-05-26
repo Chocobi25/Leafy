@@ -1,6 +1,5 @@
 package com.chocobi.leafy.trip.dto.response;
 
-import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import lombok.Builder;
 import lombok.Data;
@@ -11,18 +10,18 @@ import lombok.Data;
 public class TripPlaceResponse {
     private Long tripPlaceId;
     private Long tripId;
-    private PlaceDTO place;
+    private TripPlaceLocationResponse place;
     private int visitOrder;
-    private int day_index;
+    private int dayIndex;
     private String memo;
 
-    public static TripPlaceResponse toDTO(TripPlaceEntity tripPlace) {
+    public static TripPlaceResponse from(TripPlaceEntity tripPlace) {
         return TripPlaceResponse.builder()
                 .tripPlaceId(tripPlace.getId())
                 .tripId(tripPlace.getTrip().getId())
-                .place(PlaceDTO.fromEntity(tripPlace.getPlace()))
+                .place(TripPlaceLocationResponse.from(tripPlace.getPlace()))
                 .visitOrder(tripPlace.getVisitOrder())
-                .day_index(tripPlace.getDayIndex())
+                .dayIndex(tripPlace.getDayIndex())
                 .memo(tripPlace.getMemo())
                 .build();
     }

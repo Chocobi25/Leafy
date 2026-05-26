@@ -23,6 +23,8 @@ import com.chocobi.leafy.trip.dto.response.TripListResponse;
 import com.chocobi.leafy.trip.dto.response.TripSaveResponse;
 import com.chocobi.leafy.trip.infra.TripCommandService;
 import com.chocobi.leafy.trip.infra.TripFindService;
+import com.chocobi.leafy.trip.infra.TripPlaceCommandService;
+import com.chocobi.leafy.trip.infra.TripPlaceFindService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import com.chocobi.leafy.trip.vo.TripError;
@@ -56,7 +58,10 @@ class TripServiceTest {
     private UserService userService;
 
     @Mock
-    private TripPlaceService tripPlaceService;
+    private TripPlaceFindService tripPlaceFindService;
+
+    @Mock
+    private TripPlaceCommandService tripPlaceCommandService;
 
     @Mock
     private TripSegmentService tripSegmentService;
@@ -129,6 +134,7 @@ class TripServiceTest {
 
         given(tripFindService.findOwnedTripDetail(10L, 1L)).willReturn(trip);
         given(tripSegmentService.getTripSegments(10L)).willReturn(List.of());
+        given(tripPlaceFindService.findOrderedTripPlaces(10L)).willReturn(List.of());
 
         TripDetailResponse result = tripService.updateTripInfo(10L, request, 1L);
 
@@ -148,7 +154,7 @@ class TripServiceTest {
 
         then(tripFindService).should().findOwnedTrip(10L, 1L);
         then(tripSegmentService).should().deleteTripSegments(trip);
-        then(tripPlaceService).should().deleteTripPlaces(trip);
+        then(tripPlaceCommandService).should().deleteAll(trip);
         then(tripCommandService).should().delete(trip);
     }
 

@@ -39,6 +39,9 @@ public class TripDetailResponse {
     @Schema(description = "배출 탄소량")
     private double carbonEmission;
 
+    @Schema(description = "경로 재계산 필요 여부")
+    private boolean routeStale;
+
     @Schema(description = "여행 상태")
     private TripStatus status;
 
@@ -57,7 +60,14 @@ public class TripDetailResponse {
     @Schema(description = "여행 구간 목록")
     private List<TripSegmentDTO> tripSegments;
 
-    public static TripDetailResponse from(TripEntity trip, List<TripSegmentDTO> tripSegments) {
+    @Schema(description = "여행 장소 목록")
+    private List<TripPlaceResponse> tripPlaces;
+
+    public static TripDetailResponse from(
+            TripEntity trip,
+            List<TripSegmentDTO> tripSegments,
+            List<TripPlaceResponse> tripPlaces
+    ) {
         return TripDetailResponse.builder()
                 .tripId(trip.getId())
                 .title(trip.getTitle())
@@ -67,12 +77,14 @@ public class TripDetailResponse {
                 .arrival(trip.getArrival().getName())
                 .carbonSaved(trip.getCarbonSaved())
                 .carbonEmission(trip.getCarbonEmission())
+                .routeStale(trip.isRouteStale())
                 .status(trip.getStatus())
                 .certificationAt(trip.getCertificationAt())
                 .userId(trip.getUser().getId())
                 .createdAt(trip.getCreatedAt())
                 .updatedAt(trip.getUpdatedAt())
                 .tripSegments(tripSegments)
+                .tripPlaces(tripPlaces)
                 .build();
     }
 }

@@ -7,8 +7,8 @@ import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.domain.Point;
 import com.chocobi.leafy.distance.domain.Port;
 import com.chocobi.leafy.distance.dto.*;
-import com.chocobi.leafy.place.common.dto.PlaceDTO;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.response.TripPlaceLocationResponse;
 import com.chocobi.leafy.util.CarbonCalculator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -217,7 +217,7 @@ public class CarDistanceService {
         log.debug("전체 tripPlaces 목록: {}", tripPlaces);
 
         for (int i = 0; i < tripPlaces.size(); i++) {
-            PlaceDTO place = tripPlaces.get(i).getPlace();
+            TripPlaceLocationResponse place = tripPlaces.get(i).getPlace();
             if (place.getAddress() != null && place.getAddress().contains("제주")) {
                 if (firstJejuIndex == -1) {
                     firstJejuIndex = i;

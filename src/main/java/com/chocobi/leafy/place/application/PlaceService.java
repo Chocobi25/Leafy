@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -29,6 +30,11 @@ public class PlaceService {
 
     public PlaceEntity getPlace(Long placeId){
         return placeFindService.findPlace(placeId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlaceEntity> getPlaces(List<Long> placeIds) {
+        return placeFindService.findPlaces(placeIds);
     }
 
     @Transactional(readOnly = true)

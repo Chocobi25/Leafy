@@ -48,10 +48,10 @@ VALUES
 (2, 2, 3, 5, '사람이 많지만 바다가 깨끗해요.', '부산 여행 후기', NOW(), NOW());
 
 -- 9. 여행 계획 (Trip)
-INSERT INTO trip (id, user_id, title, status, arrival_region_id, departure_region_id, carbon_emission, carbon_saved, start_date, end_date, created_at, updated_at)
+INSERT INTO trip (id, user_id, title, status, arrival_region_id, departure_region_id, carbon_emission, carbon_saved, route_stale, start_date, end_date, created_at, updated_at)
 VALUES
-(1, 1, '서울 힐링 여행', 'COMPLETED', 1, 2, 12.5, 5.2, '2026-02-01', '2026-02-03', NOW(), NOW()),
-(2, 1, '제주 한달살기', 'READY', 3, 1, 45.0, 10.0, '2026-03-01', '2026-03-31', NOW(), NOW());
+(1, 1, '서울 힐링 여행', 'COMPLETED', 1, 2, 12.5, 5.2, false, '2026-02-01', '2026-02-03', NOW(), NOW()),
+(2, 1, '제주 한달살기', 'READY', 3, 1, 45.0, 10.0, false, '2026-03-01', '2026-03-31', NOW(), NOW());
 
 -- 10. 여행지 상세 (Trip Place)
 INSERT INTO trip_place (id, place_id, trip_id, day_index, visit_order, memo)

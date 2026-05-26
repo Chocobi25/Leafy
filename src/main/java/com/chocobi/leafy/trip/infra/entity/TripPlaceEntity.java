@@ -31,11 +31,24 @@ public class TripPlaceEntity extends BaseEntity {
     @Builder.Default
     private int visitOrder = 0;
 
+    @Column(name = "memo", length = 255)
     private String memo;
 
-    public void updateDetails(int dayIndex, int visitOrder, String memo){
+    public void updateDetails(PlaceEntity place, Integer dayIndex, Integer visitOrder, String memo) {
+        this.place = place;
         this.dayIndex = dayIndex;
         this.visitOrder = visitOrder;
         this.memo = memo;
     }
+
+    public void updateSchedule(Integer dayIndex, Integer visitOrder, String memo) {
+        this.dayIndex = dayIndex;
+        this.visitOrder = visitOrder;
+        this.memo = memo;
+    }
+
+    public void updateMemo(String memo) {
+        this.memo = memo;
+    }
+
 }

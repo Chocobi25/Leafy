@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum TripError implements ErrorCode {
     TRIP_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 여행입니다."),
-    TRIP_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 여행 장소입니다."),
     TRIP_SEGMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 여행 경로입니다."),
     INVALID_TRIP_REQUEST(HttpStatus.BAD_REQUEST, "여행 요청 정보가 올바르지 않습니다."),
     INVALID_TRIP_TITLE(HttpStatus.BAD_REQUEST, "여행 제목을 입력해주세요."),

@@ -100,6 +100,7 @@ CREATE TABLE trip
     departure_region_id bigint NOT NULL,
     carbon_emission double NOT NULL,
     carbon_saved double NOT NULL,
+    route_stale boolean NOT NULL DEFAULT false,
     start_date date NOT NULL,
     end_date date NOT NULL,
     certification_at    datetime(6),
