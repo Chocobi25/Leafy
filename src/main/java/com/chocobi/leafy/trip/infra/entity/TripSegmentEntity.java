@@ -13,8 +13,8 @@ import lombok.*;
 public class TripSegmentEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trip_id", nullable = false)
-    private TripEntity trip;
+    @JoinColumn(name = "route_option_id", nullable = false)
+    private TripRouteOptionEntity routeOption;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "start_trip_place_id", nullable = false)
@@ -24,18 +24,12 @@ public class TripSegmentEntity extends BaseEntity {
     @JoinColumn(name = "end_trip_place_id", nullable = false)
     private TripPlaceEntity endTripPlace;
 
-    @Column(name = "transport", nullable = false, length = 50)
-    private String transport;
-
     @Column(name = "distance", nullable = false)
     private double distance;
 
     @Column(name = "duration", nullable = false)
     private int duration; // 소요 시간 (분)
 
-    @Column(name = "carbon_emitted", nullable = false)
-    private double carbonEmitted;
-
-    @Column(name = "max_carbon_emission", nullable = false)
-    private double maxCarbonEmission;
+    @Column(name = "carbon_emission", nullable = false)
+    private double carbonEmission;
 }

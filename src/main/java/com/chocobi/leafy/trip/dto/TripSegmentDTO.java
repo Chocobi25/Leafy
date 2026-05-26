@@ -14,20 +14,18 @@ public class TripSegmentDTO {
     private String transport;
     private double distance;
     private int duration;
-    private double carbonEmitted;
-    private double maxCarbonEmission;
+    private double carbonEmission;
 
     public static TripSegmentDTO fromEntity(TripSegmentEntity tripSegment) {
         return new TripSegmentDTO(
                 tripSegment.getId(),
-                tripSegment.getTrip().getId(),
+                tripSegment.getRouteOption().getTrip().getId(),
                 tripSegment.getStartTripPlace().getPlace().getId(),
                 tripSegment.getEndTripPlace().getPlace().getId(),
-                tripSegment.getTransport(),
+                tripSegment.getRouteOption().getTransport().getCode(),
                 tripSegment.getDistance(),
                 tripSegment.getDuration(),
-                tripSegment.getCarbonEmitted(),
-                tripSegment.getMaxCarbonEmission()
+                tripSegment.getCarbonEmission()
         );
     }
 }

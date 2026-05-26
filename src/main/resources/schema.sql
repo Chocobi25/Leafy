@@ -119,18 +119,31 @@ CREATE TABLE trip_place
     memo            varchar(255)
 );
 
+DROP TABLE IF EXISTS trip_route_option;
+CREATE TABLE trip_route_option
+(
+    id                      bigint PRIMARY KEY,
+    trip_id                 bigint NOT NULL,
+    transport               enum('CAR','PUBLIC') NOT NULL,
+    total_distance          double NOT NULL,
+    total_duration          int NOT NULL,
+    total_carbon_emission   double NOT NULL,
+    recommended             boolean NOT NULL DEFAULT false,
+    confirmed               boolean NOT NULL DEFAULT false,
+    created_at              datetime(6) NOT NULL,
+    updated_at              datetime(6) NOT NULL
+);
+
 DROP TABLE IF EXISTS trip_segment;
 CREATE TABLE trip_segment
 (
     id              bigint PRIMARY KEY,
-    trip_id         bigint,
+    route_option_id bigint NOT NULL,
     start_trip_place_id  bigint,
     end_trip_place_id    bigint,
     distance        double NOT NULL,
     duration        int NOT NULL,
-    carbon_emitted  double,
-    max_carbon_emission double,
-    transport       varchar(255),
+    carbon_emission  double NOT NULL,
     created_at  datetime(6) NOT NULL,
     updated_at  datetime(6) NOT NULL
 );

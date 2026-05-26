@@ -22,6 +22,14 @@ public class TripSegmentFindService {
     }
 
     public List<TripSegmentEntity> findTripSegmentsByTripId(Long tripId) {
-        return tripSegmentRepository.findByTrip_Id(tripId);
+        return tripSegmentRepository.findByRouteOption_Trip_Id(tripId);
+    }
+
+    public List<TripSegmentEntity> findTripSegmentsByRouteOptionId(Long routeOptionId) {
+        return tripSegmentRepository.findByRouteOption_Id(routeOptionId);
+    }
+
+    public List<TripSegmentEntity> findConfirmedTripSegmentsByTripId(Long tripId) {
+        return tripSegmentRepository.findByRouteOption_Trip_IdAndRouteOption_ConfirmedTrue(tripId);
     }
 }

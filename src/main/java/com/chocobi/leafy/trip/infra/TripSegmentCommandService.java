@@ -1,6 +1,7 @@
 package com.chocobi.leafy.trip.infra;
 
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
+import com.chocobi.leafy.trip.infra.entity.TripRouteOptionEntity;
 import com.chocobi.leafy.trip.infra.entity.TripSegmentEntity;
 import com.chocobi.leafy.trip.infra.repository.TripSegmentRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,10 @@ public class TripSegmentCommandService {
     }
 
     public void deleteAllByTrip(TripEntity tripEntity) {
-        tripSegmentRepository.deleteAllByTrip(tripEntity);
+        tripSegmentRepository.deleteAllByRouteOption_Trip_Id(tripEntity.getId());
+    }
+
+    public void deleteAllByRouteOption(TripRouteOptionEntity routeOption) {
+        tripSegmentRepository.deleteAllByRouteOption(routeOption);
     }
 }

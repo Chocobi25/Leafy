@@ -14,11 +14,14 @@ import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.dto.TripSegmentRedisDto;
 import com.chocobi.leafy.trip.infra.TripFindService;
+import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
 import com.chocobi.leafy.trip.infra.TripSegmentCommandService;
 import com.chocobi.leafy.trip.infra.TripSegmentFindService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
+import com.chocobi.leafy.trip.infra.entity.TripRouteOptionEntity;
 import com.chocobi.leafy.trip.infra.entity.TripSegmentEntity;
+import com.chocobi.leafy.trip.vo.TripTransport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,7 @@ import static com.chocobi.leafy.distance.service.DistanceUtils.regionToPoint;
 public class TripSegmentService {
     private final TripSegmentFindService tripSegmentFindService;
     private final TripSegmentCommandService tripSegmentCommandService;
+    private final TripRouteOptionCommandService tripRouteOptionCommandService;
     private final TripFindService tripFindService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final CarDistanceService carDistanceService;
@@ -80,7 +84,6 @@ public class TripSegmentService {
             double distance = sections.get(i).getDistance();
             int durationInMinutes = Math.max(1, sections.get(i).getDuration() / 60); // 초 -> 분
             double carbonEmission = sections.get(i).getCarbonEmission();
-            double maxCarbonEmission = sections.get(i).getMaxCarbonEmission();
 
             TripSegmentRedisDto dto = TripSegmentRedisDto.builder()
                     .tripId(tripId)
@@ -89,8 +92,7 @@ public class TripSegmentService {
                     .transport(transport == null ? null : transport.toLowerCase())
                     .distance(distance)
                     .duration(durationInMinutes)
-                    .carbonEmitted(carbonEmission)
-                    .maxCarbonEmission(maxCarbonEmission)
+                    .carbonEmission(carbonEmission)
                     .build();
 
             tripSegmentDtos.add(dto);
@@ -131,6 +133,12 @@ public class TripSegmentService {
         if (tripPlaces == null || tripPlaces.size() < 2) return tripSegments;
 
         TripEntity trip = tripFindService.findTrip(tripId);
+        TripRouteOptionEntity routeOption = createRouteOptionFromSections(
+                trip,
+                transport,
+                sections,
+                false
+        );
 
         List<TripPlaceResponse> mutableTripPlaces = new ArrayList<>(tripPlaces);
         mutableTripPlaces.sort(tripPlaceRouteOrder());
@@ -143,19 +151,16 @@ public class TripSegmentService {
             double distance = sections.get(i).getDistance();
             int durationInMinutes = Math.max(1, sections.get(i).getDuration() / 60);
             double carbonEmission = sections.get(i).getCarbonEmission();
-            double maxCarbonEmission = sections.get(i).getMaxCarbonEmission();
             TripPlaceEntity startTripPlace = tripPlaceService.getTripPlaceById(startPlace.getTripPlaceId());
             TripPlaceEntity endTripPlace = tripPlaceService.getTripPlaceById(endPlace.getTripPlaceId());
 
             TripSegmentEntity tripSegment = TripSegmentEntity.builder()
-                    .trip(trip)
+                    .routeOption(routeOption)
                     .startTripPlace(startTripPlace)
                     .endTripPlace(endTripPlace)
-                    .transport(transport == null ? null : transport.toLowerCase())
                     .distance(distance)
                     .duration(durationInMinutes)
-                    .carbonEmitted(carbonEmission)
-                    .maxCarbonEmission(maxCarbonEmission)
+                    .carbonEmission(carbonEmission)
                     .build();
             tripSegments.add(tripSegment);
         }
@@ -174,40 +179,30 @@ public class TripSegmentService {
         String normalized = transport.toLowerCase();
         List<TripSegmentRedisDto> tripSegmentDtos = getTempTripSegments(tripId, normalized); // 임시 TripSegmentRedisDto를 불러와서
 
-        String otherTransport = normalized.equals("car") ? "public" : "car";
-        List<TripSegmentRedisDto> otherTripSegmentDtos = null;
+        tripSegmentCommandService.deleteAllByTrip(trip);
+        tripRouteOptionCommandService.deleteAllByTrip(trip);
 
-        try {
-            otherTripSegmentDtos = getTempTripSegments(tripId, otherTransport);
-        } catch (IllegalArgumentException e) {
-            // 다른 교통수단이 없을 수 있음 — 무시
-        }
+        TripRouteOptionEntity routeOption = tripRouteOptionCommandService.save(createRouteOptionFromRedisDtos(
+                trip,
+                normalized,
+                tripSegmentDtos,
+                true
+        ));
 
-        // 최종 선택된 교통수단으로 transport 값 업데이트 및 maxCarbonEmission 설정
         List<TripSegmentEntity> tripSegments = new ArrayList<>();
-        for (int i = 0; i < tripSegmentDtos.size(); i++) {
-            TripSegmentRedisDto dto = tripSegmentDtos.get(i);
+        for (TripSegmentRedisDto dto : tripSegmentDtos) {
             dto.setTransport(normalized);
 
-            // maxCarbonEmission 설정: 현재 교통수단과 다른 교통수단의 maxCarbonEmission 중 더 큰 값
-            double maxCarbon = dto.getMaxCarbonEmission();
-            if (otherTripSegmentDtos != null && i < otherTripSegmentDtos.size()) {
-                double otherMaxCarbon = otherTripSegmentDtos.get(i).getMaxCarbonEmission();
-                maxCarbon = Math.max(maxCarbon, otherMaxCarbon);
-            }
-            dto.setMaxCarbonEmission(maxCarbon);
-
             tripSegments.add(dto.toEntity(
+                    routeOption,
                     tripPlaceService.getTripPlaceById(dto.getStartTripPlaceId()),
                     tripPlaceService.getTripPlaceById(dto.getEndTripPlaceId())
             ));
         }
 
-        tripSegmentCommandService.deleteAllByTrip(trip);
         saveTripSegments(tripSegments); // DB에 저장
         trip.clearRouteStale();
         deleteTempTripSegments(tripId, normalized); // 임시 저장한 TripSegments를 삭제
-        deleteTempTripSegments(tripId, otherTransport);
     }
 
     /**
@@ -247,7 +242,7 @@ public class TripSegmentService {
                 .sum();
 
         double totalCarbonEmission = segments.stream()
-                .mapToDouble(TripSegmentRedisDto::getCarbonEmitted)
+                .mapToDouble(TripSegmentRedisDto::getCarbonEmission)
                 .sum();
 
         Map<String, Object> result = new HashMap<>();
@@ -318,7 +313,7 @@ public class TripSegmentService {
 
     @Transactional
     public List<TripSegmentDTO> getTripSegments(Long tripId) {
-        return tripSegmentFindService.findTripSegmentsByTripId(tripId).stream()
+        return tripSegmentFindService.findConfirmedTripSegmentsByTripId(tripId).stream()
                 .map(TripSegmentDTO::fromEntity)
                 .toList();
     }
@@ -326,6 +321,7 @@ public class TripSegmentService {
     @Transactional
     public void deleteTripSegments(TripEntity trip) {
         tripSegmentCommandService.deleteAllByTrip(trip);
+        tripRouteOptionCommandService.deleteAllByTrip(trip);
     }
 
     /**
@@ -463,5 +459,37 @@ public class TripSegmentService {
     private Comparator<TripPlaceResponse> tripPlaceRouteOrder() {
         return Comparator.comparing(TripPlaceResponse::getDayIndex)
                 .thenComparing(TripPlaceResponse::getVisitOrder);
+    }
+
+    private TripRouteOptionEntity createRouteOptionFromSections(
+            TripEntity trip,
+            String transport,
+            List<Section> sections,
+            boolean confirmed
+    ) {
+        return TripRouteOptionEntity.builder()
+                .trip(trip)
+                .transport(TripTransport.from(transport))
+                .totalDistance(sections.stream().mapToDouble(Section::getDistance).sum())
+                .totalDuration(sections.stream().mapToInt(section -> Math.max(1, section.getDuration() / 60)).sum())
+                .totalCarbonEmission(sections.stream().mapToDouble(Section::getCarbonEmission).sum())
+                .confirmed(confirmed)
+                .build();
+    }
+
+    private TripRouteOptionEntity createRouteOptionFromRedisDtos(
+            TripEntity trip,
+            String transport,
+            List<TripSegmentRedisDto> tripSegments,
+            boolean confirmed
+    ) {
+        return TripRouteOptionEntity.builder()
+                .trip(trip)
+                .transport(TripTransport.from(transport))
+                .totalDistance(tripSegments.stream().mapToDouble(TripSegmentRedisDto::getDistance).sum())
+                .totalDuration(tripSegments.stream().mapToInt(TripSegmentRedisDto::getDuration).sum())
+                .totalCarbonEmission(tripSegments.stream().mapToDouble(TripSegmentRedisDto::getCarbonEmission).sum())
+                .confirmed(confirmed)
+                .build();
     }
 }
