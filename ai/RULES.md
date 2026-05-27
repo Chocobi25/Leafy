@@ -61,7 +61,7 @@
 
 예) refactor/user-service
 
-### 2) 커밋 메세지 규칙
+### 2) 커밋 메시지 규칙
 
 커밋 메시지는 다음 형식을 따른다.
 - `{type}: {message}`
