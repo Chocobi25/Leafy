@@ -60,6 +60,10 @@ VALUES
 (2, 2, 1, 0, 2, '바다 보러 가기');
 
 -- 11. 여행 구간 정보 (Trip Segment)
-INSERT INTO trip_segment (id, trip_id, start_trip_place_id, end_trip_place_id, distance, duration, carbon_emitted, max_carbon_emission, transport, created_at, updated_at)
+INSERT INTO trip_route_option (id, trip_id, transport, total_distance, total_duration, total_carbon_emission, recommended, confirmed, created_at, updated_at)
 VALUES
-(1, 1, 1, 2, 5.2, 20, 1.2, 2.0, 'BUS', NOW(), NOW());
+(1, 1, 'PUBLIC', 5.2, 20, 1.2, true, true, NOW(), NOW());
+
+INSERT INTO trip_segment (id, route_option_id, start_trip_place_id, end_trip_place_id, distance, duration, carbon_emission, created_at, updated_at)
+VALUES
+(1, 1, 1, 2, 5.2, 20, 1.2, NOW(), NOW());
