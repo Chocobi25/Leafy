@@ -22,7 +22,10 @@ INSERT INTO region (id, code, name, full_name, parent_id, level) VALUES (6, '111
 -- 4. 카테고리 데이터
 INSERT INTO category_entity (id, code, name, icon_url) VALUES
 (1, 'CULTURE', '문화', NULL),
-(2, 'NATURE', '자연', NULL);
+(2, 'NATURE', '자연', NULL),
+(3, 'EXPERIENCE', '체험', NULL),
+(4, 'ETC', '기타', NULL),
+(5, 'FOOD', '음식', NULL);
 
 -- 5. 부모 테이블 (place) 데이터 삽입
 INSERT INTO place (id, place_type, title, address, latitude, longitude, created_at, updated_at) VALUES
@@ -30,9 +33,9 @@ INSERT INTO place (id, place_type, title, address, latitude, longitude, created_
 (2, 'EXTERNAL', '해운대 해수욕장', '부산 해운대구 해운대해변로 264', 35.1587, 129.1604, NOW(), NOW());
 
 -- 6. 자식 장소 테이블 (external_place)
-INSERT INTO external_place (id, description, url, tel, category_id, region_id) VALUES
-(1, '서울의 랜드마크입니다.', 'https://place.com/1', '02-123-4567', 1, 1),
-(2, '여름철 최고의 휴양지입니다.', 'https://place.com/2', '051-987-6543', 2, 2);
+INSERT INTO external_place (id, status, description, url, tel, category_id, region_id) VALUES
+(1, 'ACTIVE', '서울의 랜드마크입니다.', 'https://place.com/1', '02-123-4567', 1, 1),
+(2, 'ACTIVE', '여름철 최고의 휴양지입니다.', 'https://place.com/2', '051-987-6543', 2, 2);
 
 -- 7. 이미지 데이터 (Image)
 INSERT INTO image (id, place_id, url, copyright)

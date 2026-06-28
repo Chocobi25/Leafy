@@ -8,7 +8,7 @@ import com.chocobi.leafy.place.dto.request.AdminUpdateCustomPlaceRequest;
 import com.chocobi.leafy.place.dto.request.AdminUpdateExternalPlaceRequest;
 import com.chocobi.leafy.place.dto.response.AdminPlaceDetailResponse;
 import com.chocobi.leafy.place.dto.response.AdminPlaceListResponse;
-import com.chocobi.leafy.place.infra.CategoryService;
+import com.chocobi.leafy.place.infra.CategoryFindService;
 import com.chocobi.leafy.place.infra.CustomPlaceFindService;
 import com.chocobi.leafy.place.infra.ExternalPlaceCommandService;
 import com.chocobi.leafy.place.infra.ExternalPlaceFindService;
@@ -30,7 +30,7 @@ public class AdminPlaceService {
     private final PlaceFindService placeFindService;
     private final PlaceCommandService placeCommandService;
     private final RegionFindService regionFindService;
-    private final CategoryService categoryService;
+    private final CategoryFindService categoryFindService;
     private final ExternalPlaceFindService externalPlaceFindService;
     private final ExternalPlaceCommandService externalPlaceCommandService;
     private final CustomPlaceFindService customPlaceFindService;
@@ -64,7 +64,7 @@ public class AdminPlaceService {
         ExternalPlaceEntity place = ExternalPlaceEntity.builder()
                 .title(request.title())
                 .description(request.description())
-                .category(categoryService.findCategory(request.categoryId()))
+                .category(categoryFindService.findCategory(request.categoryId()))
                 .region(regionFindService.findRegion(request.regionId()))
                 .address(request.address())
                 .latitude(request.latitude())
@@ -84,7 +84,7 @@ public class AdminPlaceService {
         ExternalPlaceEntity updatedPlace = ExternalPlaceEntity.builder()
                 .title(request.title())
                 .description(request.description())
-                .category(categoryService.findCategory(request.categoryId()))
+                .category(categoryFindService.findCategory(request.categoryId()))
                 .region(regionFindService.findRegion(request.regionId()))
                 .address(request.address())
                 .latitude(request.latitude())

@@ -16,14 +16,31 @@ spring:
     init:
       mode: never
 
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+
 kakao:
   admin-key: test-admin-key
+  navi:
+    url: http://localhost
   api:
     key: test-kakao-api-key
+    base:
+      url: http://localhost
 
 tour:
   api:
     key: test-tour-api-key
+    base:
+      url: http://localhost
+
+culture:
+  api:
+    base:
+      url: http://localhost
 
 theme:
   api:
@@ -36,12 +53,17 @@ rural:
 farm:
   api:
     key: test-farm-api-key
+    base:
+      url: http://localhost
 
 tmap:
+  url: http://localhost
   api:
     key: test-tmap-api-key
 
 naver:
+  base:
+    url: http://localhost
   client:
     id: test-naver-client-id
     secret: test-naver-client-secret
@@ -55,3 +77,11 @@ jwt:
 
 cookie:
   secure: false
+
+app:
+  frontend:
+    client-uri: http://localhost
+
+VWORLD_API_URL: http://localhost
+VWORLD_API_KEY: test-vworld-api-key
+SERVICE_DOMAIN_URL: http://localhost

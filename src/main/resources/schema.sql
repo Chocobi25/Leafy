@@ -66,12 +66,21 @@ CREATE TABLE category_entity
 DROP TABLE IF EXISTS external_place;
 CREATE TABLE external_place
 (
-    id          bigint PRIMARY KEY,
-    description TEXT,
-    tel         varchar(255),
-    url         varchar(2000),
-    category_id bigint,
-    region_id   bigint
+    id                     bigint PRIMARY KEY,
+    external_content_id    varchar(255),
+    source                 varchar(30),
+    content_type_id        int,
+    large_category_code    varchar(255),
+    middle_category_code   varchar(255),
+    small_category_code    varchar(255),
+    external_version       varchar(255),
+    status                 varchar(20) NOT NULL DEFAULT 'ACTIVE',
+    description            TEXT,
+    tel                    varchar(255),
+    url                    varchar(2000),
+    category_id            bigint,
+    region_id              bigint,
+    UNIQUE (source, external_content_id)
 );
 
 DROP TABLE IF EXISTS custom_place;
