@@ -12,6 +12,8 @@ import com.chocobi.leafy.place.infra.PlaceFindService;
 import com.chocobi.leafy.place.infra.entity.CustomPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
+import com.chocobi.leafy.global.exception.CustomException;
+import com.chocobi.leafy.place.vo.PlaceError;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,17 +31,21 @@ public class PlaceService {
     private final CustomPlaceCommandService customPlaceCommandService;
 
     public PlaceEntity getPlace(Long placeId){
-        return placeFindService.findPlace(placeId);
+        PlaceEntity place = placeFindService.findPlace(placeId);
+        validateActive(place);
+        return place;
     }
 
     @Transactional(readOnly = true)
     public List<PlaceEntity> getPlaces(List<Long> placeIds) {
-        return placeFindService.findPlaces(placeIds);
+        List<PlaceEntity> places = placeFindService.findPlaces(placeIds);
+        places.forEach(this::validateActive);
+        return places;
     }
 
     @Transactional(readOnly = true)
     public ExternalPlaceDetailResponse getExternalPlace(Long id) {
-        return ExternalPlaceDetailResponse.from(externalPlaceFindService.findExternalPlace(id));
+        return ExternalPlaceDetailResponse.from(externalPlaceFindService.findActiveExternalPlace(id));
     }
 
     @Transactional(readOnly = true)
@@ -75,5 +81,11 @@ public class PlaceService {
     @Transactional
     public void deletePlace(Long placeId) {
         placeCommandService.delete(placeId);
+    }
+
+    private void validateActive(PlaceEntity place) {
+        if (place instanceof ExternalPlaceEntity externalPlace && !externalPlace.isActive()) {
+            throw new CustomException(PlaceError.PLACE_NOT_FOUND);
+        }
     }
 }

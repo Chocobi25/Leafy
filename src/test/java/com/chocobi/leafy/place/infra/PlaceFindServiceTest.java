@@ -122,7 +122,12 @@ class PlaceFindServiceTest {
     }
 
     private RegionEntity saveRegion(String name) {
-        return regionRepository.saveAndFlush(new RegionEntity(name, null, RegionLevel.SIDO));
+        return regionRepository.saveAndFlush(RegionEntity.builder()
+                .code(name)
+                .name(name)
+                .fullName(name)
+                .level(RegionLevel.SIDO)
+                .build());
     }
 
     private void saveExternalPlace(String title, CategoryEntity category, RegionEntity region) {

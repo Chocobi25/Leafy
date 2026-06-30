@@ -269,7 +269,12 @@ class TripServiceTest {
     }
 
     private RegionEntity regionFixture(Long regionId, String name) {
-        RegionEntity region = new RegionEntity(name, null, RegionLevel.SIDO);
+        RegionEntity region = RegionEntity.builder()
+                .code(name)
+                .name(name)
+                .fullName(name)
+                .level(RegionLevel.SIDO)
+                .build();
         ReflectionTestUtils.setField(region, "id", regionId);
         return region;
     }

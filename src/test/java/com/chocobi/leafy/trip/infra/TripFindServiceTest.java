@@ -98,8 +98,18 @@ class TripFindServiceTest {
     }
 
     private TripEntity saveTrip(String title, UserEntity user) {
-        RegionEntity departure = regionRepository.saveAndFlush(new RegionEntity(title + " 출발", null, RegionLevel.SIDO));
-        RegionEntity arrival = regionRepository.saveAndFlush(new RegionEntity(title + " 도착", null, RegionLevel.SIDO));
+        RegionEntity departure = regionRepository.saveAndFlush(RegionEntity.builder()
+                .code(title + "-departure")
+                .name(title + " 출발")
+                .fullName(title + " 출발")
+                .level(RegionLevel.SIDO)
+                .build());
+        RegionEntity arrival = regionRepository.saveAndFlush(RegionEntity.builder()
+                .code(title + "-arrival")
+                .name(title + " 도착")
+                .fullName(title + " 도착")
+                .level(RegionLevel.SIDO)
+                .build());
 
         return tripRepository.saveAndFlush(TripEntity.builder()
                 .user(user)
