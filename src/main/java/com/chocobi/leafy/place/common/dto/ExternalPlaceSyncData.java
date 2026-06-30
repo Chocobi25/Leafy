@@ -1,6 +1,7 @@
 package com.chocobi.leafy.place.common.dto;
 
 import com.chocobi.leafy.place.vo.ExternalPlaceSource;
+import java.util.List;
 
 public record ExternalPlaceSyncData(
         ExternalPlaceSource source,
@@ -18,6 +19,8 @@ public record ExternalPlaceSyncData(
         String largeCategoryCode,
         String middleCategoryCode,
         String smallCategoryCode,
-        String version
+        String version,
+        boolean syncImages,
+        List<ExternalPlaceImageSyncData> images
 ) {
 }

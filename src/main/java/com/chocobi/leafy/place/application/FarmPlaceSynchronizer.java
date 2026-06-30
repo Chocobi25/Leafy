@@ -10,7 +10,6 @@ import com.chocobi.leafy.external.kakao.client.GeocodeClient;
 import com.chocobi.leafy.external.kakao.dto.GeocodedAddress;
 import com.chocobi.leafy.place.common.dto.ExternalPlaceSyncData;
 import com.chocobi.leafy.place.batch.ExternalPlaceSyncService;
-import com.chocobi.leafy.place.infra.entity.Category;
 import com.chocobi.leafy.place.vo.ExternalPlaceSource;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -31,8 +30,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class FarmPlaceSynchronizer implements ExternalPlaceSynchronizer {
-    private static final int PAGE_SIZE = 100;
+    private static final int PAGE_SIZE = 500;
     private static final int SYNC_BATCH_SIZE = 100;
+    private static final String FOOD_CATEGORY_CODE = "FOOD";
     private static final Set<String> SUCCESS_RESULT_CODES = Set.of("00", "0000");
 
     private final FarmRestaurantClient farmRestaurantClient;
@@ -109,7 +109,7 @@ public class FarmPlaceSynchronizer implements ExternalPlaceSynchronizer {
         String address = geocodedAddress.getAddress().getAddress_name();
         return new ExternalPlaceSyncData(
                 ExternalPlaceSource.FARM_API,
-                Category.FOOD.name(),
+                FOOD_CATEGORY_CODE,
                 listItem.getCntntsNo(),
                 null,
                 detail.getCntntsSj(),
@@ -123,7 +123,9 @@ public class FarmPlaceSynchronizer implements ExternalPlaceSynchronizer {
                 null,
                 null,
                 null,
-                createVersion(detail, address, geocodedAddress)
+                createVersion(detail, address, geocodedAddress),
+                false,
+                List.of()
         );
     }
 

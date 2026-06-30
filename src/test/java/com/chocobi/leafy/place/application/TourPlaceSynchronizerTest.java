@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import com.chocobi.leafy.external.tour.client.TourKoreanInfoClient;
 import com.chocobi.leafy.external.tour.dto.TourKoreanAreaBasedResponse;
+import com.chocobi.leafy.external.tour.dto.TourKoreanDetailImageResponse;
 import com.chocobi.leafy.external.tour.dto.TourKoreanPlaceSearchCondition;
 import com.chocobi.leafy.place.common.dto.ExternalPlaceSyncData;
 import com.chocobi.leafy.place.batch.ExternalPlaceSyncService;
@@ -53,6 +54,8 @@ class TourPlaceSynchronizerTest {
                         invocation.getArgument(1)));
         when(externalPlaceSyncService.deactivateMissing(eq(ExternalPlaceSource.TOUR_API), any()))
                 .thenReturn(0);
+        when(tourKoreanInfoClient.fetchDetailImages("shared-content"))
+                .thenReturn(detailImageResponse());
 
         int result = synchronizer.sync();
 
@@ -64,6 +67,13 @@ class TourPlaceSynchronizerTest {
         assertThat(syncedPlaces).hasSize(1);
         assertThat(syncedPlaces.getFirst().contentId()).isEqualTo("shared-content");
         assertThat(syncedPlaces.getFirst().categoryCode()).isEqualTo("NATURE");
+        assertThat(syncedPlaces.getFirst().images()).hasSize(2);
+        assertThat(syncedPlaces.getFirst().images().getFirst().url())
+                .isEqualTo("https://images.example/thumbnail.jpg");
+        assertThat(syncedPlaces.getFirst().images().getFirst().thumbnail()).isTrue();
+        assertThat(syncedPlaces.getFirst().images().get(1).url())
+                .isEqualTo("https://images.example/detail.jpg");
+        assertThat(syncedPlaces.getFirst().images().get(1).thumbnail()).isFalse();
         verify(tourKoreanInfoClient).fetchAreaBasedPlaces(
                 new TourKoreanPlaceSearchCondition(null, null, null, "NA", null, null),
                 2,
@@ -130,8 +140,27 @@ class TourPlaceSynchronizerTest {
                 Map.entry("addr1", "서울특별시 종로구"),
                 Map.entry("mapx", "126.9"),
                 Map.entry("mapy", "37.5"),
+                Map.entry("firstimage", "https://images.example/thumbnail.jpg"),
+                Map.entry("cpyrhtDivCd", "Type1"),
                 Map.entry("modifiedtime", "20260628010101")
         );
+    }
+
+    private TourKoreanDetailImageResponse detailImageResponse() throws Exception {
+        Map<String, Object> response = Map.of(
+                "header", Map.of("resultCode", "0000", "resultMsg", "OK"),
+                "body", Map.of(
+                        "numOfRows", 100,
+                        "pageNo", 1,
+                        "totalCount", 1,
+                        "items", Map.of("item", List.of(Map.of(
+                                "contentid", "shared-content",
+                                "originimgurl", "https://images.example/detail.jpg",
+                                "cpyrhtDivCd", "Type1"))))
+        );
+        return objectMapper.readValue(
+                objectMapper.writeValueAsString(Map.of("response", response)),
+                TourKoreanDetailImageResponse.class);
     }
 
     private Map<String, Object> invalidItem() {

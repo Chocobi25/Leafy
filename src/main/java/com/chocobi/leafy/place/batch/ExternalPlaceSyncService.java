@@ -1,11 +1,15 @@
 package com.chocobi.leafy.place.batch;
 
 import com.chocobi.leafy.place.common.dto.ExternalPlaceSyncData;
+import com.chocobi.leafy.place.common.dto.ExternalPlaceImageSyncData;
 import com.chocobi.leafy.place.infra.CategoryFindService;
 import com.chocobi.leafy.place.infra.ExternalPlaceCommandService;
 import com.chocobi.leafy.place.infra.ExternalPlaceFindService;
+import com.chocobi.leafy.place.infra.PlaceImageCommandService;
+import com.chocobi.leafy.place.infra.PlaceImageFindService;
 import com.chocobi.leafy.place.infra.entity.CategoryEntity;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
+import com.chocobi.leafy.place.infra.entity.PlaceImageEntity;
 import com.chocobi.leafy.place.vo.ExternalPlaceStatus;
 import com.chocobi.leafy.place.vo.ExternalPlaceSource;
 import java.util.Collection;
@@ -15,6 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +31,8 @@ public class ExternalPlaceSyncService {
     private final ExternalPlaceFindService externalPlaceFindService;
     private final ExternalPlaceCommandService externalPlaceCommandService;
     private final CategoryFindService categoryFindService;
+    private final PlaceImageFindService placeImageFindService;
+    private final PlaceImageCommandService placeImageCommandService;
 
     public void syncBatch(List<ExternalPlaceSyncData> places) {
         if (places.isEmpty()) {
@@ -35,22 +44,102 @@ public class ExternalPlaceSyncService {
         Map<String, CategoryEntity> categories = findCategories(places);
         Map<String, ExternalPlaceEntity> existingPlaces = findExistingPlaces(places, source);
         List<ExternalPlaceEntity> placesToSave = new ArrayList<>();
+        Map<String, ExternalPlaceEntity> synchronizedPlaces = new HashMap<>();
 
         for (ExternalPlaceSyncData place : places) {
             CategoryEntity category = categories.get(place.categoryCode());
             ExternalPlaceEntity existingPlace = existingPlaces.get(place.contentId());
             if (existingPlace == null) {
-                placesToSave.add(createPlace(place, category));
+                ExternalPlaceEntity newPlace = createPlace(place, category);
+                placesToSave.add(newPlace);
+                synchronizedPlaces.put(place.contentId(), newPlace);
                 continue;
             }
             if (existingPlace.needsSync(place.version(), category)) {
                 existingPlace.sync(createPlace(place, category));
                 placesToSave.add(existingPlace);
             }
+            synchronizedPlaces.put(place.contentId(), existingPlace);
         }
         if (!placesToSave.isEmpty()) {
             externalPlaceCommandService.saveAll(placesToSave);
         }
+        syncImages(places, synchronizedPlaces);
+    }
+
+    private void syncImages(
+            List<ExternalPlaceSyncData> places,
+            Map<String, ExternalPlaceEntity> synchronizedPlaces
+    ) {
+        List<ExternalPlaceSyncData> imageTargets = places.stream()
+                .filter(ExternalPlaceSyncData::syncImages)
+                .toList();
+        if (imageTargets.isEmpty()) {
+            return;
+        }
+
+        List<ExternalPlaceEntity> targetPlaces = imageTargets.stream()
+                .map(place -> synchronizedPlaces.get(place.contentId()))
+                .toList();
+        Map<Long, List<PlaceImageEntity>> existingImages = placeImageFindService.findPlaceImages(targetPlaces)
+                .stream()
+                .collect(Collectors.groupingBy(image -> image.getPlace().getId()));
+        List<ExternalPlaceEntity> placesToReplace = new ArrayList<>();
+        List<PlaceImageEntity> imagesToSave = new ArrayList<>();
+
+        for (ExternalPlaceSyncData data : imageTargets) {
+            ExternalPlaceEntity place = synchronizedPlaces.get(data.contentId());
+            List<PlaceImageEntity> currentImages = existingImages.getOrDefault(place.getId(), List.of());
+            if (hasSameImages(currentImages, data.images())) {
+                continue;
+            }
+            placesToReplace.add(place);
+            data.images().stream()
+                    .map(image -> createImage(image, place))
+                    .forEach(imagesToSave::add);
+        }
+        placeImageCommandService.replaceAll(placesToReplace, imagesToSave);
+    }
+
+    private boolean hasSameImages(
+            List<PlaceImageEntity> currentImages,
+            List<ExternalPlaceImageSyncData> syncImages
+    ) {
+        if (currentImages.size() != syncImages.size()) {
+            return false;
+        }
+        List<PlaceImageEntity> sortedCurrentImages = currentImages.stream()
+                .sorted(Comparator.comparing(
+                        PlaceImageEntity::getSortOrder,
+                        Comparator.nullsLast(Integer::compareTo)))
+                .toList();
+        List<ExternalPlaceImageSyncData> sortedSyncImages = syncImages.stream()
+                .sorted(Comparator.comparingInt(ExternalPlaceImageSyncData::sortOrder))
+                .toList();
+        for (int index = 0; index < sortedCurrentImages.size(); index++) {
+            PlaceImageEntity current = sortedCurrentImages.get(index);
+            ExternalPlaceImageSyncData sync = sortedSyncImages.get(index);
+            if (!Objects.equals(current.getUrl(), sync.url())
+                    || !Objects.equals(current.getSource(), sync.source())
+                    || !Objects.equals(current.getSortOrder(), sync.sortOrder())
+                    || !Objects.equals(current.getThumbnail(), sync.thumbnail())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private PlaceImageEntity createImage(
+            ExternalPlaceImageSyncData image,
+            ExternalPlaceEntity place
+    ) {
+        return PlaceImageEntity.builder()
+                .url(image.url())
+                .source(image.source())
+                .sortOrder(image.sortOrder())
+                .thumbnail(image.thumbnail())
+                .place(place)
+                .build();
     }
 
     private void validateSingleSource(List<ExternalPlaceSyncData> places, ExternalPlaceSource source) {

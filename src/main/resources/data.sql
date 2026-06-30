@@ -37,12 +37,13 @@ INSERT INTO external_place (id, status, description, url, tel, category_id, regi
 (1, 'ACTIVE', '서울의 랜드마크입니다.', 'https://place.com/1', '02-123-4567', 1, 1),
 (2, 'ACTIVE', '여름철 최고의 휴양지입니다.', 'https://place.com/2', '051-987-6543', 2, 2);
 
--- 7. 이미지 데이터 (Image)
-INSERT INTO image (id, place_id, url, copyright)
+-- 7. 외부 장소 이미지 데이터
+INSERT INTO external_place_image
+    (id, external_place_id, url, source, sort_order, thumbnail, created_at, updated_at)
 VALUES
-(1, 1, 'https://images.com/namsan1.jpg', '한국관광공사'),
-(2, 1, 'https://images.com/namsan2.jpg', 'ⓒ초코비'),
-(3, 2, 'https://images.com/haeundae.jpg', '부산시청');
+(1, 1, 'https://images.com/namsan1.jpg', '한국관광공사', 0, TRUE, NOW(), NOW()),
+(2, 1, 'https://images.com/namsan2.jpg', 'ⓒ초코비', 1, FALSE, NOW(), NOW()),
+(3, 2, 'https://images.com/haeundae.jpg', '부산시청', 0, TRUE, NOW(), NOW());
 
 -- 8. 게시글 데이터 (Post)
 INSERT INTO post (id, place_id, user_id, likes, content, title, created_at, updated_at)

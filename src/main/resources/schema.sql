@@ -89,13 +89,17 @@ CREATE TABLE custom_place
     id      bigint PRIMARY KEY
 );
 
-DROP TABLE IF EXISTS image;
-CREATE TABLE image
+DROP TABLE IF EXISTS external_place_image;
+CREATE TABLE external_place_image
 (
-    id          bigint PRIMARY KEY,
-    place_id    bigint,
-    url         varchar(2000),
-    copyright   varchar(255)
+    id                bigint PRIMARY KEY AUTO_INCREMENT,
+    external_place_id bigint NOT NULL,
+    url               varchar(2000) NOT NULL,
+    source            varchar(255),
+    sort_order        int,
+    thumbnail         boolean,
+    created_at        datetime(6) NOT NULL,
+    updated_at        datetime(6) NOT NULL
 );
 
 DROP TABLE IF EXISTS trip;

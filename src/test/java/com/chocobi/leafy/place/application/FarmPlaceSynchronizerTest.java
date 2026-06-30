@@ -51,9 +51,9 @@ class FarmPlaceSynchronizerTest {
     @Test
     @DisplayName("농가맛집을 전체 페이지에서 수집하고 유효한 장소만 음식 카테고리로 동기화한다")
     void syncValidFarmRestaurants() throws Exception {
-        when(farmRestaurantClient.fetchFarmList(1, 100))
+        when(farmRestaurantClient.fetchFarmList(1, 500))
                 .thenReturn(listResponse(1, 1, 2, List.of(listItem("farm-1", "농가맛집"))));
-        when(farmRestaurantClient.fetchFarmList(2, 100))
+        when(farmRestaurantClient.fetchFarmList(2, 500))
                 .thenReturn(listResponse(2, 1, 2, List.of(listItem("farm-2", "무효 장소"))));
         when(farmRestaurantClient.fetchFarmDetail("farm-1")).thenReturn(detailResponse());
         when(farmRestaurantClient.fetchFarmDetail("farm-2")).thenReturn(invalidDetailResponse());

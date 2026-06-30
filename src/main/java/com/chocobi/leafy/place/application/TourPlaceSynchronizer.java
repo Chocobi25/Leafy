@@ -4,7 +4,10 @@ import com.chocobi.leafy.external.common.dto.ExternalApiResponse;
 import com.chocobi.leafy.external.tour.client.TourKoreanInfoClient;
 import com.chocobi.leafy.external.tour.dto.TourKoreanAreaBasedResponse;
 import com.chocobi.leafy.external.tour.dto.TourKoreanAreaBasedResponse.TourKoreanAreaBasedItem;
+import com.chocobi.leafy.external.tour.dto.TourKoreanDetailImageResponse;
+import com.chocobi.leafy.external.tour.dto.TourKoreanDetailImageResponse.TourKoreanDetailImageItem;
 import com.chocobi.leafy.place.batch.TourPlaceCollectionTarget;
+import com.chocobi.leafy.place.common.dto.ExternalPlaceImageSyncData;
 import com.chocobi.leafy.place.common.dto.ExternalPlaceSyncData;
 import com.chocobi.leafy.place.batch.ExternalPlaceSyncService;
 import com.chocobi.leafy.place.vo.ExternalPlaceSource;
@@ -15,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Map;
 import java.util.Set;
+import java.util.LinkedHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,6 +43,7 @@ public class TourPlaceSynchronizer implements ExternalPlaceSynchronizer {
             collectTarget(target, collectedPlaces, observedContentIds);
         }
 
+        collectImages(collectedPlaces);
         syncCollectedPlaces(collectedPlaces);
         int deactivatedCount = externalPlaceSyncService.deactivateMissing(
                 ExternalPlaceSource.TOUR_API,
@@ -182,12 +187,82 @@ public class TourPlaceSynchronizer implements ExternalPlaceSynchronizer {
                     item.getLclsSystm1(),
                     item.getLclsSystm2(),
                     item.getLclsSystm3(),
-                    item.getModifiedtime()
+                    item.getModifiedtime(),
+                    true,
+                    thumbnailImage(item)
             );
         } catch (NumberFormatException exception) {
             log.warn("Skipping Tour place with invalid number. contentId={}", item.getContentid(), exception);
             return null;
         }
+    }
+
+    private void collectImages(Map<String, PrioritizedPlace> collectedPlaces) {
+        collectedPlaces.replaceAll((contentId, prioritizedPlace) -> new PrioritizedPlace(
+                withDetailImages(prioritizedPlace.place()),
+                prioritizedPlace.categoryPriority()));
+    }
+
+    private ExternalPlaceSyncData withDetailImages(ExternalPlaceSyncData place) {
+        TourKoreanDetailImageResponse response = tourKoreanInfoClient.fetchDetailImages(place.contentId());
+        List<TourKoreanDetailImageItem> detailImages = validateImageResponse(response, place.contentId());
+        Map<String, ExternalPlaceImageSyncData> images = new LinkedHashMap<>();
+        place.images().forEach(image -> images.put(image.url(), image));
+
+        int sortOrder = images.size();
+        for (TourKoreanDetailImageItem image : detailImages) {
+            if (isBlank(image.getOriginimgurl()) || images.containsKey(image.getOriginimgurl())) {
+                continue;
+            }
+            images.put(image.getOriginimgurl(), new ExternalPlaceImageSyncData(
+                    image.getOriginimgurl(),
+                    image.getCpyrhtDivCd(),
+                    sortOrder++,
+                    false));
+        }
+
+        return new ExternalPlaceSyncData(
+                place.source(), place.categoryCode(), place.contentId(), place.contentTypeId(),
+                place.title(), place.address(), place.latitude(), place.longitude(), place.copyright(),
+                place.description(), place.tel(), place.url(), place.largeCategoryCode(),
+                place.middleCategoryCode(), place.smallCategoryCode(), place.version(),
+                true, List.copyOf(images.values()));
+    }
+
+    private List<TourKoreanDetailImageItem> validateImageResponse(
+            TourKoreanDetailImageResponse response,
+            String contentId
+    ) {
+        if (response == null || response.getExternalApiResponse() == null) {
+            throw new IllegalStateException("Tour 이미지 수집에 실패했습니다. contentId=" + contentId
+                    + ", reason=empty response");
+        }
+        ExternalApiResponse<TourKoreanDetailImageItem> apiResponse = response.getExternalApiResponse();
+        if (apiResponse.getHeader() == null
+                || !SUCCESS_RESULT_CODE.equals(apiResponse.getHeader().getResultCode())) {
+            String reason = apiResponse.getHeader() == null
+                    ? "missing header"
+                    : apiResponse.getHeader().getResultCode() + ":" + apiResponse.getHeader().getResultMsg();
+            throw new IllegalStateException("Tour 이미지 수집에 실패했습니다. contentId=" + contentId
+                    + ", reason=" + reason);
+        }
+        if (apiResponse.getBody() == null
+                || apiResponse.getBody().getItems() == null
+                || apiResponse.getBody().getItems().getItem() == null) {
+            return List.of();
+        }
+        return apiResponse.getBody().getItems().getItem();
+    }
+
+    private List<ExternalPlaceImageSyncData> thumbnailImage(TourKoreanAreaBasedItem item) {
+        if (isBlank(item.getFirstimage())) {
+            return List.of();
+        }
+        return List.of(new ExternalPlaceImageSyncData(
+                item.getFirstimage(),
+                item.getCpyrhtDivCd(),
+                0,
+                true));
     }
 
     private IllegalStateException invalidResponse(TourPlaceCollectionTarget target, int pageNo, String message) {
