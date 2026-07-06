@@ -7,6 +7,7 @@ import com.chocobi.leafy.distance.dto.RouteCalculationResult;
 import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.trip.application.TripMessageService;
 import com.chocobi.leafy.trip.application.TripPlaceService;
+import com.chocobi.leafy.trip.application.TripRouteCandidateService;
 import com.chocobi.leafy.trip.application.TripSegmentService;
 import com.chocobi.leafy.trip.application.TripService;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
@@ -37,6 +38,7 @@ public class TripRouteController {
 
     private final TripService tripService;
     private final TripPlaceService tripPlaceService;
+    private final TripRouteCandidateService tripRouteCandidateService;
     private final TripSegmentService tripSegmentService;
     private final TripMessageService tripMessageService;
 
@@ -47,7 +49,7 @@ public class TripRouteController {
         try {
             Long userId = (Long) authentication.getPrincipal();
             String transport = request.get("transport");
-            tripSegmentService.completeTripSegments(tripId, transport);
+            tripRouteCandidateService.completeRouteCandidate(tripId, transport);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -77,7 +79,7 @@ public class TripRouteController {
     public ResponseEntity<Map<String, Object>> getTripSummary(@PathVariable @Positive Long tripId,
                                                               @RequestParam String transport) {
         try {
-            return ResponseEntity.ok(tripSegmentService.getTotalTimeAndCarbon(tripId, transport));
+            return ResponseEntity.ok(tripRouteCandidateService.getTotalTimeAndCarbon(tripId, transport));
         } catch (CustomException e) {
             throw e;
         } catch (IllegalArgumentException e) {

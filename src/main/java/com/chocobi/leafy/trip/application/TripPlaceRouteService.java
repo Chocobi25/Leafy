@@ -16,6 +16,7 @@ public class TripPlaceRouteService {
     private final TripFindService tripFindService;
     private final TripPlaceService tripPlaceService;
     private final TripSegmentService tripSegmentService;
+    private final TripRouteCandidateService tripRouteCandidateService;
 
     @Transactional
     public void editTripPlacesAndRecalculateRoutes(RecalculateRoutesRequest request, Long userId) {
@@ -24,6 +25,6 @@ public class TripPlaceRouteService {
         tripPlaceService.updateTripPlaces(request.getTripId(), request.getPlaces(), userId);
         List<TripPlaceResponse> updatedTripPlaces = tripPlaceService.getTripPlaces(trip.getId());
         tripSegmentService.recalculateRoutesAndSaveV2(trip, request.getTransport(), updatedTripPlaces);
-        tripSegmentService.completeTripSegments(trip.getId(), request.getTransport());
+        tripRouteCandidateService.completeRouteCandidate(trip.getId(), request.getTransport());
     }
 }
