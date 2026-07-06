@@ -5,7 +5,6 @@ import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
 import com.chocobi.leafy.trip.infra.TripRouteOptionFindService;
-import com.chocobi.leafy.trip.infra.TripSegmentCommandService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import com.chocobi.leafy.trip.infra.entity.TripRouteOptionEntity;
@@ -27,7 +26,6 @@ public class TripRouteCandidateService {
     private final TripFindService tripFindService;
     private final TripRouteOptionCommandService tripRouteOptionCommandService;
     private final TripRouteOptionFindService tripRouteOptionFindService;
-    private final TripSegmentCommandService tripSegmentCommandService;
     private final TripPlaceService tripPlaceService;
 
     @Transactional
@@ -37,12 +35,13 @@ public class TripRouteCandidateService {
         TripEntity trip = tripFindService.findTrip(tripId);
         deleteRouteCandidate(tripId, transport);
 
-        TripRouteOptionEntity routeOption = tripRouteOptionCommandService.save(createRouteOption(
+        TripRouteOptionEntity routeOption = createRouteOption(
                 trip,
                 transport,
                 sections
-        ));
-        saveTripSegments(createTripSegments(routeOption, sections, tripPlaces));
+        );
+        routeOption.replaceSegments(createTripSegments(sections, tripPlaces));
+        tripRouteOptionCommandService.save(routeOption);
     }
 
     @Transactional
@@ -80,10 +79,7 @@ public class TripRouteCandidateService {
 
     private void deleteRouteCandidate(Long tripId, TripTransport transport) {
         tripRouteOptionFindService.findTripRouteOptionCandidate(tripId, transport)
-                .ifPresent(routeOption -> {
-                    tripSegmentCommandService.deleteAllByRouteOption(routeOption);
-                    tripRouteOptionCommandService.delete(routeOption);
-                });
+                .ifPresent(tripRouteOptionCommandService::delete);
     }
 
     private TripRouteOptionEntity createRouteOption(
@@ -101,13 +97,7 @@ public class TripRouteCandidateService {
                 .build();
     }
 
-    private void saveTripSegments(List<TripSegmentEntity> tripSegments) {
-        if (tripSegments.isEmpty()) return;
-        tripSegmentCommandService.saveAll(tripSegments);
-    }
-
     private List<TripSegmentEntity> createTripSegments(
-            TripRouteOptionEntity routeOption,
             List<Section> sections,
             List<TripPlaceResponse> tripPlaces
     ) {
@@ -116,14 +106,13 @@ public class TripRouteCandidateService {
 
         List<TripSegmentEntity> tripSegments = new ArrayList<>();
         for (int i = 0; i < sortedTripPlaces.size() - 1 && i < sections.size(); i++) {
-            tripSegments.add(createTripSegment(routeOption, sections.get(i), sortedTripPlaces.get(i), sortedTripPlaces.get(i + 1)));
+            tripSegments.add(createTripSegment(sections.get(i), sortedTripPlaces.get(i), sortedTripPlaces.get(i + 1)));
         }
 
         return tripSegments;
     }
 
     private TripSegmentEntity createTripSegment(
-            TripRouteOptionEntity routeOption,
             Section section,
             TripPlaceResponse startPlace,
             TripPlaceResponse endPlace
@@ -132,7 +121,6 @@ public class TripRouteCandidateService {
         TripPlaceEntity endTripPlace = tripPlaceService.getTripPlaceById(endPlace.getTripPlaceId());
 
         return TripSegmentEntity.builder()
-                .routeOption(routeOption)
                 .startTripPlace(startTripPlace)
                 .endTripPlace(endTripPlace)
                 .distance(section.getDistance())

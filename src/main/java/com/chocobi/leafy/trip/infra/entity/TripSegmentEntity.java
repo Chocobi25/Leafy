@@ -32,4 +32,8 @@ public class TripSegmentEntity extends BaseEntity {
 
     @Column(name = "carbon_emission", nullable = false)
     private double carbonEmission;
+
+    public void assignRouteOption(TripRouteOptionEntity routeOption) {
+        this.routeOption = routeOption;
+    }
 }
