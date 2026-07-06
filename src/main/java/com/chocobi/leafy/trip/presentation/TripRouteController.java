@@ -9,9 +9,8 @@ import com.chocobi.leafy.trip.application.TripMessageService;
 import com.chocobi.leafy.trip.application.TripPlaceService;
 import com.chocobi.leafy.trip.application.TripRouteCandidateService;
 import com.chocobi.leafy.trip.application.TripSegmentService;
-import com.chocobi.leafy.trip.application.TripService;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
-import com.chocobi.leafy.trip.infra.entity.TripStatus;
+import com.chocobi.leafy.trip.dto.response.TripRouteSummaryResponse;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -36,7 +35,6 @@ import java.util.Map;
 @Validated
 public class TripRouteController {
 
-    private final TripService tripService;
     private final TripPlaceService tripPlaceService;
     private final TripRouteCandidateService tripRouteCandidateService;
     private final TripSegmentService tripSegmentService;
@@ -48,15 +46,13 @@ public class TripRouteController {
                                                             Authentication authentication) {
         try {
             Long userId = (Long) authentication.getPrincipal();
-            String transport = request.get("transport");
-            tripRouteCandidateService.completeRouteCandidate(tripId, transport);
+            tripRouteCandidateService.completeOwnedRouteCandidate(tripId, request.get("transport"), userId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "여행 계획이 성공적으로 완료되었습니다.");
             response.put("tripId", tripId);
 
-            tripService.changeOwnedTripStatus(tripId, TripStatus.READY, userId);
             tripMessageService.notifyTripCreated(userId, tripId);
 
             return ResponseEntity.ok(response);
@@ -76,18 +72,14 @@ public class TripRouteController {
     }
 
     @GetMapping("/{tripId}/summary")
-    public ResponseEntity<Map<String, Object>> getTripSummary(@PathVariable @Positive Long tripId,
-                                                              @RequestParam String transport) {
+    public ResponseEntity<TripRouteSummaryResponse> getTripSummary(@PathVariable @Positive Long tripId,
+                                                                   @RequestParam String transport) {
         try {
-            return ResponseEntity.ok(tripRouteCandidateService.getTotalTimeAndCarbon(tripId, transport));
+            return ResponseEntity.ok(tripRouteCandidateService.getRouteSummary(tripId, transport));
         } catch (CustomException e) {
             throw e;
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    Map.of("error", "여행 요약 정보를 가져오는 중 오류가 발생했습니다.")
-            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
@@ -96,6 +88,8 @@ public class TripRouteController {
                                                               @RequestBody CarDistanceRequest request) {
         try {
             return ResponseEntity.ok(tripSegmentService.calculateAndSaveCarRoute(request, tripId));
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
             System.err.println("자동차 경로 계산 에러: " + e.getMessage());
             e.printStackTrace();
@@ -108,6 +102,8 @@ public class TripRouteController {
         try {
             List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(request.getTripId());
             return ResponseEntity.ok(tripSegmentService.calculateAndSavePublicRoute(request, tripPlaces));
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
             System.err.println("대중교통 경로 계산 에러: " + e.getMessage());
             e.printStackTrace();

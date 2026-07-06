@@ -14,6 +14,7 @@ import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.response.TripRouteSummaryResponse;
 import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
 import com.chocobi.leafy.trip.infra.TripRouteOptionFindService;
@@ -21,13 +22,13 @@ import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import com.chocobi.leafy.trip.infra.entity.TripRouteOptionEntity;
 import com.chocobi.leafy.trip.infra.entity.TripSegmentEntity;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import com.chocobi.leafy.trip.vo.TripError;
 import com.chocobi.leafy.trip.vo.TripTransport;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.chocobi.leafy.user.infra.entity.enums.Provider;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -77,7 +78,7 @@ class TripRouteCandidateServiceTest {
         );
 
         given(tripFindService.findTrip(1L)).willReturn(trip);
-        given(tripRouteOptionFindService.findTripRouteOptionCandidate(1L, TripTransport.CAR)).willReturn(Optional.empty());
+        given(tripRouteOptionFindService.findOptionalTripRouteOption(1L, TripTransport.CAR)).willReturn(Optional.empty());
         given(tripPlaceService.getTripPlaceById(10L)).willReturn(firstTripPlace);
         given(tripPlaceService.getTripPlaceById(20L)).willReturn(secondTripPlace);
         given(tripPlaceService.getTripPlaceById(30L)).willReturn(thirdTripPlace);
@@ -117,7 +118,7 @@ class TripRouteCandidateServiceTest {
         TripPlaceEntity fourthTripPlace = tripPlaceFixture(40L, trip, placeFixture(400L, "넷째 장소"), 2, 0);
 
         given(tripFindService.findTrip(1L)).willReturn(trip);
-        given(tripRouteOptionFindService.findTripRouteOptionCandidate(1L, TripTransport.CAR))
+        given(tripRouteOptionFindService.findOptionalTripRouteOption(1L, TripTransport.CAR))
                 .willReturn(Optional.of(existingRouteOption));
         given(tripPlaceService.getTripPlaceById(10L)).willReturn(firstTripPlace);
         given(tripPlaceService.getTripPlaceById(20L)).willReturn(secondTripPlace);
@@ -156,8 +157,9 @@ class TripRouteCandidateServiceTest {
                 TripTransport.CAR,
                 List.of(TripPlaceResponse.from(tripPlace))
         ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("여행 장소는 2개 이상 필요합니다.");
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripError.INVALID_TRIP_ROUTE_CANDIDATE);
 
         then(tripFindService).should(never()).findTrip(1L);
         then(tripRouteOptionCommandService).should(never()).save(org.mockito.ArgumentMatchers.any());
@@ -178,8 +180,9 @@ class TripRouteCandidateServiceTest {
                 TripTransport.CAR,
                 List.of(TripPlaceResponse.from(firstTripPlace), TripPlaceResponse.from(thirdTripPlace))
         ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("여행 기간의 모든 일차에 여행 장소가 필요합니다.");
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripError.INVALID_TRIP_ROUTE_CANDIDATE);
 
         then(tripRouteOptionCommandService).should(never()).delete(org.mockito.ArgumentMatchers.any());
         then(tripRouteOptionCommandService).should(never()).save(org.mockito.ArgumentMatchers.any());
@@ -198,23 +201,49 @@ class TripRouteCandidateServiceTest {
                 TripTransport.CAR,
                 List.of(TripPlaceResponse.from(firstTripPlace), TripPlaceResponse.from(secondTripPlace))
         ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("저장할 여행 경로 구간이 없습니다.");
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripError.INVALID_TRIP_ROUTE_CANDIDATE);
 
         then(tripFindService).should(never()).findTrip(1L);
         then(tripRouteOptionCommandService).should(never()).save(org.mockito.ArgumentMatchers.any());
     }
 
     @Test
-    @DisplayName("선택한 경로 후보만 확정한다")
-    void completeRouteCandidate() {
+    @DisplayName("장소 사이 구간 수가 맞지 않으면 경로 후보를 저장할 수 없다")
+    void saveRouteCandidateWithMismatchedSectionCount() {
+        TripEntity trip = tripFixture(1L);
+        TripPlaceEntity firstTripPlace = tripPlaceFixture(10L, trip, placeFixture(100L, "첫 장소"), 0, 0);
+        TripPlaceEntity secondTripPlace = tripPlaceFixture(20L, trip, placeFixture(200L, "둘째 장소"), 1, 0);
+        TripPlaceEntity thirdTripPlace = tripPlaceFixture(30L, trip, placeFixture(300L, "셋째 장소"), 2, 0);
+
+        assertThatThrownBy(() -> tripRouteCandidateService.saveRouteCandidate(
+                1L,
+                List.of(section(60, 1000, 5.0)),
+                TripTransport.CAR,
+                List.of(
+                        TripPlaceResponse.from(firstTripPlace),
+                        TripPlaceResponse.from(secondTripPlace),
+                        TripPlaceResponse.from(thirdTripPlace)
+                )
+        ))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripError.INVALID_TRIP_ROUTE_CANDIDATE);
+
+        then(tripFindService).should(never()).findTrip(1L);
+        then(tripRouteOptionCommandService).should(never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("조회된 여행의 선택한 경로 후보만 확정한다")
+    void completeRouteCandidateForTrip() {
         TripEntity trip = tripFixture(1L);
         trip.markRouteStale();
         TripRouteOptionEntity carOption = routeOptionFixture(trip, TripTransport.CAR, false);
         TripRouteOptionEntity publicOption = routeOptionFixture(trip, TripTransport.PUBLIC, true);
 
-        given(tripFindService.findTrip(1L)).willReturn(trip);
-        given(tripRouteOptionFindService.findTripRouteOption(1L, "car")).willReturn(carOption);
+        given(tripRouteOptionFindService.findOptionalTripRouteOption(1L, TripTransport.CAR)).willReturn(Optional.of(carOption));
         given(tripRouteOptionFindService.findTripRouteOptions(1L)).willReturn(List.of(carOption, publicOption));
         willAnswer(invocation -> {
             TripRouteOptionEntity selectedRouteOption = invocation.getArgument(0);
@@ -224,7 +253,7 @@ class TripRouteCandidateServiceTest {
             return null;
         }).given(tripRouteOptionCommandService).confirmOnly(carOption, List.of(carOption, publicOption));
 
-        tripRouteCandidateService.completeRouteCandidate(1L, "car");
+        tripRouteCandidateService.completeRouteCandidateForTrip(trip, "car");
 
         assertThat(carOption.isConfirmed()).isTrue();
         assertThat(publicOption.isConfirmed()).isFalse();
@@ -232,25 +261,53 @@ class TripRouteCandidateServiceTest {
     }
 
     @Test
-    @DisplayName("교통수단이 없으면 경로 후보를 확정할 수 없다")
-    void completeRouteCandidateWithoutTransport() {
-        assertThatThrownBy(() -> tripRouteCandidateService.completeRouteCandidate(1L, null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("transport가 필요합니다.");
+    @DisplayName("소유한 여행의 경로 후보를 확정하고 여행 상태를 준비 완료로 변경한다")
+    void completeOwnedRouteCandidate() {
+        TripEntity trip = tripFixture(1L);
+        trip.markRouteStale();
+        TripRouteOptionEntity carOption = routeOptionFixture(trip, TripTransport.CAR, false);
+        TripRouteOptionEntity publicOption = routeOptionFixture(trip, TripTransport.PUBLIC, true);
 
-        then(tripFindService).should(never()).findTrip(1L);
+        given(tripFindService.findOwnedTrip(1L, 100L)).willReturn(trip);
+        given(tripRouteOptionFindService.findOptionalTripRouteOption(1L, TripTransport.CAR)).willReturn(Optional.of(carOption));
+        given(tripRouteOptionFindService.findTripRouteOptions(1L)).willReturn(List.of(carOption, publicOption));
+        willAnswer(invocation -> {
+            TripRouteOptionEntity selectedRouteOption = invocation.getArgument(0);
+            List<TripRouteOptionEntity> routeOptions = invocation.getArgument(1);
+            routeOptions.forEach(TripRouteOptionEntity::unconfirm);
+            selectedRouteOption.confirm();
+            return null;
+        }).given(tripRouteOptionCommandService).confirmOnly(carOption, List.of(carOption, publicOption));
+
+        tripRouteCandidateService.completeOwnedRouteCandidate(1L, "car", 100L);
+
+        assertThat(carOption.isConfirmed()).isTrue();
+        assertThat(publicOption.isConfirmed()).isFalse();
+        assertThat(trip.isRouteStale()).isFalse();
+        assertThat(trip.getStatus()).isEqualTo(TripStatus.READY);
+    }
+
+    @Test
+    @DisplayName("교통수단이 없으면 조회된 여행의 경로 후보를 확정할 수 없다")
+    void completeRouteCandidateForTripWithoutTransport() {
+        TripEntity trip = tripFixture(1L);
+
+        assertThatThrownBy(() -> tripRouteCandidateService.completeRouteCandidateForTrip(trip, null))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripError.INVALID_TRIP_TRANSPORT);
+
         then(tripRouteOptionCommandService).should(never()).confirmOnly(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyList());
     }
 
     @Test
-    @DisplayName("확정할 경로 후보가 없으면 예외를 전파한다")
-    void completeRouteCandidateWithoutCandidate() {
+    @DisplayName("확정할 경로 후보가 없으면 조회된 여행의 경로 후보를 확정할 수 없다")
+    void completeRouteCandidateForTripWithoutCandidate() {
         TripEntity trip = tripFixture(1L);
-        given(tripFindService.findTrip(1L)).willReturn(trip);
-        given(tripRouteOptionFindService.findTripRouteOption(1L, "car"))
-                .willThrow(new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
+        given(tripRouteOptionFindService.findOptionalTripRouteOption(1L, TripTransport.CAR))
+                .willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> tripRouteCandidateService.completeRouteCandidate(1L, "car"))
+        assertThatThrownBy(() -> tripRouteCandidateService.completeRouteCandidateForTrip(trip, "car"))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(TripError.TRIP_ROUTE_OPTION_NOT_FOUND);
@@ -260,7 +317,7 @@ class TripRouteCandidateServiceTest {
 
     @Test
     @DisplayName("경로 후보의 총 시간과 탄소 배출량을 조회한다")
-    void getTotalTimeAndCarbon() {
+    void getRouteSummary() {
         TripRouteOptionEntity routeOption = TripRouteOptionEntity.builder()
                 .trip(tripFixture(1L))
                 .transport(TripTransport.PUBLIC)
@@ -271,11 +328,10 @@ class TripRouteCandidateServiceTest {
                 .build();
         given(tripRouteOptionFindService.findTripRouteOption(1L, "public")).willReturn(routeOption);
 
-        Map<String, Object> result = tripRouteCandidateService.getTotalTimeAndCarbon(1L, "public");
+        TripRouteSummaryResponse result = tripRouteCandidateService.getRouteSummary(1L, "public");
 
-        assertThat(result)
-                .containsEntry("totalDuration", 45)
-                .containsEntry("totalCarbonEmission", 7.2);
+        assertThat(result.getTotalDuration()).isEqualTo(45);
+        assertThat(result.getTotalCarbonEmission()).isEqualTo(7.2);
     }
 
     private Section section(int duration, int distance, double carbonEmission) {

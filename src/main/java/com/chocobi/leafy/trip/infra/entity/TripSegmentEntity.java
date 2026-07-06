@@ -36,4 +36,8 @@ public class TripSegmentEntity extends BaseEntity {
     public void assignRouteOption(TripRouteOptionEntity routeOption) {
         this.routeOption = routeOption;
     }
+
+    public void clearRouteOption() {
+        this.routeOption = null;
+    }
 }

@@ -18,11 +18,6 @@ import java.util.Optional;
 public class TripRouteOptionFindService {
     private final TripRouteOptionRepository tripRouteOptionRepository;
 
-    public TripRouteOptionEntity findTripRouteOption(Long routeOptionId) {
-        return tripRouteOptionRepository.findById(routeOptionId)
-                .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
-    }
-
     public List<TripRouteOptionEntity> findTripRouteOptions(Long tripId) {
         return tripRouteOptionRepository.findAllByTrip_Id(tripId);
     }
@@ -32,12 +27,8 @@ public class TripRouteOptionFindService {
                 .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
     }
 
-    public Optional<TripRouteOptionEntity> findTripRouteOptionCandidate(Long tripId, TripTransport transport) {
+    public Optional<TripRouteOptionEntity> findOptionalTripRouteOption(Long tripId, TripTransport transport) {
         return tripRouteOptionRepository.findByTrip_IdAndTransport(tripId, transport);
     }
 
-    public TripRouteOptionEntity findConfirmedTripRouteOption(Long tripId) {
-        return tripRouteOptionRepository.findByTrip_IdAndConfirmedTrue(tripId)
-                .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
-    }
 }

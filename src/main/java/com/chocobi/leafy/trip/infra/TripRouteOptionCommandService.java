@@ -19,10 +19,6 @@ public class TripRouteOptionCommandService {
         return tripRouteOptionRepository.save(tripRouteOption);
     }
 
-    public List<TripRouteOptionEntity> saveAll(List<TripRouteOptionEntity> tripRouteOptions) {
-        return tripRouteOptionRepository.saveAll(tripRouteOptions);
-    }
-
     public void deleteAllByTrip(TripEntity trip) {
         tripRouteOptionRepository.deleteAllByTrip(trip);
     }

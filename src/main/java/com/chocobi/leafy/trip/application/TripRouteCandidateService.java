@@ -1,6 +1,8 @@
 package com.chocobi.leafy.trip.application;
 
 import com.chocobi.leafy.distance.dto.Section;
+import com.chocobi.leafy.global.exception.CustomException;
+import com.chocobi.leafy.trip.dto.response.TripRouteSummaryResponse;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
@@ -9,6 +11,8 @@ import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import com.chocobi.leafy.trip.infra.entity.TripRouteOptionEntity;
 import com.chocobi.leafy.trip.infra.entity.TripSegmentEntity;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
+import com.chocobi.leafy.trip.vo.TripError;
 import com.chocobi.leafy.trip.vo.TripTransport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,9 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,35 +51,43 @@ public class TripRouteCandidateService {
     }
 
     @Transactional
-    public void completeRouteCandidate(Long tripId, String transport) {
-        if (transport == null) throw new IllegalArgumentException("transport가 필요합니다.");
+    public void completeRouteCandidateForTrip(TripEntity trip, String transport) {
+        confirmRouteCandidate(trip, TripTransport.from(transport));
+    }
 
-        TripEntity trip = tripFindService.findTrip(tripId);
-        TripRouteOptionEntity selectedRouteOption = tripRouteOptionFindService.findTripRouteOption(tripId, transport);
-        List<TripRouteOptionEntity> routeOptions = tripRouteOptionFindService.findTripRouteOptions(tripId);
+    @Transactional
+    public void completeOwnedRouteCandidate(Long tripId, String transport, Long userId) {
+        TripEntity trip = tripFindService.findOwnedTrip(tripId, userId);
+        confirmRouteCandidate(trip, TripTransport.from(transport));
+        trip.editStatus(TripStatus.READY);
+    }
+
+    private void confirmRouteCandidate(TripEntity trip, TripTransport transport) {
+        TripRouteOptionEntity selectedRouteOption = tripRouteOptionFindService.findOptionalTripRouteOption(trip.getId(), transport)
+                .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
+        List<TripRouteOptionEntity> routeOptions = tripRouteOptionFindService.findTripRouteOptions(trip.getId());
 
         tripRouteOptionCommandService.confirmOnly(selectedRouteOption, routeOptions);
         trip.clearRouteStale();
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Object> getTotalTimeAndCarbon(Long tripId, String transport) {
+    public TripRouteSummaryResponse getRouteSummary(Long tripId, String transport) {
         TripRouteOptionEntity routeOption = tripRouteOptionFindService.findTripRouteOption(tripId, transport);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("totalDuration", routeOption.getTotalDuration());
-        result.put("totalCarbonEmission", routeOption.getTotalCarbonEmission());
-
-        return result;
+        return TripRouteSummaryResponse.from(routeOption);
     }
 
     private void validateRouteCandidate(List<Section> sections, List<TripPlaceResponse> tripPlaces) {
         if (tripPlaces == null || tripPlaces.size() < 2) {
-            throw new IllegalArgumentException("여행 장소는 2개 이상 필요합니다.");
+            throw new CustomException(TripError.INVALID_TRIP_ROUTE_CANDIDATE);
         }
 
         if (sections == null || sections.isEmpty()) {
-            throw new IllegalArgumentException("저장할 여행 경로 구간이 없습니다.");
+            throw new CustomException(TripError.INVALID_TRIP_ROUTE_CANDIDATE);
+        }
+
+        if (sections.size() != tripPlaces.size() - 1) {
+            throw new CustomException(TripError.INVALID_TRIP_ROUTE_CANDIDATE);
         }
     }
 
@@ -89,13 +99,13 @@ public class TripRouteCandidateService {
 
         for (int dayIndex = 0; dayIndex < totalDays; dayIndex++) {
             if (!tripPlaceDays.contains(dayIndex)) {
-                throw new IllegalArgumentException("여행 기간의 모든 일차에 여행 장소가 필요합니다.");
+                throw new CustomException(TripError.INVALID_TRIP_ROUTE_CANDIDATE);
             }
         }
     }
 
     private void deleteRouteCandidate(Long tripId, TripTransport transport) {
-        tripRouteOptionFindService.findTripRouteOptionCandidate(tripId, transport)
+        tripRouteOptionFindService.findOptionalTripRouteOption(tripId, transport)
                 .ifPresent(tripRouteOptionCommandService::delete);
     }
 

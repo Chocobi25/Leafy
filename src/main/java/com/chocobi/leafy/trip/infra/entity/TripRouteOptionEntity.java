@@ -46,6 +46,7 @@ public class TripRouteOptionEntity extends BaseEntity {
     private List<TripSegmentEntity> segments = new ArrayList<>();
 
     public void replaceSegments(List<TripSegmentEntity> segments) {
+        this.segments.forEach(TripSegmentEntity::clearRouteOption);
         this.segments.clear();
         segments.forEach(this::addSegment);
     }

@@ -23,6 +23,6 @@ public class TripPlaceRouteService {
         tripPlaceService.updateTripPlaces(request.getTripId(), request.getPlaces(), userId);
         List<TripPlaceResponse> updatedTripPlaces = tripPlaceService.getTripPlaces(trip.getId());
         tripSegmentService.recalculateRoutesAndSaveV2(trip, request.getTransport(), updatedTripPlaces);
-        tripRouteCandidateService.completeRouteCandidate(trip.getId(), request.getTransport());
+        tripRouteCandidateService.completeRouteCandidateForTrip(trip, request.getTransport());
     }
 }
