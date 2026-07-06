@@ -1,13 +1,16 @@
 package com.chocobi.leafy.trip.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Mockito.never;
 
 import com.chocobi.leafy.distance.dto.Section;
 import com.chocobi.leafy.global.entity.RegionEntity;
 import com.chocobi.leafy.global.entity.RegionLevel;
+import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.place.infra.entity.ExternalPlaceEntity;
 import com.chocobi.leafy.place.infra.entity.PlaceEntity;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
@@ -18,6 +21,7 @@ import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import com.chocobi.leafy.trip.infra.entity.TripRouteOptionEntity;
 import com.chocobi.leafy.trip.infra.entity.TripSegmentEntity;
+import com.chocobi.leafy.trip.vo.TripError;
 import com.chocobi.leafy.trip.vo.TripTransport;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.chocobi.leafy.user.infra.entity.enums.Provider;
@@ -118,6 +122,45 @@ class TripRouteCandidateServiceTest {
     }
 
     @Test
+    @DisplayName("여행 장소가 2개 미만이면 경로 후보를 저장할 수 없다")
+    void saveRouteCandidateWithInsufficientTripPlaces() {
+        TripEntity trip = tripFixture(1L);
+        TripPlaceEntity tripPlace = tripPlaceFixture(10L, trip, placeFixture(100L, "첫 장소"), 0, 0);
+
+        assertThatThrownBy(() -> tripRouteCandidateService.saveRouteCandidate(
+                1L,
+                List.of(section(60, 1000, 5.0)),
+                TripTransport.CAR,
+                List.of(TripPlaceResponse.from(tripPlace))
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("여행 장소는 2개 이상 필요합니다.");
+
+        then(tripFindService).should(never()).findTrip(1L);
+        then(tripRouteOptionCommandService).should(never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("경로 구간이 없으면 경로 후보를 저장할 수 없다")
+    void saveRouteCandidateWithEmptySections() {
+        TripEntity trip = tripFixture(1L);
+        TripPlaceEntity firstTripPlace = tripPlaceFixture(10L, trip, placeFixture(100L, "첫 장소"), 0, 0);
+        TripPlaceEntity secondTripPlace = tripPlaceFixture(20L, trip, placeFixture(200L, "둘째 장소"), 0, 1);
+
+        assertThatThrownBy(() -> tripRouteCandidateService.saveRouteCandidate(
+                1L,
+                List.of(),
+                TripTransport.CAR,
+                List.of(TripPlaceResponse.from(firstTripPlace), TripPlaceResponse.from(secondTripPlace))
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("저장할 여행 경로 구간이 없습니다.");
+
+        then(tripFindService).should(never()).findTrip(1L);
+        then(tripRouteOptionCommandService).should(never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
     @DisplayName("선택한 경로 후보만 확정한다")
     void completeRouteCandidate() {
         TripEntity trip = tripFixture(1L);
@@ -141,6 +184,33 @@ class TripRouteCandidateServiceTest {
         assertThat(carOption.isConfirmed()).isTrue();
         assertThat(publicOption.isConfirmed()).isFalse();
         assertThat(trip.isRouteStale()).isFalse();
+    }
+
+    @Test
+    @DisplayName("교통수단이 없으면 경로 후보를 확정할 수 없다")
+    void completeRouteCandidateWithoutTransport() {
+        assertThatThrownBy(() -> tripRouteCandidateService.completeRouteCandidate(1L, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("transport가 필요합니다.");
+
+        then(tripFindService).should(never()).findTrip(1L);
+        then(tripRouteOptionCommandService).should(never()).confirmOnly(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyList());
+    }
+
+    @Test
+    @DisplayName("확정할 경로 후보가 없으면 예외를 전파한다")
+    void completeRouteCandidateWithoutCandidate() {
+        TripEntity trip = tripFixture(1L);
+        given(tripFindService.findTrip(1L)).willReturn(trip);
+        given(tripRouteOptionFindService.findTripRouteOption(1L, "car"))
+                .willThrow(new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
+
+        assertThatThrownBy(() -> tripRouteCandidateService.completeRouteCandidate(1L, "car"))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripError.TRIP_ROUTE_OPTION_NOT_FOUND);
+
+        then(tripRouteOptionCommandService).should(never()).confirmOnly(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyList());
     }
 
     @Test
