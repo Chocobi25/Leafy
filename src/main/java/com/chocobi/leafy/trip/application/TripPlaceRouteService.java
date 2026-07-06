@@ -6,7 +6,6 @@ import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,7 +17,6 @@ public class TripPlaceRouteService {
     private final TripSegmentService tripSegmentService;
     private final TripRouteCandidateService tripRouteCandidateService;
 
-    @Transactional
     public void editTripPlacesAndRecalculateRoutes(RecalculateRoutesRequest request, Long userId) {
         TripEntity trip = tripFindService.findOwnedTrip(request.getTripId(), userId);
 

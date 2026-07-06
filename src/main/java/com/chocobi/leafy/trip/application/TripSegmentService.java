@@ -75,7 +75,7 @@ public class TripSegmentService {
         return results;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<TripSegmentDTO> getTripSegments(Long tripId) {
         return tripSegmentFindService.findConfirmedTripSegmentsByTripId(tripId).stream()
                 .map(TripSegmentDTO::fromEntity)
@@ -92,7 +92,6 @@ public class TripSegmentService {
      * 재계산 진입점: 프론트에서 온 tripPlaceRequests 를 TripPlaceResponse로 변환한 뒤
      * 적절한 거리 서비스 메서드를 호출한다.
      */
-    @Transactional
     public void recalculateRoutesAndSave(TripEntity trip, String transport, List<UpdateTripPlaceRequest> tripPlaceRequests) {
         List<TripPlaceResponse> tripPlaces = tripPlaceRequests.stream()
                 .map(req -> TripPlaceResponse.builder()
@@ -158,7 +157,6 @@ public class TripSegmentService {
      * 재계산 진입점: DB에서 조회한 TripPlaceResponse를 직접 사용
      * (프론트엔드에서 온 request가 아닌, DB에 저장된 최신 데이터 사용)
      */
-    @Transactional
     public void recalculateRoutesAndSaveV2(TripEntity trip, String transport, List<TripPlaceResponse> tripPlaces) {
         System.out.println("[DEBUG] TripPlaces to recalc (from DB): " + tripPlaces);
 
