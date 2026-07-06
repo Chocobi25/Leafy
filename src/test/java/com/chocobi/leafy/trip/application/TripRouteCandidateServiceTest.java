@@ -62,16 +62,26 @@ class TripRouteCandidateServiceTest {
         TripEntity trip = tripFixture(1L);
         TripPlaceEntity firstTripPlace = tripPlaceFixture(10L, trip, placeFixture(100L, "첫 장소"), 0, 0);
         TripPlaceEntity secondTripPlace = tripPlaceFixture(20L, trip, placeFixture(200L, "둘째 장소"), 0, 1);
+        TripPlaceEntity thirdTripPlace = tripPlaceFixture(30L, trip, placeFixture(300L, "셋째 장소"), 1, 0);
+        TripPlaceEntity fourthTripPlace = tripPlaceFixture(40L, trip, placeFixture(400L, "넷째 장소"), 2, 0);
         List<TripPlaceResponse> tripPlaces = List.of(
                 TripPlaceResponse.from(secondTripPlace),
-                TripPlaceResponse.from(firstTripPlace)
+                TripPlaceResponse.from(fourthTripPlace),
+                TripPlaceResponse.from(firstTripPlace),
+                TripPlaceResponse.from(thirdTripPlace)
         );
-        List<Section> sections = List.of(section(120, 1500, 10.0));
+        List<Section> sections = List.of(
+                section(120, 1500, 10.0),
+                section(180, 2000, 12.0),
+                section(240, 3000, 15.0)
+        );
 
         given(tripFindService.findTrip(1L)).willReturn(trip);
         given(tripRouteOptionFindService.findTripRouteOptionCandidate(1L, TripTransport.CAR)).willReturn(Optional.empty());
         given(tripPlaceService.getTripPlaceById(10L)).willReturn(firstTripPlace);
         given(tripPlaceService.getTripPlaceById(20L)).willReturn(secondTripPlace);
+        given(tripPlaceService.getTripPlaceById(30L)).willReturn(thirdTripPlace);
+        given(tripPlaceService.getTripPlaceById(40L)).willReturn(fourthTripPlace);
 
         tripRouteCandidateService.saveRouteCandidate(1L, sections, TripTransport.CAR, tripPlaces);
 
@@ -81,12 +91,12 @@ class TripRouteCandidateServiceTest {
         TripRouteOptionEntity savedRouteOption = routeOptionCaptor.getValue();
         assertThat(savedRouteOption.getTrip()).isEqualTo(trip);
         assertThat(savedRouteOption.getTransport()).isEqualTo(TripTransport.CAR);
-        assertThat(savedRouteOption.getTotalDistance()).isEqualTo(1500.0);
-        assertThat(savedRouteOption.getTotalDuration()).isEqualTo(2);
-        assertThat(savedRouteOption.getTotalCarbonEmission()).isEqualTo(10.0);
+        assertThat(savedRouteOption.getTotalDistance()).isEqualTo(6500.0);
+        assertThat(savedRouteOption.getTotalDuration()).isEqualTo(9);
+        assertThat(savedRouteOption.getTotalCarbonEmission()).isEqualTo(37.0);
         assertThat(savedRouteOption.isConfirmed()).isFalse();
 
-        assertThat(savedRouteOption.getSegments()).hasSize(1);
+        assertThat(savedRouteOption.getSegments()).hasSize(3);
         TripSegmentEntity segment = savedRouteOption.getSegments().getFirst();
         assertThat(segment.getRouteOption()).isEqualTo(savedRouteOption);
         assertThat(segment.getStartTripPlace()).isEqualTo(firstTripPlace);
@@ -103,18 +113,31 @@ class TripRouteCandidateServiceTest {
         TripRouteOptionEntity existingRouteOption = routeOptionFixture(trip, TripTransport.CAR, false);
         TripPlaceEntity firstTripPlace = tripPlaceFixture(10L, trip, placeFixture(100L, "첫 장소"), 0, 0);
         TripPlaceEntity secondTripPlace = tripPlaceFixture(20L, trip, placeFixture(200L, "둘째 장소"), 0, 1);
+        TripPlaceEntity thirdTripPlace = tripPlaceFixture(30L, trip, placeFixture(300L, "셋째 장소"), 1, 0);
+        TripPlaceEntity fourthTripPlace = tripPlaceFixture(40L, trip, placeFixture(400L, "넷째 장소"), 2, 0);
 
         given(tripFindService.findTrip(1L)).willReturn(trip);
         given(tripRouteOptionFindService.findTripRouteOptionCandidate(1L, TripTransport.CAR))
                 .willReturn(Optional.of(existingRouteOption));
         given(tripPlaceService.getTripPlaceById(10L)).willReturn(firstTripPlace);
         given(tripPlaceService.getTripPlaceById(20L)).willReturn(secondTripPlace);
+        given(tripPlaceService.getTripPlaceById(30L)).willReturn(thirdTripPlace);
+        given(tripPlaceService.getTripPlaceById(40L)).willReturn(fourthTripPlace);
 
         tripRouteCandidateService.saveRouteCandidate(
                 1L,
-                List.of(section(60, 3000, 20.0)),
+                List.of(
+                        section(60, 3000, 20.0),
+                        section(120, 4000, 25.0),
+                        section(180, 5000, 30.0)
+                ),
                 TripTransport.CAR,
-                List.of(TripPlaceResponse.from(firstTripPlace), TripPlaceResponse.from(secondTripPlace))
+                List.of(
+                        TripPlaceResponse.from(firstTripPlace),
+                        TripPlaceResponse.from(secondTripPlace),
+                        TripPlaceResponse.from(thirdTripPlace),
+                        TripPlaceResponse.from(fourthTripPlace)
+                )
         );
 
         then(tripRouteOptionCommandService).should().delete(existingRouteOption);
@@ -137,6 +160,28 @@ class TripRouteCandidateServiceTest {
                 .hasMessage("여행 장소는 2개 이상 필요합니다.");
 
         then(tripFindService).should(never()).findTrip(1L);
+        then(tripRouteOptionCommandService).should(never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("여행 기간 중 장소가 없는 일차가 있으면 경로 후보를 저장할 수 없다")
+    void saveRouteCandidateWithMissingTripDay() {
+        TripEntity trip = tripFixture(1L);
+        TripPlaceEntity firstTripPlace = tripPlaceFixture(10L, trip, placeFixture(100L, "첫 장소"), 0, 0);
+        TripPlaceEntity thirdTripPlace = tripPlaceFixture(30L, trip, placeFixture(300L, "셋째 장소"), 2, 0);
+
+        given(tripFindService.findTrip(1L)).willReturn(trip);
+
+        assertThatThrownBy(() -> tripRouteCandidateService.saveRouteCandidate(
+                1L,
+                List.of(section(60, 1000, 5.0)),
+                TripTransport.CAR,
+                List.of(TripPlaceResponse.from(firstTripPlace), TripPlaceResponse.from(thirdTripPlace))
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("여행 기간의 모든 일차에 여행 장소가 필요합니다.");
+
+        then(tripRouteOptionCommandService).should(never()).delete(org.mockito.ArgumentMatchers.any());
         then(tripRouteOptionCommandService).should(never()).save(org.mockito.ArgumentMatchers.any());
     }
 
