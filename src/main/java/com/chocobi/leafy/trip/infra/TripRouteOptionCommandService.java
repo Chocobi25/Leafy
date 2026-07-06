@@ -27,6 +27,11 @@ public class TripRouteOptionCommandService {
         tripRouteOptionRepository.deleteAllByTrip(trip);
     }
 
+    public void delete(TripRouteOptionEntity tripRouteOption) {
+        tripRouteOptionRepository.delete(tripRouteOption);
+        tripRouteOptionRepository.flush();
+    }
+
     public void confirmOnly(TripRouteOptionEntity selectedRouteOption, List<TripRouteOptionEntity> routeOptions) {
         routeOptions.forEach(TripRouteOptionEntity::unconfirm);
         selectedRouteOption.confirm();

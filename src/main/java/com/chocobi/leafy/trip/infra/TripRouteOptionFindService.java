@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,10 @@ public class TripRouteOptionFindService {
     public TripRouteOptionEntity findTripRouteOption(Long tripId, String transport) {
         return tripRouteOptionRepository.findByTrip_IdAndTransport(tripId, TripTransport.from(transport))
                 .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
+    }
+
+    public Optional<TripRouteOptionEntity> findTripRouteOptionCandidate(Long tripId, TripTransport transport) {
+        return tripRouteOptionRepository.findByTrip_IdAndTransport(tripId, transport);
     }
 
     public TripRouteOptionEntity findConfirmedTripRouteOption(Long tripId) {

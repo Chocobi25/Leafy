@@ -78,6 +78,8 @@ public class TripRouteController {
                                                               @RequestParam String transport) {
         try {
             return ResponseEntity.ok(tripSegmentService.getTotalTimeAndCarbon(tripId, transport));
+        } catch (CustomException e) {
+            throw e;
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
