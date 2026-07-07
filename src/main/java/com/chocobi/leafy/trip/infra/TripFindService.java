@@ -46,7 +46,7 @@ public class TripFindService {
         return trip;
     }
 
-    public List<TripEntity> findTripsByUserId(Long userId) {
+    public List<TripEntity> findTrips(Long userId) {
         return tripRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 }

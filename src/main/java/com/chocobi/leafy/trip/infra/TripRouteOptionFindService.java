@@ -22,8 +22,8 @@ public class TripRouteOptionFindService {
         return tripRouteOptionRepository.findAllByTrip_Id(tripId);
     }
 
-    public TripRouteOptionEntity findRouteCandidate(Long tripId, String transport) {
-        return tripRouteOptionRepository.findByTrip_IdAndTransportAndConfirmedFalse(tripId, TripTransport.from(transport))
+    public TripRouteOptionEntity findRouteCandidate(Long tripId, TripTransport transport) {
+        return tripRouteOptionRepository.findByTrip_IdAndTransportAndConfirmedFalse(tripId, transport)
                 .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
     }
 

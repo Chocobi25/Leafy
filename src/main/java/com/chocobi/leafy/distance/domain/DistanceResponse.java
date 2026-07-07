@@ -8,6 +8,6 @@ import lombok.Data;
 public class DistanceResponse {
 
     private double distance; // 단위: 미터
-    private int duration; // 단위: 밀리초
+    private int duration; // 단위: 초
     private double carbonEmission;
 }

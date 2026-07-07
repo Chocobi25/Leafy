@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TripSegmentCommandService {
     private final TripSegmentRepository tripSegmentRepository;
 
-    public void deleteAllByTrip(TripEntity tripEntity) {
+    public void deleteAll(TripEntity tripEntity) {
         tripSegmentRepository.deleteAllByRouteOption_Trip_Id(tripEntity.getId());
     }
 }

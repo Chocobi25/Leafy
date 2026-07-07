@@ -31,6 +31,16 @@ public class CarDistanceService {
     /**
      * 두 좌표 사이의 거리와 시간 정보를 얻어오는 메서드
      */
+    public CarDistanceResponse calculateTripDistance(Long tripId, List<TripPlaceResponse> tripPlaces) {
+        CarDistanceRequest request = createCarDistanceRequest(tripId, tripPlaces);
+
+        if (DistanceUtils.isJejuTrip(tripPlaces)) {
+            request = addPortsToRequest(request, tripPlaces);
+        }
+
+        return getDistance(request);
+    }
+
     public CarDistanceResponse getDistance(CarDistanceRequest request) {
         KakaoNaviResponse kakaoNaviResponse = callKakaoApi(request);
 
@@ -121,6 +131,30 @@ public class CarDistanceService {
         return carDistanceResponse;
     }
 
+    private CarDistanceRequest createCarDistanceRequest(Long tripId, List<TripPlaceResponse> tripPlaces) {
+        CarDistanceRequest carRequest = new CarDistanceRequest();
+        carRequest.setTripId(tripId);
+
+        if (!tripPlaces.isEmpty()) {
+            TripPlaceLocationResponse firstPlace = tripPlaces.getFirst().getPlace();
+            TripPlaceLocationResponse lastPlace = tripPlaces.getLast().getPlace();
+
+            carRequest.setOrigin(placeToPoint(firstPlace));
+            carRequest.setDestination(placeToPoint(lastPlace));
+        }
+
+        if (tripPlaces.size() > 2) {
+            carRequest.setWaypoints(
+                    tripPlaces.subList(1, tripPlaces.size() - 1)
+                            .stream()
+                            .map(tp -> placeToPoint(tp.getPlace()))
+                            .toList()
+            );
+        }
+
+        return carRequest;
+    }
+
 
     /**
      * 카카오 내비 API 호출
@@ -171,13 +205,13 @@ public class CarDistanceService {
                 totalDistance += segmentResponse.getDistanceResponse().getDistance();
                 totalDuration += segmentResponse.getDistanceResponse().getDuration();
                 
-                // 구간별 Section 생성
-                Section segmentSection = new Section();
-                segmentSection.setDistance((int) segmentResponse.getDistanceResponse().getDistance());
-                segmentSection.setDuration(segmentResponse.getDistanceResponse().getDuration());
-                segmentSection.setCarbonEmission(segmentResponse.getDistanceResponse().getCarbonEmission());
-                segmentSection.setMaxCarbonEmission(segmentResponse.getDistanceResponse().getCarbonEmission());
-                sections.add(segmentSection);
+                DistanceResponse distanceResponse = segmentResponse.getDistanceResponse();
+                sections.add(Section.builder()
+                        .distance((int) distanceResponse.getDistance())
+                        .duration(distanceResponse.getDuration())
+                        .carbonEmission(distanceResponse.getCarbonEmission())
+                        .maxCarbonEmission(distanceResponse.getCarbonEmission())
+                        .build());
 
             } catch (Exception e) {
                 // 직선 거리 계산(하버사인 공식)
@@ -188,14 +222,13 @@ public class CarDistanceService {
                 totalDistance += estimatedDistance;
                 totalDuration += estimatedDuration;
                 
-                // 추정값으로 Section 생성
-                Section estimatedSection = new Section();
-                estimatedSection.setDistance((int) estimatedDistance);
-                estimatedSection.setDuration((int) estimatedDuration);
                 double estimatedCarbonEmission = CarbonCalculator.CalculateCarCarbonEmission(estimatedDistance);
-                estimatedSection.setCarbonEmission(estimatedCarbonEmission);
-                estimatedSection.setMaxCarbonEmission(estimatedCarbonEmission);
-                sections.add(estimatedSection);
+                sections.add(Section.builder()
+                        .distance((int) estimatedDistance)
+                        .duration((int) estimatedDuration)
+                        .carbonEmission(estimatedCarbonEmission)
+                        .maxCarbonEmission(estimatedCarbonEmission)
+                        .build());
             }
         }
 

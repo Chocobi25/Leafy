@@ -19,7 +19,7 @@ public class TripRouteOptionCommandService {
         return tripRouteOptionRepository.save(tripRouteOption);
     }
 
-    public void deleteAllByTrip(TripEntity trip) {
+    public void deleteAll(TripEntity trip) {
         tripRouteOptionRepository.deleteAllByTrip(trip);
     }
 

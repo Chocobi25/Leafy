@@ -1,6 +1,5 @@
 package com.chocobi.leafy.trip.dto.response;
 
-import com.chocobi.leafy.trip.dto.TripSegmentDTO;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -58,14 +57,14 @@ public class TripDetailResponse {
     private LocalDateTime updatedAt;
 
     @Schema(description = "여행 구간 목록")
-    private List<TripSegmentDTO> tripSegments;
+    private List<TripSegmentResponse> tripSegments;
 
     @Schema(description = "여행 장소 목록")
     private List<TripPlaceResponse> tripPlaces;
 
     public static TripDetailResponse from(
             TripEntity trip,
-            List<TripSegmentDTO> tripSegments,
+            List<TripSegmentResponse> tripSegments,
             List<TripPlaceResponse> tripPlaces
     ) {
         return TripDetailResponse.builder()

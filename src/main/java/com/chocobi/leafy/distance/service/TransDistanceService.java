@@ -6,8 +6,8 @@ import com.chocobi.leafy.constants.TmapPathTypeConst;
 import com.chocobi.leafy.distance.domain.TransDistanceRequest;
 import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.dto.*;
-import com.chocobi.leafy.place.application.PlaceService;
 import com.chocobi.leafy.trip.application.TripPlaceService;
+import com.chocobi.leafy.trip.dto.response.TripPlaceLocationResponse;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,28 +22,37 @@ public class TransDistanceService {
 
     private final WebClient tmapWebClient;
     private final TripPlaceService tripPlaceService;
-    private final PlaceService placeService;
+
+    public List<RouteCalculationResult> calculateTripDistance(Long tripId, List<TripPlaceResponse> tripPlaces) {
+        List<TripPlaceResponse> sortedTripPlaces = new ArrayList<>(tripPlaces);
+        sortedTripPlaces.sort((first, second) -> {
+            int dayCompare = Integer.compare(first.getDayIndex(), second.getDayIndex());
+            if (dayCompare != 0) {
+                return dayCompare;
+            }
+            return Integer.compare(first.getVisitOrder(), second.getVisitOrder());
+        });
+
+        TransDistanceBatchRequest batchRequest = createTransDistanceBatchRequest(tripId, sortedTripPlaces);
+        return getBatchDistance(batchRequest, DistanceUtils.isJejuTrip(sortedTripPlaces));
+    }
 
     /**
      * 여러 구간의 대중교통 경로를 배치로 처리하는 메서드
      */
     public List<RouteCalculationResult> getBatchDistance(TransDistanceBatchRequest batchRequest) {
-        List<RouteCalculationResult> allResults = new ArrayList<>();
-
         List<TripPlaceResponse> tripPlaces = new ArrayList<>(tripPlaceService.getTripPlaces(batchRequest.getTripId()));
         tripPlaces.sort((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()));
 
         // 제주 여행 여부 판별
         boolean isJejuTrip = DistanceUtils.isJejuTrip(tripPlaces);
 
-        List<TransDistanceRequest> requests = batchRequest.getRequests();
+        return getBatchDistance(batchRequest, isJejuTrip);
+    }
 
-        if (!requests.isEmpty()) {
-            TransDistanceRequest firstRequest = requests.getFirst();
-            TransDistanceRequest lastRequest = requests.getLast();
-            lastRequest.setEndX(firstRequest.getStartX());
-            lastRequest.setEndY(firstRequest.getStartY());
-        }
+    private List<RouteCalculationResult> getBatchDistance(TransDistanceBatchRequest batchRequest, boolean isJejuTrip) {
+        List<RouteCalculationResult> allResults = new ArrayList<>();
+        List<TransDistanceRequest> requests = batchRequest.getRequests();
 
         for (TransDistanceRequest request : requests) {
             RouteCalculationResult segmentResult = getDistance(request, isJejuTrip);
@@ -53,6 +62,27 @@ public class TransDistanceService {
         }
 
         return allResults;
+    }
+
+    private TransDistanceBatchRequest createTransDistanceBatchRequest(Long tripId, List<TripPlaceResponse> tripPlaces) {
+        List<TransDistanceRequest> requests = new ArrayList<>();
+        for (int i = 0; i < tripPlaces.size() - 1; i++) {
+            TripPlaceLocationResponse start = tripPlaces.get(i).getPlace();
+            TripPlaceLocationResponse end = tripPlaces.get(i + 1).getPlace();
+
+            TransDistanceRequest request = new TransDistanceRequest();
+            request.setStartX(String.valueOf(start.getLongitude()));
+            request.setStartY(String.valueOf(start.getLatitude()));
+            request.setEndX(String.valueOf(end.getLongitude()));
+            request.setEndY(String.valueOf(end.getLatitude()));
+
+            requests.add(request);
+        }
+
+        TransDistanceBatchRequest batchRequest = new TransDistanceBatchRequest();
+        batchRequest.setTripId(tripId);
+        batchRequest.setRequests(requests);
+        return batchRequest;
     }
 
     /**

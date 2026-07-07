@@ -21,6 +21,19 @@ public class TripPlaceFindService {
                 .orElseThrow(() -> new CustomException(TripPlaceError.TRIP_PLACE_NOT_FOUND));
     }
 
+    public List<TripPlaceEntity> findTripPlaces(List<Long> tripPlaceIds) {
+        List<Long> uniqueTripPlaceIds = tripPlaceIds.stream()
+                .distinct()
+                .toList();
+        List<TripPlaceEntity> tripPlaces = tripPlaceRepository.findAllById(uniqueTripPlaceIds);
+
+        if (tripPlaces.size() != uniqueTripPlaceIds.size()) {
+            throw new CustomException(TripPlaceError.TRIP_PLACE_NOT_FOUND);
+        }
+
+        return tripPlaces;
+    }
+
     public List<TripPlaceEntity> findOrderedTripPlaces(Long tripId) {
         return tripPlaceRepository.findAllByTripIdOrderByDayIndexAscVisitOrderAsc(tripId);
     }

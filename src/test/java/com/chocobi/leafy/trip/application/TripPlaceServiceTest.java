@@ -23,8 +23,11 @@ import com.chocobi.leafy.trip.dto.response.TripPlacesResponse;
 import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripPlaceCommandService;
 import com.chocobi.leafy.trip.infra.TripPlaceFindService;
+import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
+import com.chocobi.leafy.trip.infra.entity.TripStatus;
+import com.chocobi.leafy.trip.vo.TripError;
 import com.chocobi.leafy.trip.vo.TripPlaceError;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.chocobi.leafy.user.infra.entity.enums.Provider;
@@ -57,6 +60,9 @@ class TripPlaceServiceTest {
 
     @Mock
     private TripFindService tripFindService;
+
+    @Mock
+    private TripRouteOptionCommandService tripRouteOptionCommandService;
 
     @Test
     @DisplayName("외부 장소를 여행 장소 위치 응답으로 변환한다")
@@ -168,6 +174,23 @@ class TripPlaceServiceTest {
     }
 
     @Test
+    @DisplayName("여행 기간 밖의 일차에는 여행 장소를 생성할 수 없다")
+    void createTripPlacesWithDayIndexOutsideTripPeriod() {
+        TripEntity trip = tripFixture(1L);
+        List<CreateTripPlaceRequest> request = List.of(new CreateTripPlaceRequest(10L, 0, 3, "기간 밖"));
+
+        given(tripFindService.findOwnedTrip(1L, 100L)).willReturn(trip);
+
+        assertThatThrownBy(() -> tripPlaceService.createTripPlaces(1L, request, 100L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripPlaceError.INVALID_TRIP_PLACE_REQUEST);
+
+        then(tripPlaceFindService).should(never()).hasTripPlaces(1L);
+        then(tripPlaceCommandService).should(never()).saveAll(anyList());
+    }
+
+    @Test
     @DisplayName("이미 여행 장소가 있으면 최초 생성할 수 없다")
     void createTripPlacesAlreadyExist() {
         TripEntity trip = tripFixture(1L);
@@ -244,12 +267,33 @@ class TripPlaceServiceTest {
         then(placeService).should(never()).getPlaces(anyList());
         then(tripPlaceCommandService).should(never()).saveAll(anyList());
         then(tripPlaceCommandService).should(never()).deleteAll(anyList());
+        then(tripRouteOptionCommandService).should(never()).deleteAll(trip);
+    }
+
+    @Test
+    @DisplayName("진행 중인 여행은 여행 장소를 수정할 수 없다")
+    void updateTripPlacesInProgress() {
+        TripEntity trip = tripFixture(1L);
+        trip.editStatus(TripStatus.IN_PROGRESS);
+        List<UpdateTripPlaceRequest> request = List.of(new UpdateTripPlaceRequest(100L, 10L, 0, 0, "메모"));
+
+        given(tripFindService.findOwnedTrip(1L, 100L)).willReturn(trip);
+
+        assertThatThrownBy(() -> tripPlaceService.updateTripPlaces(1L, request, 100L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripError.TRIP_NOT_EDITABLE);
+
+        assertThat(trip.getStatus()).isEqualTo(TripStatus.IN_PROGRESS);
+        then(tripPlaceFindService).should(never()).findOrderedTripPlaces(1L);
+        then(tripRouteOptionCommandService).should(never()).deleteAll(trip);
     }
 
     @Test
     @DisplayName("방문 일정이 바뀌면 경로 재계산이 필요하다")
     void updateTripPlacesScheduleChanged() {
         TripEntity trip = tripFixture(1L);
+        trip.editStatus(TripStatus.READY);
         ExternalPlaceEntity place = externalPlaceFixture(10L, "해운대");
         TripPlaceEntity existing = tripPlaceFixture(100L, trip, place, 0, 0, "기존 메모");
         List<UpdateTripPlaceRequest> request = List.of(new UpdateTripPlaceRequest(100L, 10L, 1, 1, "수정 메모"));
@@ -263,7 +307,9 @@ class TripPlaceServiceTest {
         assertThat(existing.getVisitOrder()).isEqualTo(1);
         assertThat(existing.getMemo()).isEqualTo("수정 메모");
         assertThat(result.isRouteStale()).isTrue();
+        assertThat(trip.getStatus()).isEqualTo(TripStatus.CREATING);
         then(placeService).should(never()).getPlaces(anyList());
+        then(tripRouteOptionCommandService).should().deleteAll(trip);
     }
 
     @Test
@@ -286,6 +332,7 @@ class TripPlaceServiceTest {
         assertThat(existing.getVisitOrder()).isEqualTo(1);
         assertThat(existing.getMemo()).isEqualTo("수정 메모");
         assertThat(result.isRouteStale()).isTrue();
+        then(tripRouteOptionCommandService).should().deleteAll(trip);
     }
 
     @Test
@@ -306,6 +353,7 @@ class TripPlaceServiceTest {
         assertThat(result.getTripPlaces()).hasSize(1);
         assertThat(result.getTripPlaces().getFirst().getPlace().getTitle()).isEqualTo("나만의 장소");
         assertThat(result.isRouteStale()).isTrue();
+        then(tripRouteOptionCommandService).should().deleteAll(trip);
     }
 
     @Test
@@ -337,6 +385,7 @@ class TripPlaceServiceTest {
         assertThat(result.getTripPlaces()).hasSize(2);
         assertThat(result.getTripPlaces().get(1).getPlace().getTitle()).isEqualTo("광안리");
         then(tripPlaceCommandService).should().saveAll(anyList());
+        then(tripRouteOptionCommandService).should().deleteAll(trip);
     }
 
     @Test
@@ -356,6 +405,7 @@ class TripPlaceServiceTest {
 
         assertThat(result.isRouteStale()).isTrue();
         assertThat(result.getTripPlaces()).hasSize(1);
+        then(tripRouteOptionCommandService).should().deleteAll(trip);
         then(tripPlaceCommandService).should().deleteAll(List.of(second));
     }
 
@@ -390,6 +440,7 @@ class TripPlaceServiceTest {
         assertThat(first.getMemo()).isEqualTo("수정");
         assertThat(result.isRouteStale()).isTrue();
         assertThat(result.getTripPlaces()).hasSize(2);
+        then(tripRouteOptionCommandService).should().deleteAll(trip);
         then(tripPlaceCommandService).should().deleteAll(List.of(second));
         then(tripPlaceCommandService).should().saveAll(anyList());
     }
@@ -526,7 +577,7 @@ class TripPlaceServiceTest {
 
     @Test
     @DisplayName("여행 장소 단건 조회 결과를 반환한다")
-    void getTripPlaceById() {
+    void getTripPlace() {
         TripPlaceEntity tripPlace = tripPlaceFixture(
                 100L,
                 tripFixture(1L),
@@ -538,7 +589,7 @@ class TripPlaceServiceTest {
 
         given(tripPlaceFindService.findTripPlace(100L)).willReturn(tripPlace);
 
-        TripPlaceEntity result = tripPlaceService.getTripPlaceById(100L);
+        TripPlaceEntity result = tripPlaceService.getTripPlace(100L);
 
         assertThat(result).isEqualTo(tripPlace);
     }

@@ -1,8 +1,6 @@
 package com.chocobi.leafy.trip.vo;
 
-import com.chocobi.leafy.global.exception.CustomException;
-
-import java.util.Locale;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum TripTransport {
     CAR("car"),
@@ -14,20 +12,8 @@ public enum TripTransport {
         this.code = code;
     }
 
+    @JsonValue
     public String getCode() {
         return code;
-    }
-
-    public static TripTransport from(String transport) {
-        if (transport == null) {
-            throw new CustomException(TripError.INVALID_TRIP_TRANSPORT);
-        }
-
-        String normalized = transport.toLowerCase(Locale.ROOT);
-        return switch (normalized) {
-            case "car", "자동차" -> CAR;
-            case "public", "public_trans", "bus", "대중교통" -> PUBLIC;
-            default -> throw new CustomException(TripError.INVALID_TRIP_TRANSPORT);
-        };
     }
 }

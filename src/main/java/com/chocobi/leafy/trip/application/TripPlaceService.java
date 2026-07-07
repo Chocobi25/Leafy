@@ -11,13 +11,16 @@ import com.chocobi.leafy.trip.dto.response.TripPlacesResponse;
 import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripPlaceCommandService;
 import com.chocobi.leafy.trip.infra.TripPlaceFindService;
+import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
+import com.chocobi.leafy.trip.vo.TripError;
 import com.chocobi.leafy.trip.vo.TripPlaceError;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +37,15 @@ public class TripPlaceService {
     private final TripPlaceCommandService tripPlaceCommandService;
     private final PlaceService placeService;
     private final TripFindService tripFindService;
+    private final TripRouteOptionCommandService tripRouteOptionCommandService;
 
     @Transactional
     public TripPlacesResponse createTripPlaces(Long tripId, List<CreateTripPlaceRequest> request, Long userId) {
         TripEntity trip = tripFindService.findOwnedTrip(tripId, userId);
+        validateTripEditable(trip);
+        validateTripPlaceDayIndexes(trip, request.stream()
+                .map(CreateTripPlaceRequest::dayIndex)
+                .toList());
         validateDuplicateVisitOrders(request.stream()
                 .map(placeReq -> new VisitOrderKey(placeReq.dayIndex(), placeReq.visitOrder()))
                 .toList());
@@ -69,6 +77,10 @@ public class TripPlaceService {
     @Transactional
     public TripPlacesResponse updateTripPlaces(Long tripId, List<UpdateTripPlaceRequest> request, Long userId) {
         TripEntity trip = tripFindService.findOwnedTrip(tripId, userId);
+        validateTripEditable(trip);
+        validateTripPlaceDayIndexes(trip, request.stream()
+                .map(UpdateTripPlaceRequest::dayIndex)
+                .toList());
         validateDuplicateTripPlaceIds(request);
         validateDuplicateVisitOrders(request.stream()
                 .map(placeReq -> new VisitOrderKey(placeReq.dayIndex(), placeReq.visitOrder()))
@@ -88,16 +100,17 @@ public class TripPlaceService {
 
         List<TripPlaceEntity> newTripPlaces = applyTripPlaceUpdates(trip, request, updateContext, placeMap);
 
+        if (updatePlan.routeRecalculationRequired()) {
+            tripRouteOptionCommandService.deleteAll(trip);
+            trip.invalidateRoute();
+        }
+
         if (updatePlan.hasDeletedTripPlaces()) {
             tripPlaceCommandService.deleteAll(updatePlan.deletedTripPlaces());
         }
 
         if (!newTripPlaces.isEmpty()) {
             tripPlaceCommandService.saveAll(newTripPlaces);
-        }
-
-        if (updatePlan.routeRecalculationRequired()) {
-            trip.markRouteStale();
         }
 
         return TripPlacesResponse.from(trip, getTripPlaces(tripId));
@@ -113,7 +126,7 @@ public class TripPlaceService {
     }
 
     @Transactional(readOnly = true)
-    public TripPlaceEntity getTripPlaceById(Long tripPlaceId) {
+    public TripPlaceEntity getTripPlace(Long tripPlaceId) {
         return tripPlaceFindService.findTripPlace(tripPlaceId);
     }
 
@@ -126,6 +139,22 @@ public class TripPlaceService {
 
         if (tripPlaceIds.size() != uniqueTripPlaceIds.size()) {
             throw new CustomException(TripPlaceError.DUPLICATE_TRIP_PLACE_REQUEST);
+        }
+    }
+
+    private void validateTripEditable(TripEntity trip) {
+        if (!trip.isEditable()) {
+            throw new CustomException(TripError.TRIP_NOT_EDITABLE);
+        }
+    }
+
+    private void validateTripPlaceDayIndexes(TripEntity trip, List<Integer> dayIndexes) {
+        long totalDays = ChronoUnit.DAYS.between(trip.getStartDate(), trip.getEndDate()) + 1;
+        boolean hasInvalidDayIndex = dayIndexes.stream()
+                .anyMatch(dayIndex -> dayIndex == null || dayIndex < 0 || dayIndex >= totalDays);
+
+        if (hasInvalidDayIndex) {
+            throw new CustomException(TripPlaceError.INVALID_TRIP_PLACE_REQUEST);
         }
     }
 
