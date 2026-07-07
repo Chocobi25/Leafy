@@ -29,7 +29,9 @@ public class TripRouteOptionCommandService {
     }
 
     public void confirmOnly(TripRouteOptionEntity selectedRouteOption, List<TripRouteOptionEntity> routeOptions) {
-        routeOptions.forEach(TripRouteOptionEntity::unconfirm);
+        routeOptions.stream()
+                .filter(routeOption -> routeOption != selectedRouteOption)
+                .forEach(tripRouteOptionRepository::delete);
         selectedRouteOption.confirm();
     }
 }

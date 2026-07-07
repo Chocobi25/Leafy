@@ -2,7 +2,7 @@ package com.chocobi.leafy.trip.application;
 
 import com.chocobi.leafy.distance.dto.Section;
 import com.chocobi.leafy.global.exception.CustomException;
-import com.chocobi.leafy.trip.dto.response.TripRouteSummaryResponse;
+import com.chocobi.leafy.trip.dto.response.TripRouteCandidateSummaryResponse;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
@@ -51,8 +51,10 @@ public class TripRouteCandidateService {
     }
 
     @Transactional
-    public void completeRouteCandidateForTrip(TripEntity trip, String transport) {
-        confirmRouteCandidate(trip, TripTransport.from(transport));
+    public void completeRouteCandidateForTrip(Long tripId, String transport) {
+        TripTransport tripTransport = TripTransport.from(transport);
+        TripEntity trip = tripFindService.findTrip(tripId);
+        confirmRouteCandidate(trip, tripTransport);
     }
 
     @Transactional
@@ -63,7 +65,7 @@ public class TripRouteCandidateService {
     }
 
     private void confirmRouteCandidate(TripEntity trip, TripTransport transport) {
-        TripRouteOptionEntity selectedRouteOption = tripRouteOptionFindService.findOptionalTripRouteOption(trip.getId(), transport)
+        TripRouteOptionEntity selectedRouteOption = tripRouteOptionFindService.findOptionalRouteCandidate(trip.getId(), transport)
                 .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
         List<TripRouteOptionEntity> routeOptions = tripRouteOptionFindService.findTripRouteOptions(trip.getId());
 
@@ -72,9 +74,14 @@ public class TripRouteCandidateService {
     }
 
     @Transactional(readOnly = true)
-    public TripRouteSummaryResponse getRouteSummary(Long tripId, String transport) {
-        TripRouteOptionEntity routeOption = tripRouteOptionFindService.findTripRouteOption(tripId, transport);
-        return TripRouteSummaryResponse.from(routeOption);
+    public TripRouteCandidateSummaryResponse getOwnedRouteSummary(Long tripId, String transport, Long userId) {
+        tripFindService.findOwnedTrip(tripId, userId);
+        return getRouteSummary(tripId, transport);
+    }
+
+    private TripRouteCandidateSummaryResponse getRouteSummary(Long tripId, String transport) {
+        TripRouteOptionEntity routeOption = tripRouteOptionFindService.findRouteCandidate(tripId, transport);
+        return TripRouteCandidateSummaryResponse.from(routeOption);
     }
 
     private void validateRouteCandidate(List<Section> sections, List<TripPlaceResponse> tripPlaces) {
@@ -105,7 +112,7 @@ public class TripRouteCandidateService {
     }
 
     private void deleteRouteCandidate(Long tripId, TripTransport transport) {
-        tripRouteOptionFindService.findOptionalTripRouteOption(tripId, transport)
+        tripRouteOptionFindService.findOptionalRouteCandidate(tripId, transport)
                 .ifPresent(tripRouteOptionCommandService::delete);
     }
 

@@ -1,16 +1,13 @@
 package com.chocobi.leafy.trip.presentation;
 
-import com.chocobi.leafy.distance.domain.CarDistanceRequest;
 import com.chocobi.leafy.distance.domain.DistanceResponse;
 import com.chocobi.leafy.distance.domain.TransDistanceBatchRequest;
 import com.chocobi.leafy.distance.dto.RouteCalculationResult;
 import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.trip.application.TripMessageService;
-import com.chocobi.leafy.trip.application.TripPlaceService;
 import com.chocobi.leafy.trip.application.TripRouteCandidateService;
 import com.chocobi.leafy.trip.application.TripSegmentService;
-import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
-import com.chocobi.leafy.trip.dto.response.TripRouteSummaryResponse;
+import com.chocobi.leafy.trip.dto.response.TripRouteCandidateSummaryResponse;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,7 +32,6 @@ import java.util.Map;
 @Validated
 public class TripRouteController {
 
-    private final TripPlaceService tripPlaceService;
     private final TripRouteCandidateService tripRouteCandidateService;
     private final TripSegmentService tripSegmentService;
     private final TripMessageService tripMessageService;
@@ -72,10 +68,12 @@ public class TripRouteController {
     }
 
     @GetMapping("/{tripId}/summary")
-    public ResponseEntity<TripRouteSummaryResponse> getTripSummary(@PathVariable @Positive Long tripId,
-                                                                   @RequestParam String transport) {
+    public ResponseEntity<TripRouteCandidateSummaryResponse> getTripSummary(@PathVariable @Positive Long tripId,
+                                                                   @RequestParam String transport,
+                                                                   Authentication authentication) {
         try {
-            return ResponseEntity.ok(tripRouteCandidateService.getRouteSummary(tripId, transport));
+            Long userId = (Long) authentication.getPrincipal();
+            return ResponseEntity.ok(tripRouteCandidateService.getOwnedRouteSummary(tripId, transport, userId));
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -85,9 +83,10 @@ public class TripRouteController {
 
     @PostMapping("/{tripId}/routes/car")
     public ResponseEntity<DistanceResponse> calculateCarRoute(@PathVariable @Positive Long tripId,
-                                                              @RequestBody CarDistanceRequest request) {
+                                                              Authentication authentication) {
         try {
-            return ResponseEntity.ok(tripSegmentService.calculateAndSaveCarRoute(request, tripId));
+            Long userId = (Long) authentication.getPrincipal();
+            return ResponseEntity.ok(tripSegmentService.calculateAndSaveOwnedCarRoute(tripId, userId));
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -98,10 +97,11 @@ public class TripRouteController {
     }
 
     @PostMapping("/routes/public")
-    public ResponseEntity<List<RouteCalculationResult>> calculatePublicRoute(@RequestBody TransDistanceBatchRequest request) {
+    public ResponseEntity<List<RouteCalculationResult>> calculatePublicRoute(@RequestBody TransDistanceBatchRequest request,
+                                                                            Authentication authentication) {
         try {
-            List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(request.getTripId());
-            return ResponseEntity.ok(tripSegmentService.calculateAndSavePublicRoute(request, tripPlaces));
+            Long userId = (Long) authentication.getPrincipal();
+            return ResponseEntity.ok(tripSegmentService.calculateAndSaveOwnedPublicRoute(request, userId));
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {

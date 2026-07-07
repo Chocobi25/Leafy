@@ -7,11 +7,10 @@ import com.chocobi.leafy.distance.dto.Section;
 import com.chocobi.leafy.distance.service.CarDistanceService;
 import com.chocobi.leafy.distance.service.DistanceUtils;
 import com.chocobi.leafy.distance.service.TransDistanceService;
-import com.chocobi.leafy.place.application.PlaceService;
-import com.chocobi.leafy.trip.dto.request.UpdateTripPlaceRequest;
 import com.chocobi.leafy.trip.dto.response.TripPlaceLocationResponse;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
 import com.chocobi.leafy.trip.dto.TripSegmentDTO;
+import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
 import com.chocobi.leafy.trip.infra.TripSegmentCommandService;
 import com.chocobi.leafy.trip.infra.TripSegmentFindService;
@@ -34,27 +33,37 @@ public class TripSegmentService {
     private final TripSegmentCommandService tripSegmentCommandService;
     private final TripRouteOptionCommandService tripRouteOptionCommandService;
     private final TripRouteCandidateService tripRouteCandidateService;
+    private final TripFindService tripFindService;
     private final CarDistanceService carDistanceService;
     private final TransDistanceService transDistanceService;
     private final TripPlaceService tripPlaceService;
-    private final PlaceService placeService;
 
-    public DistanceResponse calculateAndSaveCarRoute(CarDistanceRequest request, Long tripId) {
+    public DistanceResponse calculateAndSaveCarRoute(Long tripId) {
         List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(tripId);
+        return calculateAndSaveCarRoute(tripId, tripPlaces);
+    }
+
+    private DistanceResponse calculateAndSaveCarRoute(Long tripId, List<TripPlaceResponse> tripPlaces) {
+        CarDistanceRequest carRequest = createCarDistanceRequest(tripId, tripPlaces);
 
         CarDistanceResponse carResponse;
 
         if (DistanceUtils.isJejuTrip(tripPlaces)) {
-            CarDistanceRequest modifiedRequest = carDistanceService.addPortsToRequest(request, tripPlaces);
+            CarDistanceRequest modifiedRequest = carDistanceService.addPortsToRequest(carRequest, tripPlaces);
             carResponse = carDistanceService.getDistance(modifiedRequest);
         } else {
-            carResponse = carDistanceService.getDistance(request);
+            carResponse = carDistanceService.getDistance(carRequest);
         }
 
         List<Section> sections = carResponse.getSections();
         tripRouteCandidateService.saveRouteCandidate(tripId, sections, TripTransport.CAR, tripPlaces);
 
         return carResponse.getDistanceResponse();
+    }
+
+    public DistanceResponse calculateAndSaveOwnedCarRoute(Long tripId, Long userId) {
+        tripFindService.findOwnedTrip(tripId, userId);
+        return calculateAndSaveCarRoute(tripId);
     }
 
     public List<RouteCalculationResult> calculateAndSavePublicRoute(TransDistanceBatchRequest batchRequest, List<TripPlaceResponse> tripPlaces) {
@@ -75,6 +84,13 @@ public class TripSegmentService {
         return results;
     }
 
+    public List<RouteCalculationResult> calculateAndSaveOwnedPublicRoute(TransDistanceBatchRequest batchRequest, Long userId) {
+        tripFindService.findOwnedTrip(batchRequest.getTripId(), userId);
+        List<TripPlaceResponse> tripPlaces = tripPlaceService.getTripPlaces(batchRequest.getTripId());
+        TransDistanceBatchRequest serverBatchRequest = createTransDistanceBatchRequest(batchRequest.getTripId(), tripPlaces);
+        return calculateAndSavePublicRoute(serverBatchRequest, tripPlaces);
+    }
+
     @Transactional(readOnly = true)
     public List<TripSegmentDTO> getTripSegments(Long tripId) {
         return tripSegmentFindService.findConfirmedTripSegmentsByTripId(tripId).stream()
@@ -88,131 +104,69 @@ public class TripSegmentService {
         tripRouteOptionCommandService.deleteAllByTrip(trip);
     }
 
-    /**
-     * 재계산 진입점: 프론트에서 온 tripPlaceRequests 를 TripPlaceResponse로 변환한 뒤
-     * 적절한 거리 서비스 메서드를 호출한다.
-     */
-    public void recalculateRoutesAndSave(TripEntity trip, String transport, List<UpdateTripPlaceRequest> tripPlaceRequests) {
-        List<TripPlaceResponse> tripPlaces = tripPlaceRequests.stream()
-                .map(req -> TripPlaceResponse.builder()
-                        .tripId(trip.getId())
-                        .place(TripPlaceLocationResponse.from(placeService.getPlace(req.placeId())))
-                        .dayIndex(req.dayIndex())
-                        .visitOrder(req.visitOrder())
-                        .memo(req.memo())
-                        .build())
-                .toList();
-
-        System.out.println("[DEBUG] TripPlaces to recalc: " + tripPlaces);
-
-        String normalized = transport == null ? "car" : transport.toLowerCase();
-        if ("car".equals(normalized)) {
-            CarDistanceRequest carRequest = new CarDistanceRequest();
-            carRequest.setTripId(trip.getId());
-
-            if (!tripPlaces.isEmpty()) {
-                TripPlaceLocationResponse firstPlace = tripPlaces.get(0).getPlace();
-                TripPlaceLocationResponse lastPlace = tripPlaces.get(tripPlaces.size() - 1).getPlace();
-
-                carRequest.setOrigin(placeToPoint(firstPlace));
-                carRequest.setDestination(placeToPoint(lastPlace));
-            }
-
-            if (tripPlaces.size() > 2) {
-                carRequest.setWaypoints(
-                        tripPlaces.subList(1, tripPlaces.size() - 1)
-                                .stream()
-                                .map(tp -> placeToPoint(tp.getPlace()))
-                                .toList()
-                );
-            }
-
-            System.out.println("[DEBUG] CarDistanceRequest: " + carRequest);
-            calculateAndSaveCarRoute(carRequest, trip.getId());
-        } else if ("public".equals(normalized)) {
-            List<TransDistanceRequest> requests = new ArrayList<>();
-            for (int i = 0; i < tripPlaces.size() - 1; i++) {
-                TripPlaceLocationResponse start = tripPlaces.get(i).getPlace();
-                TripPlaceLocationResponse end = tripPlaces.get(i + 1).getPlace();
-
-                TransDistanceRequest req = new TransDistanceRequest();
-                req.setStartX(String.valueOf(start.getLongitude()));
-                req.setStartY(String.valueOf(start.getLatitude()));
-                req.setEndX(String.valueOf(end.getLongitude()));
-                req.setEndY(String.valueOf(end.getLatitude()));
-              
-                requests.add(req);
-            }
-
-            TransDistanceBatchRequest batchRequest = new TransDistanceBatchRequest();
-            batchRequest.setTripId(trip.getId());
-            batchRequest.setRequests(requests);
-
-            System.out.println("[DEBUG] PublicTransport BatchRequest: " + batchRequest);
-            calculateAndSavePublicRoute(batchRequest, tripPlaces);
-        }
-    }
-
-    /**
-     * 재계산 진입점: DB에서 조회한 TripPlaceResponse를 직접 사용
-     * (프론트엔드에서 온 request가 아닌, DB에 저장된 최신 데이터 사용)
-     */
-    public void recalculateRoutesAndSaveV2(TripEntity trip, String transport, List<TripPlaceResponse> tripPlaces) {
+    public void recalculateRoutesAndSave(TripEntity trip, String transport, List<TripPlaceResponse> tripPlaces) {
         System.out.println("[DEBUG] TripPlaces to recalc (from DB): " + tripPlaces);
 
-        // visitOrder로 정렬
         List<TripPlaceResponse> sortedPlaces = new ArrayList<>(tripPlaces);
         sortedPlaces.sort(tripPlaceRouteOrder());
 
         String normalized = transport == null ? "car" : transport.toLowerCase();
 
         if ("car".equals(normalized)) {
-            CarDistanceRequest carRequest = new CarDistanceRequest();
-            carRequest.setTripId(trip.getId());
-
-            if (!sortedPlaces.isEmpty()) {
-                TripPlaceLocationResponse firstPlace = sortedPlaces.get(0).getPlace();
-                TripPlaceLocationResponse lastPlace = sortedPlaces.get(sortedPlaces.size() - 1).getPlace();
-
-                carRequest.setOrigin(placeToPoint(firstPlace));
-                carRequest.setDestination(placeToPoint(lastPlace));
-
-                if (sortedPlaces.size() > 2) {
-                    carRequest.setWaypoints(
-                            sortedPlaces.subList(1, sortedPlaces.size() - 1)
-                                    .stream()
-                                    .map(tp -> placeToPoint(tp.getPlace()))
-                                    .toList()
-                    );
-                }
-            }
-
+            CarDistanceRequest carRequest = createCarDistanceRequest(trip.getId(), sortedPlaces);
             System.out.println("[DEBUG] CarDistanceRequest: " + carRequest);
-            calculateAndSaveCarRoute(carRequest, trip.getId());
+            calculateAndSaveCarRoute(trip.getId(), sortedPlaces);
 
         } else if ("public".equals(normalized)) {
-            List<TransDistanceRequest> requests = new ArrayList<>();
-
-            for (int i = 0; i < sortedPlaces.size() - 1; i++) {
-                TripPlaceLocationResponse start = sortedPlaces.get(i).getPlace();
-                TripPlaceLocationResponse end = sortedPlaces.get(i + 1).getPlace();
-
-                TransDistanceRequest req = new TransDistanceRequest();
-                req.setStartX(String.valueOf(start.getLongitude()));
-                req.setStartY(String.valueOf(start.getLatitude()));
-                req.setEndX(String.valueOf(end.getLongitude()));
-                req.setEndY(String.valueOf(end.getLatitude()));
-
-                requests.add(req);
-            }
-
-            TransDistanceBatchRequest batchRequest = new TransDistanceBatchRequest();
-            batchRequest.setTripId(trip.getId());
-            batchRequest.setRequests(requests);
-
+            TransDistanceBatchRequest batchRequest = createTransDistanceBatchRequest(trip.getId(), sortedPlaces);
             System.out.println("[DEBUG] PublicTransport BatchRequest: " + batchRequest);
             calculateAndSavePublicRoute(batchRequest, sortedPlaces);
         }
+    }
+
+    private CarDistanceRequest createCarDistanceRequest(Long tripId, List<TripPlaceResponse> tripPlaces) {
+        CarDistanceRequest carRequest = new CarDistanceRequest();
+        carRequest.setTripId(tripId);
+
+        if (!tripPlaces.isEmpty()) {
+            TripPlaceLocationResponse firstPlace = tripPlaces.getFirst().getPlace();
+            TripPlaceLocationResponse lastPlace = tripPlaces.getLast().getPlace();
+
+            carRequest.setOrigin(placeToPoint(firstPlace));
+            carRequest.setDestination(placeToPoint(lastPlace));
+        }
+
+        if (tripPlaces.size() > 2) {
+            carRequest.setWaypoints(
+                    tripPlaces.subList(1, tripPlaces.size() - 1)
+                            .stream()
+                            .map(tp -> placeToPoint(tp.getPlace()))
+                            .toList()
+            );
+        }
+
+        return carRequest;
+    }
+
+    private TransDistanceBatchRequest createTransDistanceBatchRequest(Long tripId, List<TripPlaceResponse> tripPlaces) {
+        List<TransDistanceRequest> requests = new ArrayList<>();
+        for (int i = 0; i < tripPlaces.size() - 1; i++) {
+            TripPlaceLocationResponse start = tripPlaces.get(i).getPlace();
+            TripPlaceLocationResponse end = tripPlaces.get(i + 1).getPlace();
+
+            TransDistanceRequest req = new TransDistanceRequest();
+            req.setStartX(String.valueOf(start.getLongitude()));
+            req.setStartY(String.valueOf(start.getLatitude()));
+            req.setEndX(String.valueOf(end.getLongitude()));
+            req.setEndY(String.valueOf(end.getLatitude()));
+
+            requests.add(req);
+        }
+
+        TransDistanceBatchRequest batchRequest = new TransDistanceBatchRequest();
+        batchRequest.setTripId(tripId);
+        batchRequest.setRequests(requests);
+        return batchRequest;
     }
 
     private Comparator<TripPlaceResponse> tripPlaceRouteOrder() {

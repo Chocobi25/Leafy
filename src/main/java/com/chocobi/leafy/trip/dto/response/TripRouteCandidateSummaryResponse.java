@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class TripRouteSummaryResponse {
+public class TripRouteCandidateSummaryResponse {
 
     @Schema(description = "총 이동 시간(분)")
     private int totalDuration;
@@ -15,8 +15,8 @@ public class TripRouteSummaryResponse {
     @Schema(description = "총 탄소 배출량")
     private double totalCarbonEmission;
 
-    public static TripRouteSummaryResponse from(TripRouteOptionEntity routeOption) {
-        return TripRouteSummaryResponse.builder()
+    public static TripRouteCandidateSummaryResponse from(TripRouteOptionEntity routeOption) {
+        return TripRouteCandidateSummaryResponse.builder()
                 .totalDuration(routeOption.getTotalDuration())
                 .totalCarbonEmission(routeOption.getTotalCarbonEmission())
                 .build();
