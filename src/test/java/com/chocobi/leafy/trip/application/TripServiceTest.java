@@ -112,7 +112,7 @@ class TripServiceTest {
     @Test
     @DisplayName("사용자의 여행 목록을 응답 DTO로 변환한다")
     void getTrips() {
-        given(tripFindService.findTripsByUserId(1L))
+        given(tripFindService.findTrips(1L))
                 .willReturn(List.of(tripFixture(10L, userFixture(1L), "부산 여행")));
 
         List<TripListResponse> result = tripService.getTrips(1L);
@@ -123,9 +123,10 @@ class TripServiceTest {
     }
 
     @Test
-    @DisplayName("여행 상세 정보를 수정한다")
+    @DisplayName("여행 날짜를 수정하면 기존 경로를 무효화하고 생성 중 상태로 되돌린다")
     void updateTripInfo() {
         TripEntity trip = tripFixture(10L, userFixture(1L), "기존 여행");
+        trip.editStatus(TripStatus.READY);
         TripUpdateRequest request = new TripUpdateRequest(
                 "수정된 여행",
                 LocalDate.of(2026, 7, 1),
@@ -133,7 +134,7 @@ class TripServiceTest {
         );
 
         given(tripFindService.findOwnedTripDetail(10L, 1L)).willReturn(trip);
-        given(tripSegmentService.getTripSegments(10L)).willReturn(List.of());
+        given(tripSegmentService.getTripSegments(trip)).willReturn(List.of());
         given(tripPlaceFindService.findOrderedTripPlaces(10L)).willReturn(List.of());
 
         TripDetailResponse result = tripService.updateTripInfo(10L, request, 1L);
@@ -141,7 +142,56 @@ class TripServiceTest {
         assertThat(result.getTitle()).isEqualTo("수정된 여행");
         assertThat(result.getStartDate()).isEqualTo(LocalDate.of(2026, 7, 1));
         assertThat(result.getEndDate()).isEqualTo(LocalDate.of(2026, 7, 2));
+        assertThat(trip.isRouteStale()).isTrue();
+        assertThat(trip.getStatus()).isEqualTo(TripStatus.CREATING);
         then(tripFindService).should().findOwnedTripDetail(10L, 1L);
+        then(tripSegmentService).should().deleteTripSegments(trip);
+    }
+
+    @Test
+    @DisplayName("여행 제목만 수정하면 기존 경로를 무효화하지 않는다")
+    void updateTripTitleOnly() {
+        TripEntity trip = tripFixture(10L, userFixture(1L), "기존 여행");
+        trip.editStatus(TripStatus.READY);
+        TripUpdateRequest request = new TripUpdateRequest(
+                "수정된 여행",
+                LocalDate.of(2026, 6, 1),
+                LocalDate.of(2026, 6, 3)
+        );
+
+        given(tripFindService.findOwnedTripDetail(10L, 1L)).willReturn(trip);
+        given(tripSegmentService.getTripSegments(trip)).willReturn(List.of());
+        given(tripPlaceFindService.findOrderedTripPlaces(10L)).willReturn(List.of());
+
+        TripDetailResponse result = tripService.updateTripInfo(10L, request, 1L);
+
+        assertThat(result.getTitle()).isEqualTo("수정된 여행");
+        assertThat(trip.isRouteStale()).isFalse();
+        assertThat(trip.getStatus()).isEqualTo(TripStatus.READY);
+        then(tripSegmentService).should(never()).deleteTripSegments(trip);
+    }
+
+    @Test
+    @DisplayName("진행 중인 여행은 상세 정보를 수정할 수 없다")
+    void updateTripInfoInProgress() {
+        TripEntity trip = tripFixture(10L, userFixture(1L), "진행 중 여행");
+        trip.editStatus(TripStatus.IN_PROGRESS);
+        TripUpdateRequest request = new TripUpdateRequest(
+                "수정된 여행",
+                LocalDate.of(2026, 7, 1),
+                LocalDate.of(2026, 7, 2)
+        );
+
+        given(tripFindService.findOwnedTripDetail(10L, 1L)).willReturn(trip);
+
+        assertThatThrownBy(() -> tripService.updateTripInfo(10L, request, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripError.TRIP_NOT_EDITABLE);
+
+        assertThat(trip.getStatus()).isEqualTo(TripStatus.IN_PROGRESS);
+        then(tripSegmentService).should(never()).deleteTripSegments(trip);
+        then(tripSegmentService).should(never()).getTripSegments(trip);
     }
 
     @Test

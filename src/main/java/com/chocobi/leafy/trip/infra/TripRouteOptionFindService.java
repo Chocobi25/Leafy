@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,22 +18,17 @@ import java.util.List;
 public class TripRouteOptionFindService {
     private final TripRouteOptionRepository tripRouteOptionRepository;
 
-    public TripRouteOptionEntity findTripRouteOption(Long routeOptionId) {
-        return tripRouteOptionRepository.findById(routeOptionId)
-                .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
-    }
-
     public List<TripRouteOptionEntity> findTripRouteOptions(Long tripId) {
         return tripRouteOptionRepository.findAllByTrip_Id(tripId);
     }
 
-    public TripRouteOptionEntity findTripRouteOption(Long tripId, String transport) {
-        return tripRouteOptionRepository.findByTrip_IdAndTransport(tripId, TripTransport.from(transport))
+    public TripRouteOptionEntity findRouteCandidate(Long tripId, TripTransport transport) {
+        return tripRouteOptionRepository.findByTrip_IdAndTransportAndConfirmedFalse(tripId, transport)
                 .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
     }
 
-    public TripRouteOptionEntity findConfirmedTripRouteOption(Long tripId) {
-        return tripRouteOptionRepository.findByTrip_IdAndConfirmedTrue(tripId)
-                .orElseThrow(() -> new CustomException(TripError.TRIP_ROUTE_OPTION_NOT_FOUND));
+    public Optional<TripRouteOptionEntity> findOptionalRouteCandidate(Long tripId, TripTransport transport) {
+        return tripRouteOptionRepository.findByTrip_IdAndTransportAndConfirmedFalse(tripId, transport);
     }
+
 }

@@ -14,9 +14,7 @@ public interface TripRouteOptionRepository extends JpaRepository<TripRouteOption
 
     List<TripRouteOptionEntity> findAllByTrip_Id(Long tripId);
 
-    Optional<TripRouteOptionEntity> findByTrip_IdAndTransport(Long tripId, TripTransport transport);
-
-    Optional<TripRouteOptionEntity> findByTrip_IdAndConfirmedTrue(Long tripId);
+    Optional<TripRouteOptionEntity> findByTrip_IdAndTransportAndConfirmedFalse(Long tripId, TripTransport transport);
 
     void deleteAllByTrip(TripEntity trip);
 }

@@ -16,11 +16,6 @@ spring:
     init:
       mode: always
 
-  data:
-    redis:
-      host: localhost
-      port: 6379
-
   batch:
     job:
       enabled: true

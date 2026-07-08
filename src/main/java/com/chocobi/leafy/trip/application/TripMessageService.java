@@ -4,9 +4,9 @@ import com.chocobi.leafy.fcm.service.FCMService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.chocobi.leafy.user.infra.service.UserService;
-import com.google.firebase.messaging.FirebaseMessagingException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -22,8 +22,9 @@ public class TripMessageService {
     /**
      * 여행 생성 알림 🌱
      */
+    @Async
     @Transactional
-    public void notifyTripCreated(Long userId, Long tripId) throws FirebaseMessagingException {
+    public void notifyTripCreated(Long userId, Long tripId) {
         UserEntity user = userService.findById(userId);
         TripEntity trip = tripService.getOwnedTrip(tripId, userId);
 
@@ -44,7 +45,7 @@ public class TripMessageService {
      * 여행 출발 알림 ✈️
      */
     @Transactional
-    public void notifyTripStart(UserEntity user, TripEntity trip) throws FirebaseMessagingException {
+    public void notifyTripStart(UserEntity user, TripEntity trip) {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
                 "url", "/trip/" + trip.getId()
@@ -62,7 +63,7 @@ public class TripMessageService {
      * 위치 인증 요청 📍
      */
     @Transactional
-    public void requestLocationCheck(UserEntity user, TripEntity trip) throws FirebaseMessagingException {
+    public void requestLocationCheck(UserEntity user, TripEntity trip) {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
                 "url", "/trip/" + trip.getId() + "/certify"
@@ -80,7 +81,7 @@ public class TripMessageService {
      * 여행 인증 완료 🎉
      */
     @Transactional
-    public void certifyTrip(UserEntity user, TripEntity trip) throws FirebaseMessagingException {
+    public void certifyTrip(UserEntity user, TripEntity trip) {
         Map<String, String> data = Map.of(
                 "tripId", trip.getId().toString(),
                 "url", "/trip/" + trip.getId()

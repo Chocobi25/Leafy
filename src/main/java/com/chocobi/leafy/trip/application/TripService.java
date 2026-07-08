@@ -7,12 +7,12 @@ import com.chocobi.leafy.external.kakao.dto.GeocodeResponse.Address;
 import com.chocobi.leafy.trip.client.TransCoordDTO;
 import com.chocobi.leafy.trip.client.TransCoordResponse;
 import com.chocobi.leafy.trip.client.TranscodeClient;
-import com.chocobi.leafy.trip.dto.*;
 import com.chocobi.leafy.trip.dto.request.CreateTripRequest;
 import com.chocobi.leafy.trip.dto.request.TripUpdateRequest;
 import com.chocobi.leafy.trip.dto.response.TripDetailResponse;
 import com.chocobi.leafy.trip.dto.response.TripListResponse;
 import com.chocobi.leafy.trip.dto.response.TripPlaceResponse;
+import com.chocobi.leafy.trip.dto.response.TripSegmentResponse;
 import com.chocobi.leafy.trip.dto.response.TripSaveResponse;
 import com.chocobi.leafy.trip.infra.TripCommandService;
 import com.chocobi.leafy.trip.infra.TripFindService;
@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 
 @Service
@@ -63,7 +64,7 @@ public class TripService {
 
     @Transactional(readOnly = true)
     public List<TripListResponse> getTrips(Long userId) {
-        return tripFindService.findTripsByUserId(userId).stream()
+        return tripFindService.findTrips(userId).stream()
                 .map(TripListResponse::from)
                 .toList();
     }
@@ -72,7 +73,7 @@ public class TripService {
     public TripDetailResponse getTripDetails(Long tripId, Long userId) {
         TripEntity trip = tripFindService.findOwnedTripDetail(tripId, userId);
 
-        List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
+        List<TripSegmentResponse> tripSegments = tripSegmentService.getTripSegments(trip);
         return TripDetailResponse.from(trip, tripSegments, getTripPlaces(tripId));
     }
 
@@ -90,9 +91,15 @@ public class TripService {
     public TripDetailResponse updateTripInfo(Long tripId, TripUpdateRequest request, Long userId) {
 
         TripEntity trip = tripFindService.findOwnedTripDetail(tripId, userId);
+        validateTripEditable(trip);
+
+        if (hasTripDateChanged(trip, request)) {
+            tripSegmentService.deleteTripSegments(trip);
+            trip.invalidateRoute();
+        }
 
         trip.update(request.title(), request.startDate(), request.endDate());
-        List<TripSegmentDTO> tripSegments = tripSegmentService.getTripSegments(tripId);
+        List<TripSegmentResponse> tripSegments = tripSegmentService.getTripSegments(trip);
 
         return TripDetailResponse.from(trip, tripSegments, getTripPlaces(tripId));
     }
@@ -157,6 +164,17 @@ public class TripService {
         }
 
         return address.getRegion_1depth_name();
+    }
+
+    private boolean hasTripDateChanged(TripEntity trip, TripUpdateRequest request) {
+        return !Objects.equals(trip.getStartDate(), request.startDate())
+                || !Objects.equals(trip.getEndDate(), request.endDate());
+    }
+
+    private void validateTripEditable(TripEntity trip) {
+        if (!trip.isEditable()) {
+            throw new CustomException(TripError.TRIP_NOT_EDITABLE);
+        }
     }
 
     private List<TripPlaceResponse> getTripPlaces(Long tripId) {

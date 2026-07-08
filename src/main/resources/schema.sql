@@ -145,7 +145,7 @@ CREATE TABLE trip_route_option
     confirmed               boolean NOT NULL DEFAULT false,
     created_at              datetime(6) NOT NULL,
     updated_at              datetime(6) NOT NULL,
-    CONSTRAINT uq_trip_route_option_trip_transport UNIQUE (trip_id, transport)
+    UNIQUE KEY uq_trip_route_option_trip_transport_confirmed (trip_id, transport, confirmed)
 );
 
 DROP TABLE IF EXISTS trip_segment;

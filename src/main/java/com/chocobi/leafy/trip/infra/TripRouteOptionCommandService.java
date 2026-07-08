@@ -19,16 +19,19 @@ public class TripRouteOptionCommandService {
         return tripRouteOptionRepository.save(tripRouteOption);
     }
 
-    public List<TripRouteOptionEntity> saveAll(List<TripRouteOptionEntity> tripRouteOptions) {
-        return tripRouteOptionRepository.saveAll(tripRouteOptions);
-    }
-
-    public void deleteAllByTrip(TripEntity trip) {
+    public void deleteAll(TripEntity trip) {
         tripRouteOptionRepository.deleteAllByTrip(trip);
     }
 
+    public void delete(TripRouteOptionEntity tripRouteOption) {
+        tripRouteOptionRepository.delete(tripRouteOption);
+        tripRouteOptionRepository.flush();
+    }
+
     public void confirmOnly(TripRouteOptionEntity selectedRouteOption, List<TripRouteOptionEntity> routeOptions) {
-        routeOptions.forEach(TripRouteOptionEntity::unconfirm);
+        routeOptions.stream()
+                .filter(routeOption -> routeOption != selectedRouteOption)
+                .forEach(tripRouteOptionRepository::delete);
         selectedRouteOption.confirm();
     }
 }

@@ -84,14 +84,14 @@ class TripFindServiceTest {
 
     @Test
     @DisplayName("사용자별 여행 목록을 최신 생성순으로 조회한다")
-    void findTripsByUserId() {
+    void findTrips() {
         UserEntity user = saveUser("user-1");
         UserEntity otherUser = saveUser("other");
         saveTrip("첫 번째 여행", user);
         saveTrip("다른 사용자 여행", otherUser);
         saveTrip("두 번째 여행", user);
 
-        List<TripEntity> result = tripFindService.findTripsByUserId(user.getId());
+        List<TripEntity> result = tripFindService.findTrips(user.getId());
 
         assertThat(result).extracting(TripEntity::getTitle)
                 .containsExactly("두 번째 여행", "첫 번째 여행");

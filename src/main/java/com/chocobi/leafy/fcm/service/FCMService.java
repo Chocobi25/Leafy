@@ -2,6 +2,8 @@ package com.chocobi.leafy.fcm.service;
 
 import com.chocobi.leafy.fcm.entity.UserDevice;
 import com.chocobi.leafy.fcm.repository.UserDeviceRepository;
+import com.chocobi.leafy.fcm.vo.FcmError;
+import com.chocobi.leafy.global.exception.CustomException;
 import com.chocobi.leafy.user.infra.entity.UserEntity;
 import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,7 @@ public class FCMService {
      * 특정 사용자에게 단일 알림 전송
      */
     @Transactional
-    public void sendNotification(UserEntity user, String title, String body, Map<String, String> data) throws FirebaseMessagingException {
+    public void sendNotification(UserEntity user, String title, String body, Map<String, String> data) {
         // 1. 사용자 디바이스 토큰 가져오기 (단일)
         Optional<UserDevice> deviceOpt = userDeviceRepository.findByUser(user);
         if (deviceOpt.isEmpty()) {
@@ -56,6 +58,7 @@ public class FCMService {
             // 실패 토큰 삭제
             userDeviceRepository.findByFcmToken(fcmToken)
                     .ifPresent(userDeviceRepository::delete);
+            throw new CustomException(FcmError.FCM_NOTIFICATION_FAILED);
         }
     }
 

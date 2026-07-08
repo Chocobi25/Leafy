@@ -79,6 +79,20 @@ public class TripEntity extends BaseEntity {
         this.routeStale = true;
     }
 
+    public void invalidateRoute() {
+        this.routeStale = true;
+        this.status = TripStatus.CREATING;
+    }
+
+    public void completeRoute() {
+        this.routeStale = false;
+        this.status = TripStatus.READY;
+    }
+
+    public boolean isEditable() {
+        return this.status == TripStatus.CREATING || this.status == TripStatus.READY;
+    }
+
     public void clearRouteStale() {
         this.routeStale = false;
     }
