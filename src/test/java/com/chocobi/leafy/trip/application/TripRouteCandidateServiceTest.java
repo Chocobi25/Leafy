@@ -200,6 +200,27 @@ class TripRouteCandidateServiceTest {
     }
 
     @Test
+    @DisplayName("교통수단이 없으면 경로 후보를 저장할 수 없다")
+    void saveRouteCandidateWithoutTransport() {
+        TripEntity trip = tripFixture(1L);
+        TripPlaceEntity firstTripPlace = tripPlaceFixture(10L, trip, placeFixture(100L, "첫 장소"), 0, 0);
+        TripPlaceEntity secondTripPlace = tripPlaceFixture(20L, trip, placeFixture(200L, "둘째 장소"), 0, 1);
+
+        assertThatThrownBy(() -> tripRouteCandidateService.saveRouteCandidate(
+                1L,
+                List.of(section(60, 1000, 5.0)),
+                null,
+                List.of(TripPlaceResponse.from(firstTripPlace), TripPlaceResponse.from(secondTripPlace))
+        ))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(TripError.INVALID_TRIP_TRANSPORT);
+
+        then(tripFindService).should(never()).findTrip(1L);
+        then(tripRouteOptionCommandService).should(never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
     @DisplayName("여행 기간 중 장소가 없는 일차가 있으면 경로 후보를 저장할 수 없다")
     void saveRouteCandidateWithMissingTripDay() {
         TripEntity trip = tripFixture(1L);

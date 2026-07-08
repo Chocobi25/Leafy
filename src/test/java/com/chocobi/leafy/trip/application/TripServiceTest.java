@@ -25,7 +25,6 @@ import com.chocobi.leafy.trip.infra.TripCommandService;
 import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripPlaceCommandService;
 import com.chocobi.leafy.trip.infra.TripPlaceFindService;
-import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
 import com.chocobi.leafy.trip.vo.TripError;
@@ -72,9 +71,6 @@ class TripServiceTest {
 
     @Mock
     private RegionFindService regionFindService;
-
-    @Mock
-    private TripRouteOptionCommandService tripRouteOptionCommandService;
 
     @Test
     @DisplayName("여행을 생성한다")
@@ -149,7 +145,7 @@ class TripServiceTest {
         assertThat(trip.isRouteStale()).isTrue();
         assertThat(trip.getStatus()).isEqualTo(TripStatus.CREATING);
         then(tripFindService).should().findOwnedTripDetail(10L, 1L);
-        then(tripRouteOptionCommandService).should().deleteAll(trip);
+        then(tripSegmentService).should().deleteTripSegments(trip);
     }
 
     @Test
@@ -172,7 +168,7 @@ class TripServiceTest {
         assertThat(result.getTitle()).isEqualTo("수정된 여행");
         assertThat(trip.isRouteStale()).isFalse();
         assertThat(trip.getStatus()).isEqualTo(TripStatus.READY);
-        then(tripRouteOptionCommandService).should(never()).deleteAll(trip);
+        then(tripSegmentService).should(never()).deleteTripSegments(trip);
     }
 
     @Test
@@ -194,7 +190,7 @@ class TripServiceTest {
                 .isEqualTo(TripError.TRIP_NOT_EDITABLE);
 
         assertThat(trip.getStatus()).isEqualTo(TripStatus.IN_PROGRESS);
-        then(tripRouteOptionCommandService).should(never()).deleteAll(trip);
+        then(tripSegmentService).should(never()).deleteTripSegments(trip);
         then(tripSegmentService).should(never()).getTripSegments(trip);
     }
 

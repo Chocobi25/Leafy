@@ -18,7 +18,6 @@ import com.chocobi.leafy.trip.infra.TripCommandService;
 import com.chocobi.leafy.trip.infra.TripFindService;
 import com.chocobi.leafy.trip.infra.TripPlaceCommandService;
 import com.chocobi.leafy.trip.infra.TripPlaceFindService;
-import com.chocobi.leafy.trip.infra.TripRouteOptionCommandService;
 import com.chocobi.leafy.trip.infra.entity.TripEntity;
 import com.chocobi.leafy.trip.infra.entity.TripPlaceEntity;
 import com.chocobi.leafy.trip.infra.entity.TripStatus;
@@ -44,7 +43,6 @@ public class TripService {
     private final TripSegmentService tripSegmentService;
     private final TranscodeClient transcodeClient;
     private final RegionFindService regionFindService;
-    private final TripRouteOptionCommandService tripRouteOptionCommandService;
 
     @Transactional
     public TripSaveResponse createTrip(CreateTripRequest createTripRequest, Long userId) {
@@ -96,7 +94,7 @@ public class TripService {
         validateTripEditable(trip);
 
         if (hasTripDateChanged(trip, request)) {
-            tripRouteOptionCommandService.deleteAll(trip);
+            tripSegmentService.deleteTripSegments(trip);
             trip.invalidateRoute();
         }
 

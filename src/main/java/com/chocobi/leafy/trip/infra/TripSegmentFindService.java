@@ -15,6 +15,6 @@ public class TripSegmentFindService {
     private final TripSegmentRepository tripSegmentRepository;
 
     public List<TripSegmentEntity> findConfirmedTripSegments(Long tripId) {
-        return tripSegmentRepository.findByRouteOption_Trip_IdAndRouteOption_ConfirmedTrue(tripId);
+        return tripSegmentRepository.findConfirmedTripSegments(tripId);
     }
 }

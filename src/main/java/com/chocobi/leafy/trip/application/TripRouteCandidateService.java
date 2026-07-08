@@ -37,6 +37,7 @@ public class TripRouteCandidateService {
 
     @Transactional
     public void saveRouteCandidate(Long tripId, List<Section> sections, TripTransport transport, List<TripPlaceResponse> tripPlaces) {
+        validateTransport(transport);
         validateRouteCandidate(sections, tripPlaces);
 
         TripEntity trip = tripFindService.findTrip(tripId);

@@ -13,7 +13,13 @@ import java.util.List;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "trip_route_option")
+@Table(
+        name = "trip_route_option",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_trip_route_option_trip_transport_confirmed",
+                columnNames = {"trip_id", "transport", "confirmed"}
+        )
+)
 public class TripRouteOptionEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

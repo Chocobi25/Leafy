@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -96,6 +97,17 @@ class TripRouteControllerTest {
                 .andExpect(jsonPath("$.data.totalCarbonEmission").value(2.5));
 
         then(tripRouteService).should().getRouteSummary(eq(10L), any(TripRouteSummaryRequest.class), eq(1L));
+    }
+
+    @Test
+    @DisplayName("여행 경로 후보 요약 조회는 대문자 이동수단만 허용한다")
+    void getRouteSummaryWithLowercaseTransport() throws Exception {
+        mockMvc.perform(get("/api/trip/{tripId}/summary", 10L)
+                        .param("transport", "public")
+                        .with(userAuthentication()))
+                .andExpect(status().isBadRequest());
+
+        then(tripRouteService).should(never()).getRouteSummary(any(), any(), any());
     }
 
     @Test
